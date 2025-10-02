@@ -1,9 +1,11 @@
 import { FormEvent } from 'react'
 import { auth } from '../firebase/firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
+import { useNavigate } from 'react-router-dom'
 
 
 const Login = () => {
+    const navigate = useNavigate();
 
     const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -18,7 +20,7 @@ const Login = () => {
             if (user){
                 //retrieve user authtoken
                 //throw successful login toast
-                //navigate to home page
+                //navigate('/'); //redirect to previous page
             }
         }catch(err){
             //throw toast error with err.message
@@ -26,7 +28,27 @@ const Login = () => {
     }
 
     //Add HTML
-
+    return (
+        <div>
+            <form onSubmit={handleLogin}>
+                <div>
+                    <label>Email</label>
+                    <input
+                        type="email"
+                        name="email"
+                    />
+                </div>
+                <div>
+                    <label>Password</label>
+                    <input
+                        type="password"
+                        name="password"
+                    />
+                </div>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    );
 }
 
 export default Login;
