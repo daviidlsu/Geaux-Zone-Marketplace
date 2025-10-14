@@ -60,8 +60,9 @@ export default function WelcomePage() {
             //throw successful login toast
           setShowLoginModal(false); // Close modal on successful login
         }
-    }catch(err){
+    }catch(error){
         //throw toast error with err.message
+        console.log(error);
     }
   }
 
@@ -210,7 +211,7 @@ export default function WelcomePage() {
                 />
               </div>
               {/* Submit button */}
-              <button className="button" type="submit">Login</button> 
+              <button className="px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2" type="submit">Login</button> 
             </form>
           </div>
         </div>

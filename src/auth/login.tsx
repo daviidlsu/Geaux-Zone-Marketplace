@@ -20,10 +20,11 @@ const Login = () => {
             if (user){
                 //retrieve user authtoken
                 //throw successful login toast
-                //navigate('/'); //redirect to previous page
+                navigate('/'); //redirect to previous page
             }
-        }catch(err){
+        }catch(error){
             //throw toast error with err.message
+            console.log(error);
         }
     }
 

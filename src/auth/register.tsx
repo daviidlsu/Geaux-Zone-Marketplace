@@ -30,8 +30,9 @@ const Register = () => {
             });
 
             //Toast successful creation message
-        }catch(err){
+        }catch(error){
             //throw toast error with err.message
+            console.log(error);
         }
     }
 
