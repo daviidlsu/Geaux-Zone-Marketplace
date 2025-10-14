@@ -45,7 +45,7 @@ const Login = () => {
                         name="password"
                     />
                 </div>
-                <button type="submit">Login</button>
+                <button className="button" type="submit">Login</button>
             </form>
         </div>
     );

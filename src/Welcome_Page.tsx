@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { Search, Filter, MapPin, Heart } from "lucide-react";
+import { useState, FormEvent } from "react";
+import { Search, Filter, MapPin, Heart, X } from "lucide-react";
+import { auth } from "./firebase/firebase";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -15,6 +17,8 @@ interface Listing {
 export default function WelcomePage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
+  const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
+  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
 
   const listings: Listing[] = [
     { id: 1, title: "Textbook", price: 45, image: "https://via.placeholder.com/300x200", category: "Textbooks", location: "Union" },
@@ -27,7 +31,12 @@ export default function WelcomePage() {
 
   const handleListing = (listing: Listing) => {
     console.log("Clicked listing:", listing);
-    alert("Please Login or Register to view details.");
+    if (!loggedIn){
+      alert("Please Login or Register to view details.");
+    }
+    else{
+      // Navigate to listing details page
+    }
   };
 
   const filteredListings = listings.filter((listing) => {
@@ -36,6 +45,36 @@ export default function WelcomePage() {
     return matchesCategory && matchesSearch;
   });
 
+  // Login button handler
+  const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget);
+    const {email, password} = Object.fromEntries(formData.entries()) as Record<string,string>;
+    // TODO: sanitize user input
+    try{
+        const user = await signInWithEmailAndPassword(auth, email, password)
+        //console.log(user);
+        if (user){
+          setLoggedIn(true);
+            //retrieve user authtoken
+            //throw successful login toast
+          setShowLoginModal(false); // Close modal on successful login
+        }
+    }catch(err){
+        //throw toast error with err.message
+    }
+  }
+
+  // Logout button handler
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setLoggedIn(false);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  }
+  
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
@@ -48,7 +87,12 @@ export default function WelcomePage() {
             <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
           </div>
           <div className="flex gap-3">
-            <button className="px-5 py-2 text-white hover:text-yellow-400 transition-colors font-medium">Login</button>
+            <button onClick={loggedIn ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
+              ${loggedIn 
+                ? 'bg-purple-950 text-white hover:bg-purple-800'
+                : 'bg-yellow-400 text-purple-900 hover:bg-yellow-300'}`}> {/*Determines button style based on login state*/}
+              {loggedIn ? 'Logout' : 'Login'} {/* Determines button text */}
+            </button>
             <button className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all">Sign Up</button>
           </div>
         </div>
@@ -139,6 +183,38 @@ export default function WelcomePage() {
       <button className="fixed bottom-8 right-8 w-16 h-16 bg-yellow-400 text-purple-900 rounded-full shadow-2xl hover:bg-yellow-300 transition-all transform hover:scale-110 flex items-center justify-center text-3xl font-bold">
         +
       </button>
+
+      {/* Login Modal */}
+      {!loggedIn && showLoginModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-purple-600/20 z-50">
+          <div className="bg-white rounded-xl w-2/5 h-2/3 relative">
+            {/*Close button (X)*/}
+            <button className="absolute top-2 right-2 hover:bg-gray-100 rounded-md"
+              onClick={() => setShowLoginModal(false)}>
+              <X size={30}/>
+            </button>
+            {/* Login Form */}
+            <form onSubmit={handleLogin}>
+              <div>
+                <label>Email</label>
+                <input className='border'
+                  type="email"
+                  name="email"
+                />
+              </div>
+              <div>
+                <label>Password</label>
+                <input className='border'
+                  type="password"
+                  name="password"
+                />
+              </div>
+              {/* Submit button */}
+              <button className="button" type="submit">Login</button> 
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
