@@ -2,6 +2,7 @@ import { useState, FormEvent } from "react";
 import { Search, Filter, MapPin, Heart, X } from "lucide-react";
 import { auth } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -15,6 +16,7 @@ interface Listing {
 }
 
 export default function WelcomePage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
@@ -65,7 +67,6 @@ export default function WelcomePage() {
         console.log(error);
     }
   }
-
   // Logout button handler
   const handleLogout = async () => {
     try {
@@ -74,6 +75,10 @@ export default function WelcomePage() {
     } catch (error) {
       console.error("Error signing out:", error);
     }
+  }
+  // Signup button handler
+  const handleSignup = async () => {
+    navigate('/register');
   }
   
   return (
@@ -94,7 +99,7 @@ export default function WelcomePage() {
                 : 'bg-yellow-400 text-purple-900 hover:bg-yellow-300'}`}> {/*Determines button style based on login state*/}
               {loggedIn ? 'Logout' : 'Login'} {/* Determines button text */}
             </button>
-            <button className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all">Sign Up</button>
+            <button className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all" onClick={handleSignup}>Sign Up</button>
           </div>
         </div>
       </nav>
