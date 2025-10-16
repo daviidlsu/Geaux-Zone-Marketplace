@@ -7,6 +7,7 @@ import { toast, ToastContainer, Zoom } from 'react-toastify';
 
 const Register = () => {
     const navigate = useNavigate();
+    const toastID = "current-toast";
 
     const handleHome = async () => {
         navigate('/');
@@ -20,22 +21,22 @@ const Register = () => {
 
         {//Check for empty fields
             if (!username){
-                toast.warn("Please enter a username");
+                toast.warn("Please enter a username", {toastId: toastID});
                 //Add css to make field red
                 return;
             }
             if (!email || !email.endsWith("@lsu.edu")){
-                toast.warn("Please enter a valid school email");
+                toast.warn("Please enter a valid school email", {toastId: toastID});
                 //Add css to make field red
                 return;
             }
             if (!password){
-                toast.warn("Please enter a password");
+                toast.warn("Please enter a password", {toastId: toastID});
                 //Add css to make field red
                 return;
             }
             if (!repassword){
-                toast.warn("Please re-enter your password");
+                toast.warn("Please re-enter your password", {toastId: toastID});
                 //Add css to make field red
                 return;
             }}
@@ -44,22 +45,22 @@ const Register = () => {
             const q = query(collection(db, "Users"), where("email","==",email));
             const qSnapshot = await getDocs(q);
             if (!qSnapshot.empty){
-                toast.warn("Email already in use");
+                toast.warn("Email already in use", {toastId: toastID});
                 return;
             }}
         {//Check if school email
             if (!email.endsWith("@lsu.edu")){
-                toast.warn("Please use a valid school email");
+                toast.warn("Please use a valid school email", {toastId: toastID});
                 return;
             }}
         {//Check if valid password
             if (password.length < 8 || !/[!@#$%^&*_]/.test(password)){
-                toast.warn("Password must be at least 8 characters long and contain at least one special character");
+                toast.warn("Password must be at least 8 characters long and contain at least one special character", {toastId: toastID});
                 return;
             }}
         {//Check if passwords match
             if (password!=repassword){
-                toast.warn("Passwords do not match");
+                toast.warn("Passwords do not match", {toastId: toastID});
                 return;
             }}
 
@@ -74,11 +75,11 @@ const Register = () => {
             await setDoc(doc(db, "UserChats", newuser.user.uid), {
                 chats: []
             });
-            toast.success("Account created!");
-            toast.success("Redirecting to login...");
+            toast.success("Account created!", {toastId: toastID});
+            toast.success("Redirecting to login...", {toastId: toastID});
             setTimeout(() => navigate('/login'), 3000);
         }catch(error){
-            toast.error("An error occurred. Please try again.");
+            toast.error("An error occurred. Please try again.", {toastId: toastID});
         }
     }
 
@@ -117,7 +118,7 @@ const Register = () => {
             </form>
             <button className="border 1px" onClick={handleHome}>Back to Home</button>
             <ToastContainer
-                position="bottom-right"
+                position="top-right"
                 autoClose={4000}
                 hideProgressBar={true}
                 transition={Zoom}
