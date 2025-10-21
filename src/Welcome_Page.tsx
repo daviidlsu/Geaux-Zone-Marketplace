@@ -2,6 +2,7 @@ import { useState, FormEvent } from "react";
 import { Search, Filter, MapPin, Heart, X } from "lucide-react";
 import { auth } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -19,6 +20,7 @@ export default function WelcomePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const listings: Listing[] = [
     { id: 1, title: "Textbook", price: 45, image: "https://via.placeholder.com/300x200", category: "Textbooks", location: "Union" },
@@ -75,7 +77,12 @@ export default function WelcomePage() {
       console.error("Error signing out:", error);
     }
   }
-  
+
+  // Register button handler
+  const handleRegister = () => {
+    navigate('/register');
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
@@ -94,7 +101,7 @@ export default function WelcomePage() {
                 : 'bg-yellow-400 text-purple-900 hover:bg-yellow-300'}`}> {/*Determines button style based on login state*/}
               {loggedIn ? 'Logout' : 'Login'} {/* Determines button text */}
             </button>
-            <button className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all">Sign Up</button>
+            <button onClick={handleRegister} className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all">Sign Up</button>
           </div>
         </div>
       </nav>
