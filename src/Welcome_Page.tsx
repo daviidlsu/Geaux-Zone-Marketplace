@@ -18,6 +18,7 @@ interface Listing {
 }
 
 export default function WelcomePage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
@@ -68,7 +69,6 @@ export default function WelcomePage() {
         console.log(error);
     }
   }
-
   // Logout button handler
   const handleLogout = async () => {
     try {
