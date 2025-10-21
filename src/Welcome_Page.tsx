@@ -1,7 +1,8 @@
 import { useState, FormEvent } from "react";
-import { Search, Filter, MapPin, Heart, X } from "lucide-react";
+import { Search, Filter, MapPin, Heart, X} from "lucide-react";
 import { auth } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -12,6 +13,7 @@ interface Listing {
   image: string;
   category: Category;
   location: string;
+  description: string;
 }
 
 export default function WelcomePage() {
@@ -19,23 +21,22 @@ export default function WelcomePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
   const listings: Listing[] = [
-    { id: 1, title: "Textbook", price: 45, image: "https://via.placeholder.com/300x200", category: "Textbooks", location: "Union" },
-    { id: 2, title: "LSU Jersey", price: 34, image: "https://via.placeholder.com/300x200", category: "Clothing", location: "Union" },
-    { id: 3, title: "Bike", price: 220, image: "https://via.placeholder.com/300x200", category: "Other", location: "Union" },
-    { id: 4, title: "Airpods", price: 106, image: "https://via.placeholder.com/300x200", category: "Electronics", location: "Union" },
+    { id: 1, title: "Textbook", price: 45, image: "https://i.ebayimg.com/images/g/04IAAOSwDiRlVIsd/s-l400.jpg", category: "Textbooks", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
+    { id: 2, title: "LSU Jersey", price: 34, image: "https://i.ebayimg.com/images/g/408AAOSw8FBncfAV/s-l400.jpg", category: "Clothing", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
+    { id: 3, title: "Bike", price: 220, image: "https://upload.wikimedia.org/wikipedia/commons/3/37/Danish_bicycle_female.jpg", category: "Other", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
+    { id: 4, title: "Airpods", price: 106, image: "https://external-preview.redd.it/m1yhEWLKN3Uu4AfHCTbwaB6iO0xZrHXAncXScxkMtt0.jpg?auto=webp&s=53fe89c7c25394ec90e8acb6d088fda35736fcab", category: "Electronics", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
   ];
 
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
   const handleListing = (listing: Listing) => {
-    console.log("Clicked listing:", listing);
-    if (!loggedIn){
+    if (!loggedIn) {
       alert("Please Login or Register to view details.");
-    }
-    else{
-      // Navigate to listing details page
+    } else {
+      setSelectedListing(listing);
     }
   };
 
@@ -75,6 +76,11 @@ export default function WelcomePage() {
       console.error("Error signing out:", error);
     }
   }
+
+  const handleCloseModal = () => {
+    setSelectedListing(null);
+  };
+
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -184,6 +190,99 @@ export default function WelcomePage() {
       <button className="fixed bottom-8 right-8 w-16 h-16 bg-yellow-400 text-purple-900 rounded-full shadow-2xl hover:bg-yellow-300 transition-all transform hover:scale-110 flex items-center justify-center text-3xl font-bold">
         +
       </button>
+
+      
+      {/* Listing Detail Modal */}
+      {selectedListing && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center p-4"
+          onClick={handleCloseModal}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Left Side - Image */}
+            <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
+              <img 
+                src={selectedListing.image} 
+                alt={selectedListing.title} 
+                className="w-full h-full object-cover" 
+              />
+            </div>
+
+            {/* Right Side - Details */}
+            <div className="w-1/2 flex flex-col">
+              {/* Header with Close Button */}
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
+                  {selectedListing.category}
+                </span>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-all"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                {/* Title and Price */}
+                <div className="mb-6">
+                  <h3 className="text-3xl font-bold text-gray-900 mb-3">{selectedListing.title}</h3>
+                  <p className="text-4xl font-bold text-purple-900">${selectedListing.price}</p>
+                </div>
+
+                {/* Location */}
+                <div className="flex items-center text-gray-600 mb-6 pb-6 border-b border-gray-200">
+                  <MapPin className="w-5 h-5 mr-2" />
+                  <span className="text-lg">{selectedListing.location}</span>
+                </div>
+
+                {/* Description */}
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Description</h4>
+                  <p className="text-gray-700 leading-relaxed">
+                  {selectedListing.description}
+                     </p>
+                      </div>
+
+                {/* Seller Info */}
+                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Seller Information</h4>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      TS
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Tiger Student</p>
+                      <p className="text-sm text-gray-600">LSU Student • Member since 2024</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons - Fixed at Bottom */}
+              <div className="px-6 py-4 border-t border-gray-200 bg-white">
+                <div className="flex gap-3">
+                  <button className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
+                    Contact Seller
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    className="px-4 py-3 border-2 border-gray-300 rounded-xl hover:border-purple-900 hover:text-purple-900 transition-all"
+                  >
+                    <Heart className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Login Modal */}
       {!loggedIn && showLoginModal && (
