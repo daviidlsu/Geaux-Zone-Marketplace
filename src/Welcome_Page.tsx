@@ -2,6 +2,7 @@ import { useState, FormEvent } from "react";
 import { Search, Filter, MapPin, Heart, X} from "lucide-react";
 import { auth } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
@@ -22,6 +23,7 @@ export default function WelcomePage() {
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const navigate = useNavigate();
 
   const listings: Listing[] = [
     { id: 1, title: "Textbook", price: 45, image: "https://i.ebayimg.com/images/g/04IAAOSwDiRlVIsd/s-l400.jpg", category: "Textbooks", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
@@ -82,6 +84,11 @@ export default function WelcomePage() {
   };
 
   
+  // Register button handler
+  const handleRegister = () => {
+    navigate('/register');
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
@@ -100,7 +107,7 @@ export default function WelcomePage() {
                 : 'bg-yellow-400 text-purple-900 hover:bg-yellow-300'}`}> {/*Determines button style based on login state*/}
               {loggedIn ? 'Logout' : 'Login'} {/* Determines button text */}
             </button>
-            <button className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all">Sign Up</button>
+            <button onClick={handleRegister} className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all">Sign Up</button>
           </div>
         </div>
       </nav>
