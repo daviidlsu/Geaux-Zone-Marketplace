@@ -25,7 +25,6 @@ export default function WelcomePage() {
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-  const toastID = "current-toast";
 
   const listings: Listing[] = [
     { id: 1, title: "Textbook", price: 45, image: "https://i.ebayimg.com/images/g/04IAAOSwDiRlVIsd/s-l400.jpg", category: "Textbooks", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
@@ -36,20 +35,31 @@ export default function WelcomePage() {
 
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
-  const handleListing = (listing: Listing) => {
-    if (!loggedIn) {
-      toast.warn("Please Login or Register to view details.", {toastId: toastID});
-    } else {
-      setSelectedListing(listing);
-    }
-  };
-
   const filteredListings = listings.filter((listing) => {
     const matchesCategory = selectedCategory === "All" || listing.category === selectedCategory;
     const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
-
+  // Listing handler
+  const handleListing = (listing: Listing) => {
+    setSelectedListing(listing);
+  }
+  // Contact seller handler
+  const handleContactSeller = () => {
+    if (!loggedIn) {
+      toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
+    } else {
+      // Implement contact seller functionality here
+    }
+  }
+  // Favorite handler
+  const handleFavorite = () => {
+    if (!loggedIn) {
+      toast.warn("Please Login or Register to favorite listings.", {toastId: 'favorite-error'});
+    } else {
+      // Implement favorite functionality here
+    }
+  }
   // Login button handler
   const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -62,11 +72,11 @@ export default function WelcomePage() {
         if (user){
           setLoggedIn(true);
             //retrieve user authtoken
-          toast.success("Login Successful!", {toastId: toastID});
+          toast.success("Login Successful!", {toastId: 'login-success'});
           setShowLoginModal(false); // Close modal on successful login
         }
     }catch(error){
-        toast.error("Login Failed. Please check your credentials.", {toastId: toastID});
+        toast.error("Login Failed. Please check your credentials.", {toastId: 'login-failed'});
         console.log(error);
     }
   }
@@ -75,15 +85,15 @@ export default function WelcomePage() {
     try {
       await signOut(auth);
       setLoggedIn(false);
+      toast.success("Logout Successful!", {toastId: 'logout-success'});
     } catch (error) {
       console.error("Error signing out:", error);
     }
   }
-
+  // Handle modal close
   const handleCloseModal = () => {
     setSelectedListing(null);
   };
-  
   // Register button handler
   const handleRegister = () => {
     navigate('/register');
@@ -274,13 +284,10 @@ export default function WelcomePage() {
               {/* Action Buttons - Fixed at Bottom */}
               <div className="px-6 py-4 border-t border-gray-200 bg-white">
                 <div className="flex gap-3">
-                  <button className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
+                  <button onClick={() => {handleContactSeller();}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
                     Contact Seller
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
+                  <button onClick={() => {handleFavorite();}}
                     className="px-4 py-3 border-2 border-gray-300 rounded-xl hover:border-purple-900 hover:text-purple-900 transition-all"
                   >
                     <Heart className="w-6 h-6" />
