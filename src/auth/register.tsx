@@ -117,9 +117,13 @@ const Register = () => {
                 <button type="submit" className="border 1px">Register</button>
             </form>
             <button className="border 1px" onClick={handleHome}>Back to Home</button>
+            
+            {/* Toast Container */}
             <ToastContainer
+                toastStyle={{ backgroundColor: '#421168ff', color: '#fff', border: '1.5px #421168ff' , borderRadius: '16px'}}
                 position="top-right"
                 autoClose={4000}
+                closeOnClick
                 hideProgressBar={true}
                 transition={Zoom}
                 theme="light"

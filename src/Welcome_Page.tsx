@@ -3,6 +3,7 @@ import { Search, Filter, MapPin, Heart, X} from "lucide-react";
 import { auth } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer, Zoom } from 'react-toastify';
 
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
@@ -24,7 +25,7 @@ export default function WelcomePage() {
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-  const navigate = useNavigate();
+  const toastID = "current-toast";
 
   const listings: Listing[] = [
     { id: 1, title: "Textbook", price: 45, image: "https://i.ebayimg.com/images/g/04IAAOSwDiRlVIsd/s-l400.jpg", category: "Textbooks", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
@@ -37,7 +38,7 @@ export default function WelcomePage() {
 
   const handleListing = (listing: Listing) => {
     if (!loggedIn) {
-      alert("Please Login or Register to view details.");
+      toast.warn("Please Login or Register to view details.", {toastId: toastID});
     } else {
       setSelectedListing(listing);
     }
@@ -61,11 +62,11 @@ export default function WelcomePage() {
         if (user){
           setLoggedIn(true);
             //retrieve user authtoken
-            //throw successful login toast
+          toast.success("Login Successful!", {toastId: toastID});
           setShowLoginModal(false); // Close modal on successful login
         }
     }catch(error){
-        //throw toast error with err.message
+        toast.error("Login Failed. Please check your credentials.", {toastId: toastID});
         console.log(error);
     }
   }
@@ -82,7 +83,6 @@ export default function WelcomePage() {
   const handleCloseModal = () => {
     setSelectedListing(null);
   };
-
   
   // Register button handler
   const handleRegister = () => {
@@ -107,7 +107,9 @@ export default function WelcomePage() {
                 : 'bg-yellow-400 text-purple-900 hover:bg-yellow-300'}`}> {/*Determines button style based on login state*/}
               {loggedIn ? 'Logout' : 'Login'} {/* Determines button text */}
             </button>
-            <button onClick={handleRegister} className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all">Sign Up</button>
+            {!loggedIn && (
+              <button onClick={handleRegister} className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all">Sign Up</button>
+            )}
           </div>
         </div>
       </nav>
@@ -198,11 +200,10 @@ export default function WelcomePage() {
         +
       </button>
 
-      
       {/* Listing Detail Modal */}
       {selectedListing && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-[#444]/70 z-50 flex items-center justify-center p-4"
           onClick={handleCloseModal}
         >
           <div
@@ -293,8 +294,8 @@ export default function WelcomePage() {
 
       {/* Login Modal */}
       {!loggedIn && showLoginModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-purple-600/20 z-50">
-          <div className="bg-white rounded-xl w-2/5 h-2/3 relative">
+        <div onClick={() => setShowLoginModal(false)} className="fixed inset-0 flex items-center justify-center bg-[#444]/60 z-50">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl w-2/5 h-2/3 relative">
             {/*Close button (X)*/}
             <button className="absolute top-2 right-2 hover:bg-gray-100 rounded-md"
               onClick={() => setShowLoginModal(false)}>
@@ -322,6 +323,17 @@ export default function WelcomePage() {
           </div>
         </div>
       )}
+
+      {/* Toast Container */}
+      <ToastContainer
+        toastStyle={{ backgroundColor: '#421168ff', color: '#fff', border: '1.5px #421168ff' , borderRadius: '16px'}}
+        position="top-right"
+        autoClose={4000}
+        closeOnClick
+        hideProgressBar={true}
+        transition={Zoom}
+        theme="dark"
+      />
     </div>
   );
 }
