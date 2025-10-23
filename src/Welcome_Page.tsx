@@ -239,12 +239,12 @@ export default function WelcomePage() {
           <div className="flex gap-3">
             <button onClick={loggedIn ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
               ${loggedIn 
-                ? 'bg-purple-950 text-white hover:bg-purple-800'
-                : 'bg-yellow-400 text-purple-900 hover:bg-yellow-300'}`}> {/*Determines button style based on login state*/}
+                ? 'bg-purple-950 text-white hover:bg-purple-999'
+                : 'bg-yellow-400 text-purple-900 hover:bg-yellow-500'}`}> {/*Determines button style based on login state*/}
               {loggedIn ? 'Logout' : 'Login'} {/* Determines button text */}
             </button>
             {!loggedIn && (
-              <button onClick={handleRegister} className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all">Sign Up</button>
+              <button onClick={handleRegister} className="px-5 py-2 rounded-2xl bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-500 transition-all active:cursor:grabbing">Sign Up</button>
             )}
           </div>
         </div>
