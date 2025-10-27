@@ -26,7 +26,7 @@ export default function WelcomePage() {
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [newTitle, setNewTitle] = useState<string>("");
-  const [newPrice, setNewPrice] = useState<string>("");
+  const [newPrice, setNewPrice] = useState<number | null>(null);
   const [newCategory, setNewCategory] = useState<Category>("");
   const [newLocation, setNewLocation] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
@@ -127,7 +127,7 @@ const handleCloseNewListingModal = () => {
 // Reset new listing form
 const resetNewListingForm = () => {
   setNewTitle("");
-  setNewPrice("");
+  setNewPrice(null);
   setNewCategory("");
   setNewLocation("");
   setNewDescription("");
@@ -137,8 +137,16 @@ const resetNewListingForm = () => {
 
 // Submit new listing to Firestore
 const handleSubmitListing = async ()  => {
-  if (!newTitle || !newPrice || !newLocation || !newDescription) {
+  if (!newTitle || newPrice === null || !newLocation || !newDescription) {
     toast.warn("Please fill in all required fields.", {toastId: 'create-listing-error'});
+    return;
+  }
+  if (newPrice < 1) {
+    toast.warn("Please enter a valid price.", {toastId: 'price-error'});
+    return;
+  }
+  if (newCategory === "") {
+    toast.warn("Please select a category.", {toastId: 'category-error'});
     return;
   }
   try {
@@ -149,7 +157,7 @@ const handleSubmitListing = async ()  => {
       dateListed: new Date(), // Store current date
       image: newImage || "https://via.placeholder.com/300x200",
       location: newLocation,      
-      price: parseFloat(newPrice),
+      price: newPrice || null,
       sellerUID: auth.currentUser?.uid || "anonymous",
       title: newTitle
     });
@@ -157,7 +165,6 @@ const handleSubmitListing = async ()  => {
     console.error("Error adding document: ", e);
   }
   resetNewListingForm();
-
   toast.success("Listing created successfully!");
 };
 
@@ -413,11 +420,12 @@ const handleSubmitListing = async ()  => {
                     <div className="relative z-0">
                       <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
                       <input
-                        type="number"
-                        value={newPrice}
-                        onChange={(e) => setNewPrice(e.target.value)}
-                        placeholder="0.00"
+                        type="text"
+                        value={newPrice || ""}
+                        onChange={(e) => setNewPrice(e.target.value ? parseFloat(e.target.value) : null)}
+                        placeholder="0"
                         className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        min="0"
                       />
                     </div>
                   </div>
