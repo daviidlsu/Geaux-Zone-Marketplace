@@ -25,6 +25,13 @@ export default function WelcomePage() {
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [newTitle, setNewTitle] = useState<string>("");
+  const [newPrice, setNewPrice] = useState<string>("");
+  const [newCategory, setNewCategory] = useState<Category>("");
+  const [newLocation, setNewLocation] = useState<string>("");
+  const [newDescription, setNewDescription] = useState<string>("");
+  const [newImage, setNewImage] = useState<string>("");
+  const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
 
   const listings: Listing[] = [
     { id: 1, title: "Textbook", price: 45, image: "https://i.ebayimg.com/images/g/04IAAOSwDiRlVIsd/s-l400.jpg", category: "Textbooks", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
@@ -81,6 +88,8 @@ export default function WelcomePage() {
         console.log(error);
     }
   }
+
+
   // Logout button handler
   const handleLogout = async () => {
     try {
@@ -99,6 +108,46 @@ export default function WelcomePage() {
   const handleRegister = () => {
     navigate('/register');
   }
+
+  const handleCreateListing = () => {
+  if (!loggedIn) {
+    alert("Please login to create a listing.");
+    setShowLoginModal(true);
+  } else {
+    setShowCreateListing(true);
+  }
+};
+
+const handleCloseCreateListing = () => {
+  setShowCreateListing(false);
+};
+
+const handleSubmitListing = () => {
+  if (!newTitle || !newPrice || !newLocation || !newDescription) {
+    alert("Please fill in all fields.");
+    return;
+  }
+
+  console.log("New listing:", {
+    title: newTitle,
+    price: parseFloat(newPrice),
+    category: newCategory,
+    location: newLocation,
+    description: newDescription,
+    image: newImage || "https://via.placeholder.com/300x200"
+  });
+
+  // Reset form
+  setNewTitle("");
+  setNewPrice("");
+  setNewCategory("Textbooks");
+  setNewLocation("");
+  setNewDescription("");
+  setNewImage("");
+  setShowCreateListing(false);
+
+  alert("Listing created successfully!");
+};
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -206,10 +255,11 @@ export default function WelcomePage() {
         )}
       </div>
 
-      {/* Floating Action Button */}
-      <button className="fixed bottom-8 right-8 w-16 h-16 bg-yellow-400 text-purple-900 rounded-full shadow-2xl hover:bg-yellow-300 transition-all transform hover:scale-110 flex items-center justify-center text-3xl font-bold">
+      <button 
+        onClick={handleCreateListing}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-yellow-400 text-purple-900 rounded-full shadow-2xl hover:bg-yellow-300 transition-all transform hover:scale-110 flex items-center justify-center text-3xl font-bold z-30">
         +
-      </button>
+        </button>
 
       {/* Listing Detail Modal */}
       {selectedListing && (
@@ -281,6 +331,9 @@ export default function WelcomePage() {
                   </div>
                 </div>
               </div>
+            
+           
+              
 
               {/* Action Buttons - Fixed at Bottom */}
               <div className="px-6 py-4 border-t border-gray-200 bg-white">
@@ -299,6 +352,144 @@ export default function WelcomePage() {
           </div>
         </div>
       )}
+
+         {/* Create Listing Modal */}
+      {showCreateListing && (
+        <div
+          className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center p-4"
+          onClick={handleCloseCreateListing}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+              <h2 className="text-2xl font-bold text-gray-900">Create New Listing</h2>
+              <button
+                onClick={handleCloseCreateListing}
+                className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-all"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Form Content */}
+            <div className="p-6">
+              <div className="space-y-6">
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="e.g., Calculus Textbook"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Price and Category Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Price <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                      <input
+                        type="number"
+                        value={newPrice}
+                        onChange={(e) => setNewPrice(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Category <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value as Category)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                      {categories.filter(cat => cat !== "All").map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Location */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Location <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newLocation}
+                    onChange={(e) => setNewLocation(e.target.value)}
+                    placeholder="e.g., Student Union, West Campus"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Image URL */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Image URL (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newImage}
+                    onChange={(e) => setNewImage(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">Or upload from your device (coming soon)</p>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Describe your item in detail..."
+                    rows={6}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">{newDescription.length} characters</p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-8 flex gap-3">
+                <button
+                  onClick={handleCloseCreateListing}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitListing}
+                  className="flex-1 px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+                >
+                  Create Listing
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Login Modal */}
       {!loggedIn && showLoginModal && (
@@ -331,6 +522,8 @@ export default function WelcomePage() {
           </div>
         </div>
       )}
+
+      
 
       {/* Toast Container */}
       <ToastContainer
