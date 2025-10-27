@@ -1,10 +1,10 @@
 import { useState, FormEvent } from "react";
 import { Search, Filter, MapPin, Heart, X} from "lucide-react";
-import { auth } from "./firebase/firebase";
+import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
-
+import { collection, addDoc } from "firebase/firestore";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -111,42 +111,54 @@ export default function WelcomePage() {
 
   const handleCreateListing = () => {
   if (!loggedIn) {
-    alert("Please login to create a listing.");
+    toast.warn("Please login to create a listing.");
     setShowLoginModal(true);
   } else {
     setShowCreateListing(true);
   }
 };
 
-const handleCloseCreateListing = () => {
+// Close new listing modal
+const handleCloseNewListingModal = () => {
   setShowCreateListing(false);
-};
+  resetNewListingForm();
+}
 
-const handleSubmitListing = () => {
-  if (!newTitle || !newPrice || !newLocation || !newDescription) {
-    alert("Please fill in all fields.");
-    return;
-  }
-
-  console.log("New listing:", {
-    title: newTitle,
-    price: parseFloat(newPrice),
-    category: newCategory,
-    location: newLocation,
-    description: newDescription,
-    image: newImage || "https://via.placeholder.com/300x200"
-  });
-
-  // Reset form
+// Reset new listing form
+const resetNewListingForm = () => {
   setNewTitle("");
   setNewPrice("");
-  setNewCategory("Textbooks");
+  setNewCategory("");
   setNewLocation("");
   setNewDescription("");
   setNewImage("");
   setShowCreateListing(false);
+}
 
-  alert("Listing created successfully!");
+// Submit new listing to Firestore
+const handleSubmitListing = async ()  => {
+  if (!newTitle || !newPrice || !newLocation || !newDescription) {
+    toast.warn("Please fill in all required fields.", {toastId: 'create-listing-error'});
+    return;
+  }
+  try {
+    await addDoc(collection(db, "Inventory"), {
+      Description: newDescription,
+      available: true,
+      categoryID: newCategory,
+      dateListed: new Date(), // Store current date
+      image: newImage || "https://via.placeholder.com/300x200",
+      location: newLocation,      
+      price: parseFloat(newPrice),
+      sellerUID: auth.currentUser?.uid || "anonymous",
+      title: newTitle
+    });
+  } catch (e) {
+    console.error("Error adding document: ", e);
+  }
+  resetNewListingForm();
+
+  toast.success("Listing created successfully!");
 };
 
   return (
@@ -255,11 +267,12 @@ const handleSubmitListing = () => {
         )}
       </div>
 
+      {/* New Listing Button */}
       <button 
         onClick={handleCreateListing}
         className="fixed bottom-8 right-8 w-16 h-16 bg-yellow-400 text-purple-900 rounded-full shadow-2xl hover:bg-yellow-300 transition-all transform hover:scale-110 flex items-center justify-center text-3xl font-bold z-30">
         +
-        </button>
+      </button>
 
       {/* Listing Detail Modal */}
       {selectedListing && (
@@ -353,21 +366,21 @@ const handleSubmitListing = () => {
         </div>
       )}
 
-         {/* Create Listing Modal */}
+      {/* Create Listing Modal */}
       {showCreateListing && (
         <div
           className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center p-4"
-          onClick={handleCloseCreateListing}
+          onClick={handleCloseNewListingModal}
         >
           <div
             className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+            <div className="z-50 sticky top-0 bg-white border-b bg-opacity-0 border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-2xl font-bold text-gray-900">Create New Listing</h2>
               <button
-                onClick={handleCloseCreateListing}
+                onClick={handleCloseNewListingModal}
                 className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-all"
               >
                 <X className="w-6 h-6" />
@@ -397,7 +410,7 @@ const handleSubmitListing = () => {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Price <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
+                    <div className="relative z-0">
                       <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
                       <input
                         type="number"
@@ -418,6 +431,7 @@ const handleSubmitListing = () => {
                       onChange={(e) => setNewCategory(e.target.value as Category)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
+                      <option value="" disabled>Select a category</option>
                       {categories.filter(cat => cat !== "All").map((cat) => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
@@ -473,7 +487,7 @@ const handleSubmitListing = () => {
               {/* Action Buttons */}
               <div className="mt-8 flex gap-3">
                 <button
-                  onClick={handleCloseCreateListing}
+                  onClick={handleCloseNewListingModal}
                   className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
                 >
                   Cancel
@@ -489,7 +503,6 @@ const handleSubmitListing = () => {
           </div>
         </div>
       )}
-
 
       {/* Login Modal */}
       {!loggedIn && showLoginModal && (
