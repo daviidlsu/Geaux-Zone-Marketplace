@@ -1,7 +1,7 @@
-import { useState, FormEvent } from "react";
+import { useState } from "react";
 import { Search, Filter, MapPin, Heart, X} from "lucide-react";
 import { auth } from "./firebase/firebase";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 
@@ -23,7 +23,6 @@ export default function WelcomePage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
-  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
   const listings: Listing[] = [
@@ -61,26 +60,7 @@ export default function WelcomePage() {
       // Implement favorite functionality here
     }
   }
-  // Login button handler
-  const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget);
-    const {email, password} = Object.fromEntries(formData.entries()) as Record<string,string>;
-    // TODO: sanitize user input
-    try{
-        const user = await signInWithEmailAndPassword(auth, email, password)
-        //console.log(user);
-        if (user){
-          setLoggedIn(true);
-            //retrieve user authtoken
-          toast.success("Login Successful!", {toastId: 'login-success'});
-          setShowLoginModal(false); // Close modal on successful login
-        }
-    }catch(error){
-        toast.error("Login Failed. Please check your credentials.", {toastId: 'login-failed'});
-        console.log(error);
-    }
-  }
+  // Login functionality moved to /login page
   // Logout button handler
   const handleLogout = async () => {
     try {
@@ -112,7 +92,7 @@ export default function WelcomePage() {
             <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
           </div>
           <div className="flex gap-3">
-            <button onClick={loggedIn ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
+            <button onClick={loggedIn ? handleLogout : () => navigate('/login')} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
               ${loggedIn 
                 ? 'bg-purple-950 text-white hover:bg-purple-800'
                 : 'bg-yellow-400 text-purple-900 hover:bg-yellow-300'}`}> {/*Determines button style based on login state*/}
@@ -300,37 +280,7 @@ export default function WelcomePage() {
         </div>
       )}
 
-      {/* Login Modal */}
-      {!loggedIn && showLoginModal && (
-        <div onClick={() => setShowLoginModal(false)} className="fixed inset-0 flex items-center justify-center bg-[#444]/60 z-50">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl w-2/5 h-2/3 relative">
-            {/*Close button (X)*/}
-            <button className="absolute top-2 right-2 hover:bg-gray-100 rounded-md"
-              onClick={() => setShowLoginModal(false)}>
-              <X size={30}/>
-            </button>
-            {/* Login Form */}
-            <form onSubmit={handleLogin}>
-              <div>
-                <label>Email</label>
-                <input className='border'
-                  type="email"
-                  name="email"
-                />
-              </div>
-              <div>
-                <label>Password</label>
-                <input className='border'
-                  type="password"
-                  name="password"
-                />
-              </div>
-              {/* Submit button */}
-              <button className="px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2" type="submit">Login</button> 
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Login Modal removed - now using navigation to /login */}
 
       {/* Toast Container */}
       <ToastContainer
