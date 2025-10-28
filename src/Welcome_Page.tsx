@@ -473,7 +473,13 @@ const handleSubmitListing = async ()  => {
                     placeholder="https://..."
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
-                  <p className="text-sm text-gray-500 mt-1">Or upload from your device (coming soon)</p>
+                  <div className="flex gap-1.5 mt-1">
+                  <button className="text-center w-20 px-4 py-1 text-xs text-white font-semibold rounded-lg bg-purple-900 hover:bg-purple-800">
+                    Upload
+                  </button>
+                  <p className="text-sm text-gray-500 mt-0">Upload from your device (coming soon)
+                  </p>
+                  </div>
                 </div>
 
                 {/* Description */}
