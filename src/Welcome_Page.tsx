@@ -351,9 +351,6 @@ const handleSubmitListing = async ()  => {
                   </div>
                 </div>
               </div>
-            
-           
-              
 
               {/* Action Buttons - Fixed at Bottom */}
               <div className="px-6 py-4 border-t border-gray-200 bg-white">
@@ -376,22 +373,78 @@ const handleSubmitListing = async ()  => {
       {/* Create Listing Modal */}
       {showCreateListing && (
         <div
-          className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-white bg-opacity-80 z-50 flex grid-cols-2 items-center justify-center p-4 gap-2"
           onClick={handleCloseNewListingModal}
         >
+          {/* Preview Container */}
           <div
-            className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="bg-white rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Left Side - Image */}
+            <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
+              <img 
+                src={newImage || "https://img.freepik.com/free-photo/blurred-abstract-background_58702-1509.jpg?semt=ais_hybrid&w=740&q=80"} 
+                alt={newTitle} 
+                className="w-full h-full object-cover rounded-tl-2xl rounded-bl-2xl" 
+              />
+            </div>
+
+            {/* Right Side - Details */}
+            <div className="w-1/2 flex flex-col">
+              {/* Header with Close Button */}
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
+                  {newCategory || "Category"}
+                </span>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                {/* Title and Price */}
+                <div className="mb-6">
+                  <h3 className="text-3xl font-bold text-gray-900 mb-3">{newTitle || "Title"}</h3>
+                  <p className="text-4xl font-bold text-purple-900">${newPrice || "0"}</p>
+                </div>
+
+                {/* Location */}
+                <div className="flex items-center text-gray-600 mb-6 pb-6 border-b border-gray-200">
+                  <MapPin className="w-5 h-5 mr-2" />
+                  <span className="text-lg">{newLocation || "Location"}</span>
+                </div>
+
+                {/* Description */}
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Description</h4>
+                  <p className="text-gray-700 leading-relaxed">
+                  {newDescription || "Description"}
+                     </p>
+                      </div>
+
+                {/* Seller Info */}
+                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Seller Information</h4>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      TS
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Username</p> {/* Placeholder name */}
+                      <p className="text-sm text-gray-600">LSU Student • Member since 2024</p> {/* Placeholder info */}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Form Container */}
+            <div
+              className="bg-white border-1 border-gray-300 rounded-2xl max-w-3xl w-full max-h-[90vh] shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
             {/* Header */}
             <div className="z-50 sticky top-0 bg-white border-b bg-opacity-0 border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-2xl font-bold text-gray-900">Create New Listing</h2>
-              <button
-                onClick={handleCloseNewListingModal}
-                className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-all"
-              >
-                <X className="w-6 h-6" />
-              </button>
             </div>
 
             {/* Form Content */}
@@ -492,14 +545,14 @@ const handleSubmitListing = async ()  => {
                     onChange={(e) => setNewDescription(e.target.value)}
                     placeholder="Describe your item in detail..."
                     rows={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                   />
                   <p className="text-sm text-gray-500 mt-1">{newDescription.length} characters</p>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-8 flex gap-3">
+              <div className="mt-6 flex gap-3">
                 <button
                   onClick={handleCloseNewListingModal}
                   className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
