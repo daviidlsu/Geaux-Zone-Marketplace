@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState } from "react";
 import { Search, Filter, MapPin, Heart, X} from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
@@ -23,7 +23,6 @@ export default function WelcomePage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
-  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [newTitle, setNewTitle] = useState<string>("");
   const [newPrice, setNewPrice] = useState<number | null>(null);
@@ -68,6 +67,7 @@ export default function WelcomePage() {
       // Implement favorite functionality here
     }
   }
+  // Login functionality moved to /login page
   // Login button handler
   const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -180,7 +180,7 @@ const handleSubmitListing = async ()  => {
             <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
           </div>
           <div className="flex gap-3">
-            <button onClick={loggedIn ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
+            <button onClick={loggedIn ? handleLogout : () => navigate('/login')} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
               ${loggedIn 
                 ? 'bg-purple-950 text-white hover:bg-purple-800'
                 : 'bg-yellow-400 text-purple-900 hover:bg-yellow-300'}`}> {/*Determines button style based on login state*/}
@@ -370,6 +370,7 @@ const handleSubmitListing = async ()  => {
         </div>
       )}
 
+      {/* Login Modal removed - now using navigation to /login */}
       {/* Create Listing Modal */}
       {showCreateListing && (
         <div
