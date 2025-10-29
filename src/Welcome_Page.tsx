@@ -376,9 +376,9 @@ const handleSubmitListing = async ()  => {
           className="fixed inset-0 bg-white bg-opacity-80 z-50 flex grid-cols-2 items-center justify-center p-4 gap-2"
           onClick={handleCloseNewListingModal}
         >
-          {/* Preview Container */}
+          {/* Listing Preview Container LEFT SIDE*/}
           <div
-            className="bg-white rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden"
+            className="relative bg-white rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Left Side - Image */}
@@ -400,46 +400,45 @@ const handleSubmitListing = async ()  => {
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="overflow-y-auto p-6 h-4/5">
                 {/* Title and Price */}
                 <div className="mb-6">
                   <h3 className="text-3xl font-bold text-gray-900 mb-3">{newTitle || "Title"}</h3>
                   <p className="text-4xl font-bold text-purple-900">${newPrice || "0"}</p>
                 </div>
-
                 {/* Location */}
                 <div className="flex items-center text-gray-600 mb-6 pb-6 border-b border-gray-200">
                   <MapPin className="w-5 h-5 mr-2" />
                   <span className="text-lg">{newLocation || "Location"}</span>
                 </div>
-
                 {/* Description */}
-                <div className="mb-6">
+                <div className="mb-6 h-1/2">
                   <h4 className="text-lg font-semibold text-gray-900 mb-3">Description</h4>
-                  <p className="text-gray-700 leading-relaxed">
-                  {newDescription || "Description"}
-                     </p>
-                      </div>
+                  <textarea 
+                    className="text-gray-700 w-full h-full leading-relaxed resize-none"
+                    value={newDescription || "Enter description..."}
+                    disabled>
+                  </textarea>
+                </div>
+              </div>
 
-                {/* Seller Info */}
-                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+              {/* Seller Info */}
+                <div className="bg-gray-50 rounded-xl p-4 m-4">
                   <h4 className="text-lg font-semibold text-gray-900 mb-3">Seller Information</h4>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      TS
-                    </div>
+                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">TS</div>
                     <div>
                       <p className="font-semibold text-gray-900">Username</p> {/* Placeholder name */}
                       <p className="text-sm text-gray-600">LSU Student • Member since 2024</p> {/* Placeholder info */}
                     </div>
                   </div>
                 </div>
-              </div>
             </div>
           </div>
-          {/* Form Container */}
+
+          {/* Input Form Container  RIGHT SIDE*/}
             <div
-              className="bg-white border-1 border-gray-300 rounded-2xl max-w-3xl w-full max-h-[90vh] shadow-xl"
+              className="flex flex-col relative bg-white border-1 border-gray-300 rounded-2xl max-w-3xl w-full max-h-[90vh] shadow-xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
             {/* Header */}
@@ -448,8 +447,8 @@ const handleSubmitListing = async ()  => {
             </div>
 
             {/* Form Content */}
-            <div className="p-6">
-              <div className="space-y-6">
+            <div className="p-6 overflow-y-auto">
+              <div className="flex flex-col space-y-6">
                 {/* Title */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -544,10 +543,11 @@ const handleSubmitListing = async ()  => {
                     value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
                     placeholder="Describe your item in detail..."
-                    rows={6}
+                    maxLength={500}
+                    rows={5}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                   />
-                  <p className="text-sm text-gray-500 mt-1">{newDescription.length} characters</p>
+                  <p className="text-sm text-gray-500 mt-1">{500-newDescription.length} characters left</p>
                 </div>
               </div>
 
