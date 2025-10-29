@@ -379,8 +379,7 @@ const handleSubmitListing = async ()  => {
           {/* Listing Preview Container LEFT SIDE*/}
           <div
             className="relative bg-white rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+            onClick={(e) => e.stopPropagation()}>
             {/* Left Side - Image */}
             <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
               <img 
@@ -390,7 +389,7 @@ const handleSubmitListing = async ()  => {
               />
             </div>
 
-            {/* Right Side - Details */}
+            {/* Right Side - Listing Info */}
             <div className="w-1/2 flex flex-col">
               {/* Header with Close Button */}
               <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -402,20 +401,20 @@ const handleSubmitListing = async ()  => {
               {/* Scrollable Content */}
               <div className="overflow-y-auto p-6 h-4/5">
                 {/* Title and Price */}
-                <div className="mb-6">
-                  <h3 className="text-3xl font-bold text-gray-900 mb-3">{newTitle || "Title"}</h3>
+                <div className="mb-4">
+                  <h3 className="text-3xl font-bold text-gray-900 mb-2">{newTitle || "Title"}</h3>
                   <p className="text-4xl font-bold text-purple-900">${newPrice || "0"}</p>
                 </div>
                 {/* Location */}
-                <div className="flex items-center text-gray-600 mb-6 pb-6 border-b border-gray-200">
+                <div className="flex items-center text-gray-700 mb-4 pb-4 border-b border-gray-200">
                   <MapPin className="w-5 h-5 mr-2" />
                   <span className="text-lg">{newLocation || "Location"}</span>
                 </div>
                 {/* Description */}
                 <div className="mb-6 h-1/2">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Description</h4>
+                  <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
                   <textarea 
-                    className="text-gray-700 w-full h-full leading-relaxed resize-none"
+                    className="text-gray-800 rounded-xl p-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
                     value={newDescription || "Enter description..."}
                     disabled>
                   </textarea>
@@ -423,8 +422,8 @@ const handleSubmitListing = async ()  => {
               </div>
 
               {/* Seller Info */}
-                <div className="bg-gray-50 rounded-xl p-4 m-4">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Seller Information</h4>
+                <div className="bg-gray-100 rounded-xl p-4 m-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">TS</div>
                     <div>
