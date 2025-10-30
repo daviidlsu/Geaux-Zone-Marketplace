@@ -2,7 +2,7 @@ import { useState, FormEvent, useEffect } from "react";
 import { Search, Filter, MapPin, Heart, X} from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { collection, addDoc, getDoc, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
 
@@ -44,6 +44,8 @@ export default function WelcomePage() {
   const [filteredNum, setFilteredNum] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
@@ -53,7 +55,11 @@ export default function WelcomePage() {
   const [newLocation, setNewLocation] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
   const [newImage, setNewImage] = useState<string>("");
+  const [password, setPassword] = useState('')
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
+  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+
+  const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
 
   const listings: Listing[] = [
     { id: 1, title: "Textbook", price: 45, image: "https://i.ebayimg.com/images/g/04IAAOSwDiRlVIsd/s-l400.jpg", category: "Textbooks", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
@@ -191,6 +197,12 @@ export default function WelcomePage() {
   async function handleListing(listing: Listing){
     setSelectedListing(listing);
   }
+
+  // Closes selected listing
+  const handleCloseListing = () => {
+    setSelectedListing(null);
+  }
+
   // Contact seller handler
   const handleContactSeller = () => {
     if (!loggedIn) {
@@ -199,7 +211,8 @@ export default function WelcomePage() {
       // Implement contact seller functionality here
     }
   }
-  // Favorite handler
+
+  // Favorite listing handler
   const handleFavorite = () => {
     if (!loggedIn) {
       toast.warn("Please Login or Register to favorite listings.", {toastId: 'favorite-error'});
@@ -207,14 +220,15 @@ export default function WelcomePage() {
       // Implement favorite functionality here
     }
   }
-  // Login functionality moved to /login page
-  // Login button handler
+
+  // Login handler
   const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget);
     const {email, password} = Object.fromEntries(formData.entries()) as Record<string,string>;
     // TODO: sanitize user input
     try{
+        setIsLoading(true);
         const userCred = await signInWithEmailAndPassword(auth, email, password)
         const User = userCred.user
         if (User){
@@ -224,16 +238,17 @@ export default function WelcomePage() {
             //retrieve user authtoken
           toast.success("Login Successful!", {toastId: 'login-success'});
           setShowLoginModal(false); // Close modal on successful login
+          setIsLoading(false);
         }
         else {toast.error("User not found.", {toastId:'user-not-found'})}
     }catch(error){
+        setIsLoading(false);
         toast.error("Login Failed. Please check your credentials.", {toastId: 'login-failed'});
         console.log(error);
     }
   }
 
-
-  // Logout button handler
+  // Logout handler
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -254,23 +269,18 @@ export default function WelcomePage() {
     navigate('/register');
   }
 
+  // Create listing handler
   const handleCreateListing = () => {
-  if (!loggedIn) {
-    toast.warn("Please login to create a listing.");
-    setShowLoginModal(true);
-  } else {
-    setShowCreateListing(true);
-  }
-};
+    if (!loggedIn) {
+      toast.warn("Please login to create a listing.");
+      setShowLoginModal(true);
+    } else {
+      setShowCreateListing(true);
+    }
+  };
 
-// Close new listing modal
-const handleCloseNewListingModal = () => {
-  setShowCreateListing(false);
-  resetNewListingForm();
-}
-
-// Reset new listing form
-const resetNewListingForm = () => {
+  // Close create listing modal
+  const handleCloseNewListingModal = () => {
   setNewTitle("");
   setNewPrice(null);
   setNewCategory("");
@@ -278,10 +288,10 @@ const resetNewListingForm = () => {
   setNewDescription("");
   setNewImage("");
   setShowCreateListing(false);
-}
+  }
 
-// Submit new listing to Firestore
-const handleSubmitListing = async ()  => {
+  // Submit new listing to Firestore
+  const handleSubmitListing = async ()  => {
   if (!newTitle || newPrice === null || !newLocation || !newDescription) {
     toast.warn("Please fill in all required fields.", {toastId: 'create-listing-error'});
     return;
@@ -309,9 +319,9 @@ const handleSubmitListing = async ()  => {
   } catch (e) {
     console.error("Error adding document: ", e);
   }
-  resetNewListingForm();
+  handleCloseNewListingModal();
   toast.success("Listing created successfully!");
-};
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -325,7 +335,7 @@ const handleSubmitListing = async ()  => {
             <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
           </div>
           <div className="flex gap-3">
-            <button onClick={loggedIn ? handleLogout : () => navigate('/login')} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
+            <button onClick={loggedIn ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
               ${loggedIn 
                 ? 'bg-purple-950 text-white hover:bg-purple-999'
                 : 'bg-yellow-400 text-purple-900 hover:bg-yellow-500'}`}> {/*Determines button style based on login state*/}
@@ -400,7 +410,7 @@ const handleSubmitListing = async ()  => {
       {selectedListing && listingOwner!=null &&(
         <div
           className="fixed inset-0 bg-[#444]/70 z-50 flex items-center justify-center p-4"
-          onClick={handleCloseModal}
+          onClick={handleCloseListing}
         >
           <div
             className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex"
@@ -424,7 +434,7 @@ const handleSubmitListing = async ()  => {
                   {selectedListing.categoryID}
                 </span>
                 <button
-                  onClick={handleCloseModal}
+                  onClick={handleCloseListing}
                   className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-all"
                 >
                   <X className="w-6 h-6" />
@@ -485,7 +495,6 @@ const handleSubmitListing = async ()  => {
         </div>
       )}
 
-      {/* Login Modal removed - now using navigation to /login */}
       {/* Create Listing Modal */}
       {showCreateListing && (
         <div
@@ -688,37 +697,74 @@ const handleSubmitListing = async ()  => {
 
       {/* Login Modal */}
       {!loggedIn && showLoginModal && (
-        <div onClick={() => setShowLoginModal(false)} className="fixed inset-0 flex items-center justify-center bg-[#444]/60 z-50">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl w-2/5 h-2/3 relative">
-            {/*Close button (X)*/}
-            <button className="absolute top-2 right-2 hover:bg-gray-100 rounded-md"
-              onClick={() => setShowLoginModal(false)}>
-              <X size={30}/>
-            </button>
+        <div id="top"onClick={() => setShowLoginModal(false)} className="fixed inset-0 flex items-center justify-center bg-[#444]/60 z-50">
+          
+            <div id="box" onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 relative">
+              <div className="text-center mb-6 ">
+                <div className="mx-auto w-16 h-16 bg-yellow-400 rounded-lg flex items-center justify-center font-bold text-purple-900 text-2xl">LSU</div>
+                <h1 className="text-2xl font-bold text-gray-900 mt-4">Welcome Back</h1>
+                <p className="text-sm text-gray-500">Sign in with your @lsu.edu account</p>
+              </div>
+              {/*Close button (X)*/}
+              <button className="absolute top-2 right-2 hover:bg-gray-100 rounded-md"
+                  onClick={() => setShowLoginModal(false)}>
+                  <X size={30}/>
+              </button>
+            
             {/* Login Form */}
-            <form onSubmit={handleLogin}>
+            <form onSubmit={handleLogin} noValidate>
               <div>
-                <label>Email</label>
-                <input className='border'
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <input 
+                  className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  id="email"
                   type="email"
                   name="email"
+                  placeholder="email@lsu.edu"
+                  value={email}
+                  onChange={(e)=> setEmail(e.target.value)}
+                  onBlur={() => {
+                    if (email && !lsuEmailRegex.test(email.trim())){
+                      setInvalidEmail(true)}
+                    else {setInvalidEmail(false)}
+                  }}
                 />
+                {/*Displays invalid email error if email is invalid */}
+                {invalidEmail && (
+                <label className="ml-1 text-sm font-medium text-red-500">Please enter a valid school email</label>
+                )}
               </div>
               <div>
-                <label>Password</label>
-                <input className='border'
+                <label className="block mt-4 text-sm font-medium text-gray-700">Password</label>
+                <input 
+                  className="mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  id="password"
                   type="password"
                   name="password"
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e)=> setPassword(e.target.value)}
                 />
               </div>
               {/* Submit button */}
-              <button className="px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2" type="submit">Login</button> 
+              <button 
+                className={`w-full px-4 py-3 rounded-lg font-semibold text-white ${
+                  isLoading || !lsuEmailRegex.test(email.trim()) || password.length === 0
+                  ? 'bg-purple-900/60 cursor-not-allowed opacity-80'
+                  : 'bg-purple-900 hover:bg-purple-800'
+                }`}
+                type="submit"
+                disabled={isLoading || !lsuEmailRegex.test(email.trim()) || password.length === 0}>
+                  {isLoading ? 'Logging in...' : 'Login'} 
+              </button> 
+              <div className="mt-4 text-center text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link to="/register" className="font-semibold text-purple-900 hover:underline">Sign up</Link>
+              </div>
             </form>
           </div>
         </div>
       )}
-
-      
 
       {/* Toast Container */}
       <ToastContainer
