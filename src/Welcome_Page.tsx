@@ -4,7 +4,6 @@ import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
-import { collection, addDoc, getDoc, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
 import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
@@ -38,10 +37,9 @@ interface userData {
 export default function WelcomePage() {
   const navigate = useNavigate();
   const [currentUserData, setCurrentUserData] = useState<userData | null>(null);
-
+  const [email, setEmail] = useState<string>('')
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
   const [filteredNum, setFilteredNum] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
@@ -57,19 +55,11 @@ export default function WelcomePage() {
   const [newDescription, setNewDescription] = useState<string>("");
   const [newImage, setNewImage] = useState<string>("");
   const [password, setPassword] = useState('')
+  const [showNewListingButton, setShowNewListingButton] = useState<boolean>(false);
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
-
-  const listings: Listing[] = [
-    { id: 1, title: "Textbook", price: 45, image: "https://i.ebayimg.com/images/g/04IAAOSwDiRlVIsd/s-l400.jpg", category: "Textbooks", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
-    { id: 2, title: "LSU Jersey", price: 34, image: "https://i.ebayimg.com/images/g/408AAOSw8FBncfAV/s-l400.jpg", category: "Clothing", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
-    { id: 3, title: "Bike", price: 220, image: "https://upload.wikimedia.org/wikipedia/commons/3/37/Danish_bicycle_female.jpg", category: "Other", location: "Union", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
-    { id: 4, title: "Fronchetti", price: 67, image: "https://conf.researchr.org/getProfileImage/felipefronchetti/40da9bf4-e117-4240-8a91-f0eede574a7f/small.jpg?1711682220000", category: "Other", location: "PFT", description: "This is a great item in excellent condition. Perfect for LSU students looking for quality at an affordable price. Feel free to contact me if you have any questions!" },
-    
-  ];
-
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
   // Fetch listings from Firestore
@@ -180,10 +170,12 @@ export default function WelcomePage() {
         </div>
         <div className="p-4">
           <div className="flex items-start justify-between mb-2">
-            <h3 className="font-semibold text-gray-900 group-hover:text-purple-900 transition-colors">{listing.title}</h3>
-            <button className="text-gray-400 hover:text-red-500 transition-colors">
+            <h3 className="font-semibold text-gray-900 group-hover:text-purple-900 transition-colors flex-grow truncate">{listing.title}</h3>
+            <div className="flex w-1/10 h-1/10 center-items justify-center">
+            <button onClick={(e)=>{e.stopPropagation();handleFavorite}} className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
               <Heart className="w-5 h-5" />
             </button>
+            </div>
           </div>
           <p className="text-2xl font-bold text-purple-900 mb-2">${listing.price}</p>
           <div className="flex items-center text-sm text-gray-500">
@@ -202,6 +194,7 @@ export default function WelcomePage() {
   // Closes selected listing
   const handleCloseListing = () => {
     setSelectedListing(null);
+    setListingOwner(null);
   }
 
   // Contact seller handler
@@ -260,11 +253,6 @@ export default function WelcomePage() {
       console.error("Error signing out:", error);
     }
   }
-  // Handle modal close
-  const handleCloseModal = () => {
-    setSelectedListing(null);
-    setListingOwner(null);
-  };
   // Register button handler
   const handleRegister = () => {
     navigate('/register');
@@ -273,7 +261,7 @@ export default function WelcomePage() {
   // Create listing handler
   const handleCreateListing = () => {
     if (!loggedIn) {
-      toast.warn("Please login to create a listing.");
+      toast.warn("Please login to create a listing.", {toastId:'login-to-create'});
       setShowLoginModal(true);
     } else {
       setShowCreateListing(true);
@@ -282,46 +270,46 @@ export default function WelcomePage() {
 
   // Close create listing modal
   const handleCloseNewListingModal = () => {
-  setNewTitle("");
-  setNewPrice(null);
-  setNewCategory("");
-  setNewLocation("");
-  setNewDescription("");
-  setNewImage("");
-  setShowCreateListing(false);
+    setNewTitle("");
+    setNewPrice(null);
+    setNewCategory("");
+    setNewLocation("");
+    setNewDescription("");
+    setNewImage("");
+    setShowCreateListing(false);
   }
 
   // Submit new listing to Firestore
   const handleSubmitListing = async ()  => {
-  if (!newTitle || newPrice === null || !newLocation || !newDescription) {
-    toast.warn("Please fill in all required fields.", {toastId: 'create-listing-error'});
-    return;
-  }
-  if (newPrice < 1) {
-    toast.warn("Please enter a valid price.", {toastId: 'price-error'});
-    return;
-  }
-  if (newCategory === "") {
-    toast.warn("Please select a category.", {toastId: 'category-error'});
-    return;
-  }
-  try {
-    await addDoc(collection(db, "Inventory"), {
-      Description: newDescription,
-      available: true,
-      categoryID: newCategory,
-      dateListed: new Date(), // Store current date
-      image: newImage || "https://via.placeholder.com/300x200",
-      location: newLocation,      
-      price: newPrice || null,
-      sellerUID: auth.currentUser?.uid || "anonymous",
-      title: newTitle
-    });
-  } catch (e) {
-    console.error("Error adding document: ", e);
-  }
-  handleCloseNewListingModal();
-  toast.success("Listing created successfully!");
+    if (!newTitle || newPrice === null || !newLocation || !newDescription) {
+      toast.warn("Please fill in all required fields.", {toastId: 'create-listing-error'});
+      return;
+    }
+    if (newPrice < 1) {
+      toast.warn("Please enter a valid price.", {toastId: 'price-error'});
+      return;
+    }
+    if (newCategory === "") {
+      toast.warn("Please select a category.", {toastId: 'category-error'});
+      return;
+    }
+    try {
+      await addDoc(collection(db, "Inventory"), {
+        Description: newDescription,
+        available: true,
+        categoryID: newCategory,
+        dateListed: new Date(), // Store current date
+        image: newImage || "https://via.placeholder.com/300x200",
+        location: newLocation,      
+        price: newPrice || null,
+        sellerUID: auth.currentUser?.uid || "anonymous",
+        title: newTitle
+      });
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+    handleCloseNewListingModal();
+    toast.success("Listing created successfully!");
   };
 
   return (
@@ -354,13 +342,21 @@ export default function WelcomePage() {
         <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            {/*Possibly remove the category reset, if user needs to search in specific category*/}
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {setSearchQuery(e.target.value);setSelectedCategory("All")}}
               placeholder="Search for items..."
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
+            /> 
+            {/*Clear search button if searchQuery is not empty*/}
+            {searchQuery!=="" && (
+              <button 
+              onClick={()=>{setSearchQuery("");console.log(searchQuery)}} 
+              className="absolute flex right-3 top-1/2 transform -translate-y-1/2 items-center justify-center">
+                <X color="gray" size={20}></X>
+            </button>)}
           </div>
           <button className="px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2">
             <Filter className="w-5 h-5" />
@@ -399,12 +395,15 @@ export default function WelcomePage() {
           {renderListings()}
         </div>
       </div>
-
+      
       {/* New Listing Button */}
-      <button 
-        onClick={handleCreateListing}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-yellow-400 text-purple-900 rounded-full shadow-2xl hover:bg-yellow-300 transition-all transform hover:scale-110 flex items-center justify-center text-3xl font-bold z-30">
-        +
+      <button onClick={handleCreateListing} className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
+        <span className="text-2xl text-purple-900 font-bold leading-none absolute inset-0  mb-1 flex items-center justify-center transition-all duration-300 group-hover:opacity-0 group-hover:scale-0">
+          +
+        </span>
+        <span className=" text-m text-purple-900 font-bold opacity-0 group-hover:opacity-100 transition-all hover:duration-300 hover:delay-100 whitespace-nowrap w-full flex justify-center">
+          Create new listing
+        </span>
       </button>
 
       {/* Listing Detail Modal */}
@@ -436,9 +435,9 @@ export default function WelcomePage() {
                 </span>
                 <button
                   onClick={handleCloseListing}
-                  className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-all"
+                  className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full transition-all"
                 >
-                  <X className="w-6 h-6" />
+                  <X size={30} color="#59168b" />
                 </button>
               </div>
 
@@ -540,7 +539,7 @@ export default function WelcomePage() {
                 <div className="mb-6 h-1/2">
                   <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
                   <textarea 
-                    className="text-gray-800 rounded-xl p-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
+                    className="text-gray-800 rounded-xl p-4 pt-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
                     value={newDescription || "Enter description..."}
                     disabled>
                   </textarea>
@@ -707,9 +706,9 @@ export default function WelcomePage() {
                 <p className="text-sm text-gray-500">Sign in with your @lsu.edu account</p>
               </div>
               {/*Close button (X)*/}
-              <button className="absolute top-2 right-2 hover:bg-gray-100 rounded-md"
+              <button className="absolute top-2 right-2 rounded-md"
                   onClick={() => setShowLoginModal(false)}>
-                  <X size={30}/>
+                  <X size={30} color="#59168b"/>
               </button>
             
             {/* Login Form */}
