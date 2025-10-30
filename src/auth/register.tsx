@@ -69,7 +69,8 @@ const Register = () => {
             await setDoc(doc(db,"Users", newuser.user.uid), {
                 username,
                 email,
-                id: newuser.user.uid
+                uid: newuser.user.uid,
+                accountCreation: Date()
             });
 
             await setDoc(doc(db, "UserChats", newuser.user.uid), {
