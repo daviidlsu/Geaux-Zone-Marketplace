@@ -1,32 +1,54 @@
-import { useState, FormEvent  } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { Search, Filter, MapPin, Heart, X} from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDoc, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
 interface Listing {
+  docId: string;
   id: number;
   title: string;
+  categoryID: Category;
+  Description: string;
   price: number;
+  dateListed: string;
   image: string;
-  category: Category;
   location: string;
-  description: string;
+  sellerUID: string;
+  available: boolean;
+}
+
+interface sellerInfo {
+  accountCreation: Timestamp;
+  email: string;
+  username: string;
+}
+
+interface userData {
+  uid: string;
+  username: string;
+  accountCreation: Timestamp;
 }
 
 export default function WelcomePage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('')
+  const [currentUserData, setCurrentUserData] = useState<userData | null>(null);
+
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const [filteredNum, setFilteredNum] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
   const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
   const [newTitle, setNewTitle] = useState<string>("");
   const [newPrice, setNewPrice] = useState<number | null>(null);
   const [newCategory, setNewCategory] = useState<Category>("");
@@ -49,14 +71,130 @@ export default function WelcomePage() {
 
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
-  const filteredListings = listings.filter((listing) => {
-    const matchesCategory = selectedCategory === "All" || listing.category === selectedCategory;
-    const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  // Fetch listings from Firestore
+  const fetchListings = async (): Promise<Listing[]> => {
+    try{
+      const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
+      const fetchedListings: Listing[] = querySnapshot.docs.map(doc => {
+        const data = doc.data() as Listing;
+        return {
+          docId: doc.id,
+          id: data.id,
+          title: data.title,
+          categoryID: data.categoryID,
+          Description: data.Description,
+          price: data.price,
+          dateListed: data.dateListed,
+          image: data.image,
+          location: data.location,
+          sellerUID: data.sellerUID,
+          available: data.available,
+        } as Listing;
+      });
+      return fetchedListings;
+    } catch (error) {
+      toast.error("Failed to fetch listings.", {toastId:"fetch-error"});
+      console.error("Error fetching listings: ", error);
+      return [];
+    }
+  }
+  // Update filtered listings count
+  useEffect(() => {
+    const filteredListings = listings.filter((listing) => {
+      const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
+      const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+    setFilteredNum(filteredListings.length);
+  }, [listings, searchQuery, selectedCategory]);
 
-  // Opens selected listing
-  const handleOpenListing = (listing: Listing) => {
+  // Called upon loading page to fetch listings
+  useEffect(() => {
+    const loadListings = async () => {
+      setLoading(true);
+      const fetchedListings = await fetchListings();
+      setListings(fetchedListings);
+      setLoading(false);
+    };
+    loadListings();
+  }, []);
+
+  // Gathers seller info upon selecting a listing
+  useEffect(() => {
+    if (selectedListing) {
+      const fetchSellerInfo = async () => {
+        try{
+          const userSnapshot = await getDocsFromServer(query(collection(db, "Users"), where("uid", "==", selectedListing.sellerUID)));
+          if (userSnapshot.docs.length > 0) {
+            const userData = userSnapshot.docs[0];
+            setListingOwner(userData.data() as sellerInfo); 
+          } else {
+            console.log("No user found with UID:", selectedListing.sellerUID);
+            setListingOwner(null);
+          }
+        } catch (error) {
+          console.error("Error fetching seller info:", error);
+          setListingOwner(null);
+        }
+      };
+      fetchSellerInfo();
+    }
+    else{
+      setListingOwner(null);
+    }
+  }, [selectedListing])
+
+  // Once listings are fetched, render them
+  const renderListings = () => {
+    if (loading) {
+      return (
+      <div className="col-span-full text-center py-10 text-gray-500">
+            <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
+            Loading listings...
+        </div>
+      );
+    }
+
+    const filteredListings = listings.filter((listing) => {
+      const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
+      const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+
+    if (filteredNum === 0) {
+      return (
+        <div className="col-span-full text-center py-20">
+          <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
+        </div>
+      );
+    }
+    return filteredListings.map((listing) => (
+      <div
+        key={listing.docId}
+        onClick={() => handleListing(listing)}
+        className="bg-white rounded-xl shadow-sm hover:shadow-xl cursor-pointer border border-gray-200 overflow-hidden group"
+      >
+        <div className="aspect-square bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
+          <img src={listing.image} alt={listing.title} className="w-full h-full object-cover" loading="lazy" />
+        </div>
+        <div className="p-4">
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="font-semibold text-gray-900 group-hover:text-purple-900 transition-colors">{listing.title}</h3>
+            <button className="text-gray-400 hover:text-red-500 transition-colors">
+              <Heart className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-2xl font-bold text-purple-900 mb-2">${listing.price}</p>
+          <div className="flex items-center text-sm text-gray-500">
+            <MapPin className="w-4 h-4 mr-1" />
+            {listing.location}
+          </div>
+        </div>
+      </div>
+    ));
+  }
+  // Listing handler (Sets selected listing))
+  async function handleListing(listing: Listing){
     setSelectedListing(listing);
   }
 
@@ -91,14 +229,18 @@ export default function WelcomePage() {
     // TODO: sanitize user input
     try{
         setIsLoading(true);
-        const user = await signInWithEmailAndPassword(auth, email, password)
-        if (user){
+        const userCred = await signInWithEmailAndPassword(auth, email, password)
+        const User = userCred.user
+        if (User){
           setLoggedIn(true);
+          const docSnap = await getDoc(doc(db, 'Users', User.uid))
+          if (docSnap.exists()){setCurrentUserData(docSnap.data() as userData)}
             //retrieve user authtoken
           toast.success("Login Successful!", {toastId: 'login-success'});
           setShowLoginModal(false); // Close modal on successful login
           setIsLoading(false);
         }
+        else {toast.error("User not found.", {toastId:'user-not-found'})}
     }catch(error){
         setIsLoading(false);
         toast.error("Login Failed. Please check your credentials.", {toastId: 'login-failed'});
@@ -110,14 +252,19 @@ export default function WelcomePage() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      setCurrentUserData(null);
       setLoggedIn(false);
       toast.success("Logout Successful!", {toastId: 'logout-success'});
     } catch (error) {
       console.error("Error signing out:", error);
     }
   }
-
-  // Register handler
+  // Handle modal close
+  const handleCloseModal = () => {
+    setSelectedListing(null);
+    setListingOwner(null);
+  };
+  // Register button handler
   const handleRegister = () => {
     navigate('/register');
   }
@@ -190,12 +337,12 @@ export default function WelcomePage() {
           <div className="flex gap-3">
             <button onClick={loggedIn ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
               ${loggedIn 
-                ? 'bg-purple-950 text-white hover:bg-purple-800'
-                : 'bg-yellow-400 text-purple-900 hover:bg-yellow-300'}`}> {/*Determines button style based on login state*/}
+                ? 'bg-purple-950 text-white hover:bg-purple-999'
+                : 'bg-yellow-400 text-purple-900 hover:bg-yellow-500'}`}> {/*Determines button style based on login state*/}
               {loggedIn ? 'Logout' : 'Login'} {/* Determines button text */}
             </button>
             {!loggedIn && (
-              <button onClick={handleRegister} className="px-5 py-2 bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300 transition-all">Sign Up</button>
+              <button onClick={handleRegister} className="px-5 py-2 rounded-2xl bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-500 transition-all active:cursor:grabbing">Sign Up</button>
             )}
           </div>
         </div>
@@ -244,42 +391,12 @@ export default function WelcomePage() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">
-            {filteredListings.length} {filteredListings.length === 1 ? "Listing" : "Listings"} Available
+            {filteredNum} {filteredNum === 1 ? "Listing" : "Listings"} Available
           </h2>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredListings.map((listing) => (
-            <div
-              key={listing.id}
-              onClick={() => handleOpenListing(listing)}
-              className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all cursor-pointer border border-gray-200 overflow-hidden group"
-            >
-              <div className="aspect-square bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
-                <img src={listing.image} alt={listing.title} className="w-full h-full object-cover" />
-              </div>
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-purple-900 transition-colors">{listing.title}</h3>
-                  <button className="text-gray-400 hover:text-red-500 transition-colors">
-                    <Heart className="w-5 h-5" />
-                  </button>
-                </div>
-                <p className="text-2xl font-bold text-purple-900 mb-2">${listing.price}</p>
-                <div className="flex items-center text-sm text-gray-500">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {listing.location}
-                </div>
-              </div>
-            </div>
-          ))}
+        <div id="listing-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {renderListings()}
         </div>
-
-        {filteredListings.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
-          </div>
-        )}
       </div>
 
       {/* New Listing Button */}
@@ -290,7 +407,7 @@ export default function WelcomePage() {
       </button>
 
       {/* Listing Detail Modal */}
-      {selectedListing && (
+      {selectedListing && listingOwner!=null &&(
         <div
           className="fixed inset-0 bg-[#444]/70 z-50 flex items-center justify-center p-4"
           onClick={handleCloseListing}
@@ -305,6 +422,7 @@ export default function WelcomePage() {
                 src={selectedListing.image} 
                 alt={selectedListing.title} 
                 className="w-full h-full object-cover" 
+                loading="lazy"
               />
             </div>
 
@@ -313,7 +431,7 @@ export default function WelcomePage() {
               {/* Header with Close Button */}
               <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
-                  {selectedListing.category}
+                  {selectedListing.categoryID}
                 </span>
                 <button
                   onClick={handleCloseListing}
@@ -340,35 +458,34 @@ export default function WelcomePage() {
                 {/* Description */}
                 <div className="mb-6">
                   <h4 className="text-lg font-semibold text-gray-900 mb-3">Description</h4>
-                  <p className="text-gray-700 leading-relaxed">
-                  {selectedListing.description}
-                     </p>
-                      </div>
+                  <p className="text-gray-700 leading-relaxed">{selectedListing.Description}</p>
+                </div>
 
                 {/* Seller Info */}
+                {listingOwner && (
                 <div className="bg-gray-50 rounded-xl p-4 mb-6">
                   <h4 className="text-lg font-semibold text-gray-900 mb-3">Seller Information</h4>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      TS
-                    </div>
+                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{listingOwner.username.charAt(0).toUpperCase()}</div>
                     <div>
-                      <p className="font-semibold text-gray-900">Tiger Student</p>
-                      <p className="text-sm text-gray-600">LSU Student • Member since 2024</p>
+                      <p className="font-semibold text-gray-900">{listingOwner.username}</p>
+                      <p className="text-sm text-gray-600">Member since {listingOwner.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
                     </div>
                   </div>
-                </div>
+                </div>)}
               </div>
 
               {/* Action Buttons - Fixed at Bottom */}
               <div className="px-6 py-4 border-t border-gray-200 bg-white">
                 <div className="flex gap-3">
+                  {/* Contact Seller Button */}
                   <button onClick={() => {handleContactSeller();}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
                     Contact Seller
                   </button>
-                  <button onClick={() => {handleFavorite();}}
-                    className="px-4 py-3 border-2 border-gray-300 rounded-xl hover:border-purple-900 hover:text-purple-900 transition-all"
-                  >
+                  {/* Favorite Button */}
+                    <button onClick={() => {handleFavorite();}}
+                      className="px-4 py-3 border-2 border-gray-300 rounded-xl hover:border-purple-900 hover:text-purple-900 transition-all"
+                    >
                     <Heart className="w-6 h-6" />
                   </button>
                 </div>
@@ -433,10 +550,10 @@ export default function WelcomePage() {
                 <div className="bg-gray-100 rounded-xl p-4 m-6">
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">TS</div>
+                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
                     <div>
-                      <p className="font-semibold text-gray-900">Username</p> {/* Placeholder name */}
-                      <p className="text-sm text-gray-600">LSU Student • Member since 2024</p> {/* Placeholder info */}
+                      <p className="font-semibold text-gray-900">{currentUserData?.username}</p>
+                      <p className="text-sm text-gray-600">LSU Student • Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
                     </div>
                   </div>
                 </div>
