@@ -50,14 +50,13 @@ const Login = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="min-h-screen bg-gray-50 flex flex-col bg-[url('/lsu_fall.jpg')] bg-bottom">
             {/* Top navigation like Welcome page */}
-            <header className="bg-purple-900 shadow-md">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <header className="bg-purple-900 ">
+                <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-yellow-400 rounded-lg flex items-center justify-center font-bold text-purple-900 text-lg">
-                            LSU
-                        </div>
+                        <img className="w-10 h-10 " src="/geauxzone_tiger.png">
+                        </img>
                         <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
                     </div>
                     <div>
@@ -67,10 +66,13 @@ const Login = () => {
             </header>
 
             {/* Centered login card */}
-            <main className="flex-1 flex items-center justify-center py-12 px-4">
+            <main className="flex-1 flex items-center justify-center py-12 px-4 opacity-99">
                 <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-                    <div className="text-center mb-6">
-                        <div className="mx-auto w-16 h-16 bg-yellow-400 rounded-lg flex items-center justify-center font-bold text-purple-900 text-2xl">LSU</div>
+                    <div className="text-center mb-4">
+                        <div className="mx-auto w-24 h-24 bg-purple-900 rounded-lg flex items-center justify-center">
+                            <img className="w-16 h-16 " src="/geauxzone_tiger.png">
+                            </img>
+                        </div>
                         <h1 className="text-2xl font-bold text-gray-900 mt-4">Welcome Back</h1>
                         <p className="text-sm text-gray-500">Sign in with your @lsu.edu account</p>
                     </div>

@@ -55,7 +55,6 @@ export default function WelcomePage() {
   const [newDescription, setNewDescription] = useState<string>("");
   const [newImage, setNewImage] = useState<string>("");
   const [password, setPassword] = useState('')
-  const [showNewListingButton, setShowNewListingButton] = useState<boolean>(false);
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
 
@@ -318,20 +317,17 @@ export default function WelcomePage() {
       <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-400 rounded-lg flex items-center justify-center font-bold text-purple-900 text-lg">
-              LSU
-            </div>
+            <img className="w-10 h-10 " src="/geauxzone_tiger.png">
+            </img>
             <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 font-sans">
             <button onClick={loggedIn ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
               ${loggedIn 
                 ? 'bg-purple-950 text-white hover:bg-purple-999'
-                : 'bg-yellow-400 text-purple-900 hover:bg-yellow-500'}`}> {/*Determines button style based on login state*/}
               {loggedIn ? 'Logout' : 'Login'} {/* Determines button text */}
             </button>
             {!loggedIn && (
-              <button onClick={handleRegister} className="px-5 py-2 rounded-2xl bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-500 transition-all active:cursor:grabbing">Sign Up</button>
             )}
           </div>
         </div>
@@ -398,10 +394,10 @@ export default function WelcomePage() {
       
       {/* New Listing Button */}
       <button onClick={handleCreateListing} className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
-        <span className="text-2xl text-purple-900 font-bold leading-none absolute inset-0  mb-1 flex items-center justify-center transition-all duration-300 group-hover:opacity-0 group-hover:scale-0">
+        <span className="text-2xl text-purple-900 font-bold leading-none absolute inset-0 mb-1 flex items-center justify-center transition-all duration-300 group-hover:opacity-0 group-hover:scale-0">
           +
         </span>
-        <span className=" text-m text-purple-900 font-bold opacity-0 group-hover:opacity-100 transition-all hover:duration-300 hover:delay-100 whitespace-nowrap w-full flex justify-center">
+        <span className=" text-m text-purple-900 font-bold opacity-0 group-hover:opacity-100 transition-all hover:duration-300 hover:delay-190 whitespace-nowrap w-full flex justify-center">
           Create new listing
         </span>
       </button>
@@ -553,7 +549,7 @@ export default function WelcomePage() {
                     <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
                     <div>
                       <p className="font-semibold text-gray-900">{currentUserData?.username}</p>
-                      <p className="text-sm text-gray-600">LSU Student • Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
+                      <p className="text-sm text-gray-600">Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
                     </div>
                   </div>
                 </div>
@@ -562,7 +558,7 @@ export default function WelcomePage() {
 
           {/* Input Form Container  RIGHT SIDE*/}
             <div
-              className="flex flex-col relative bg-white border-1 border-gray-300 rounded-2xl max-w-3xl w-full max-h-[90vh] shadow-xl overflow-hidden"
+              className="flex flex-col relative bg-white border-1 border-gray-300 rounded-2xl max-w-3xl w-2/3 max-h-[90vh] shadow-xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
             {/* Header */}
@@ -701,7 +697,10 @@ export default function WelcomePage() {
           
             <div id="box" onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 relative">
               <div className="text-center mb-6 ">
-                <div className="mx-auto w-16 h-16 bg-yellow-400 rounded-lg flex items-center justify-center font-bold text-purple-900 text-2xl">LSU</div>
+                <div className="mx-auto w-24 h-24 bg-purple-900 rounded-lg flex items-center justify-center">
+                  <img className="w-16 h-16 " src="/geauxzone_tiger.png">
+                  </img>
+                </div>
                 <h1 className="text-2xl font-bold text-gray-900 mt-4">Welcome Back</h1>
                 <p className="text-sm text-gray-500">Sign in with your @lsu.edu account</p>
               </div>
