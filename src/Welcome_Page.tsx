@@ -324,10 +324,12 @@ export default function WelcomePage() {
           <div className="flex gap-3 font-sans">
             <button onClick={loggedIn ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
               ${loggedIn 
-                ? 'bg-purple-950 text-white hover:bg-purple-999'
+                ? 'text-white hover:text-yellow-600'
+                : 'text-white hover:text-yellow-600'}`}> {/*Determines button style based on login state*/}
               {loggedIn ? 'Logout' : 'Login'} {/* Determines button text */}
             </button>
             {!loggedIn && (
+              <button onClick={handleRegister} className="px-5 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
             )}
           </div>
         </div>
@@ -394,7 +396,7 @@ export default function WelcomePage() {
       
       {/* New Listing Button */}
       <button onClick={handleCreateListing} className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
-        <span className="text-2xl text-purple-900 font-bold leading-none absolute inset-0 mb-1 flex items-center justify-center transition-all duration-300 group-hover:opacity-0 group-hover:scale-0">
+        <span className="text-2xl text-purple-900 font-bold leading-none absolute inset-0  mb-1 flex items-center justify-center transition-all duration-300 group-hover:opacity-0 group-hover:scale-0">
           +
         </span>
         <span className=" text-m text-purple-900 font-bold opacity-0 group-hover:opacity-100 transition-all hover:duration-300 hover:delay-190 whitespace-nowrap w-full flex justify-center">
