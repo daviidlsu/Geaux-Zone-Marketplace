@@ -9,6 +9,7 @@ const Login = () => {
     const toastID = "login-toast"
 
     const [email, setEmail] = useState('')
+    const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string | null>(null)
     const [submitting, setSubmitting] = useState(false)
@@ -84,14 +85,19 @@ const Login = () => {
                             onChange={(e) => setEmail(e.target.value)}
                             onBlur={() => {
                                 if (email && !lsuEmailRegex.test(email.trim())) {
-                                    toast.warn("Please sign in with a valid @lsu.edu email address", { toastId: toastID })
-                                }
+                                    setInvalidEmail(true)}
+                                else {setInvalidEmail(false)}
                             }}
                             placeholder="you@lsu.edu"
-                            className="mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                         />
 
-                        <label className="block text-sm font-medium text-gray-700">Password</label>
+                        {/*Displays invalid email error if email is invalid */}
+                        {invalidEmail && (
+                            <label className="ml-1 text-sm font-medium text-red-500">Please enter a valid school email</label>
+                        )}
+
+                        <label className="block mt-4 text-sm font-medium text-gray-700">Password</label>
                         <input
                             id="password"
                             type="password"

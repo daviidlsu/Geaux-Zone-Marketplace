@@ -5,22 +5,24 @@ import { collection, doc, getDocs, query, setDoc, where } from 'firebase/firesto
 import { useNavigate, Link } from 'react-router-dom';
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 
+import "../index.css"
+
 const Register: React.FC = () => {
     const navigate = useNavigate();
     const toastID = "current-toast";
 
     const [username, setUsername] = useState('');
+    const [invalidUsername, setInvalidUsername] = useState<boolean>(false);
     const [email, setEmail] = useState('');
+    const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
     const [password, setPassword] = useState('');
+    const [invalidPass, setInvalidPass] = useState<boolean>(false);
     const [repassword, setRepassword] = useState('');
+    const [invalidRepass, setInvalidRepass] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
     const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i;
-
-    const handleHome = async () => {
-        navigate('/');
-    };
 
     const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -31,26 +33,32 @@ const Register: React.FC = () => {
         // Basic validations
         if (!username) {
             toast.warn("Please enter a username", { toastId: toastID });
+            setInvalidUsername(true);
             return;
         }
         if (!trimmedEmail || !lsuEmailRegex.test(trimmedEmail)) {
             toast.warn("Please enter a valid @lsu.edu email", { toastId: toastID });
+            setInvalidEmail(true);
             return;
         }
         if (!password) {
             toast.warn("Please enter a password", { toastId: toastID });
+            setInvalidPass(true);
             return;
         }
         if (!repassword) {
             toast.warn("Please re-enter your password", { toastId: toastID });
+            setInvalidRepass(true);
             return;
         }
         if (password.length < 8 || !/[!@#$%^&*_]/.test(password)) {
-            toast.warn("Password must be at least 8 characters long and contain at least one special character", { toastId: toastID });
+            toast.warn("Password does not meet requirements", { toastId: toastID });
+            setInvalidPass(true);
             return;
         }
         if (password !== repassword) {
             toast.warn("Passwords do not match", { toastId: toastID });
+            setInvalidRepass(true);
             return;
         }
 
@@ -59,6 +67,7 @@ const Register: React.FC = () => {
             setSubmitting(true);
             const q = query(collection(db, "Users"), where("email", "==", trimmedEmail));
             const qSnapshot = await getDocs(q);
+            console.log(qSnapshot)
             if (!qSnapshot.empty) {
                 toast.warn("Email already in use", { toastId: toastID });
                 return;
@@ -80,8 +89,8 @@ const Register: React.FC = () => {
             setTimeout(() => navigate('/login'), 2000);
         } catch (err: any) {
             console.error(err);
-            toast.error(err?.message ?? "An error occurred. Please try again.", { toastId: toastID });
-            setError(err?.message ?? "An error occurred. Please try again.");
+            toast.error("An error occurred. Please try again.", { toastId: toastID });
+            setError("An error occurred. Please try again.");
         } finally {
             setSubmitting(false);
         }
@@ -117,29 +126,40 @@ const Register: React.FC = () => {
                             type="text"
                             name="username"
                             value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Your display name"
-                            className="mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            onChange={(e) => {setUsername(e.target.value); setInvalidUsername(false)}}
+                            placeholder="Display name"
+                            className={`mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidUsername ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
                         />
 
                         <label className="block text-sm font-medium text-gray-700">Email</label>
                         <input
+                            id="email"
                             type="email"
                             name="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@lsu.edu"
-                            className="mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            onBlur={() => {
+                                if (email && !lsuEmailRegex.test(email.trim())){
+                                    setInvalidEmail(true)}
+                                else {setInvalidEmail(false)}
+                            }}
+                            placeholder="Email@lsu.edu"
+                            className={`mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidEmail ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
                         />
+                        
+                        {/*Displays invalid email error if email is invalid */}
+                        {invalidEmail && (
+                            <label className="ml-1 text-sm font-medium text-red-500">Please enter a valid school email</label>
+                        )}
 
-                        <label className="block text-sm font-medium text-gray-700">Password</label>
+                        <label className="block mt-4 text-sm font-medium text-gray-700">Password</label>
                         <input
                             type="password"
                             name="password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => {setPassword(e.target.value); setInvalidPass(false)}}
                             placeholder="Create a password"
-                            className="mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className={`mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidPass ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
                         />
 
                         <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
@@ -147,9 +167,9 @@ const Register: React.FC = () => {
                             type="password"
                             name="repassword"
                             value={repassword}
-                            onChange={(e) => setRepassword(e.target.value)}
+                            onChange={(e) => {setRepassword(e.target.value); setInvalidRepass(false)}}
                             placeholder="Re-enter password"
-                            className="mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className={`mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidRepass ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
                         />
 
                         {error && <div role="alert" className="text-sm text-red-600 mb-4">{error}</div>}
@@ -173,10 +193,6 @@ const Register: React.FC = () => {
                     </form>
                 </div>
             </main>
-
-            <div className="max-w-7xl mx-auto px-6 py-4">
-                <button className="mt-4 px-4 py-2 bg-yellow-400 text-purple-900 rounded-lg" onClick={handleHome}>Back to Home</button>
-            </div>
 
             <ToastContainer
                 toastStyle={{ backgroundColor: '#421168ff', color: '#fff', border: '1.5px #421168ff' , borderRadius: '16px'}}
