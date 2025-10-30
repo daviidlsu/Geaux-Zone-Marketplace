@@ -68,7 +68,8 @@ const Register: React.FC = () => {
             await setDoc(doc(db, "Users", newuser.user.uid), {
                 username,
                 email: trimmedEmail,
-                id: newuser.user.uid
+                uid: newuser.user.uid,
+                accountCreation: Date()
             });
 
             await setDoc(doc(db, "UserChats", newuser.user.uid), {

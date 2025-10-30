@@ -4,7 +4,7 @@ import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
-import { collection, getDocs, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
+import { collection, addDoc, getDoc, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -28,8 +28,15 @@ interface sellerInfo {
   username: string;
 }
 
+interface userData {
+  uid: string;
+  username: string;
+  accountCreation: Timestamp;
+}
+
 export default function WelcomePage() {
   const navigate = useNavigate();
+  const [currentUserData, setCurrentUserData] = useState<userData | null>(null);
 
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -208,13 +215,17 @@ export default function WelcomePage() {
     const {email, password} = Object.fromEntries(formData.entries()) as Record<string,string>;
     // TODO: sanitize user input
     try{
-        const user = await signInWithEmailAndPassword(auth, email, password)
-        if (user){
+        const userCred = await signInWithEmailAndPassword(auth, email, password)
+        const User = userCred.user
+        if (User){
           setLoggedIn(true);
+          const docSnap = await getDoc(doc(db, 'Users', User.uid))
+          if (docSnap.exists()){setCurrentUserData(docSnap.data() as userData)}
             //retrieve user authtoken
           toast.success("Login Successful!", {toastId: 'login-success'});
           setShowLoginModal(false); // Close modal on successful login
         }
+        else {toast.error("User not found.", {toastId:'user-not-found'})}
     }catch(error){
         toast.error("Login Failed. Please check your credentials.", {toastId: 'login-failed'});
         console.log(error);
@@ -226,6 +237,7 @@ export default function WelcomePage() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      setCurrentUserData(null);
       setLoggedIn(false);
       toast.success("Logout Successful!", {toastId: 'logout-success'});
     } catch (error) {
@@ -529,10 +541,10 @@ const handleSubmitListing = async ()  => {
                 <div className="bg-gray-100 rounded-xl p-4 m-6">
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">TS</div>
+                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
                     <div>
-                      <p className="font-semibold text-gray-900">Username</p> {/* Placeholder name */}
-                      <p className="text-sm text-gray-600">LSU Student • Member since 2024</p> {/* Placeholder info */}
+                      <p className="font-semibold text-gray-900">{currentUserData?.username}</p>
+                      <p className="text-sm text-gray-600">LSU Student • Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
                     </div>
                   </div>
                 </div>
