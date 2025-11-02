@@ -45,7 +45,7 @@ export default function WelcomePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
-  const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state
+  const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state HERE
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
   const [newTitle, setNewTitle] = useState<string>("");
@@ -65,7 +65,10 @@ export default function WelcomePage() {
   const fetchListings = async (): Promise<Listing[]> => {
     try{
       const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
-      const fetchedListings: Listing[] = querySnapshot.docs.map(doc => {
+      const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
+        const data = doc.data() as Listing;
+        return auth.currentUser?.uid !== data.sellerUID;}
+      ).map(doc => {
         const data = doc.data() as Listing;
         return {
           docId: doc.id,
@@ -107,7 +110,7 @@ export default function WelcomePage() {
       setLoading(false);
     };
     loadListings();
-  }, []);
+  }, [auth.currentUser]);
 
   // Gathers seller info upon selecting a listing
   useEffect(() => {
@@ -198,7 +201,7 @@ export default function WelcomePage() {
 
   // Contact seller handler
   const handleContactSeller = () => {
-    if (!loggedIn) {
+    if (auth.currentUser == null) {
       toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
     } else {
       // Implement contact seller functionality here
@@ -207,7 +210,7 @@ export default function WelcomePage() {
 
   // Favorite listing handler
   const handleFavorite = () => {
-    if (!loggedIn) {
+    if (auth.currentUser == null) {
       toast.warn("Please Login or Register to favorite listings.", {toastId: 'favorite-error'});
     } else {
       // Implement favorite functionality here
@@ -225,10 +228,10 @@ export default function WelcomePage() {
         const userCred = await signInWithEmailAndPassword(auth, email, password)
         const User = userCred.user
         if (User){
-          setLoggedIn(true);
+          //setLoggedIn(true); HERE
           const docSnap = await getDoc(doc(db, 'Users', User.uid))
           if (docSnap.exists()){setCurrentUserData(docSnap.data() as userData)}
-            //retrieve user authtoken
+          navigate('/');
           toast.success("Login Successful!", {toastId: 'login-success'});
           setShowLoginModal(false); // Close modal on successful login
           setIsLoading(false);
@@ -246,7 +249,7 @@ export default function WelcomePage() {
     try {
       await signOut(auth);
       setCurrentUserData(null);
-      setLoggedIn(false);
+      navigate('/');
       toast.success("Logout Successful!", {toastId: 'logout-success'});
     } catch (error) {
       console.error("Error signing out:", error);
@@ -259,7 +262,7 @@ export default function WelcomePage() {
 
   // Create listing handler
   const handleCreateListing = () => {
-    if (!loggedIn) {
+    if (auth.currentUser == null) {
       toast.warn("Please login to create a listing.", {toastId:'login-to-create'});
       setShowLoginModal(true);
     } else {
@@ -322,13 +325,13 @@ export default function WelcomePage() {
             <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
           </div>
           <div className="flex gap-3 font-sans">
-            <button onClick={loggedIn ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
-              ${loggedIn 
+            <button onClick={auth.currentUser ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
+              ${auth.currentUser 
                 ? 'text-white hover:text-yellow-600'
                 : 'text-white hover:text-yellow-600'}`}> {/*Determines button style based on login state*/}
-              {loggedIn ? 'Logout' : 'Login'} {/* Determines button text */}
+              {auth.currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
             </button>
-            {!loggedIn && (
+            {auth.currentUser == null && (
               <button onClick={handleRegister} className="px-5 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
             )}
           </div>
@@ -694,7 +697,7 @@ export default function WelcomePage() {
       )}
 
       {/* Login Modal */}
-      {!loggedIn && showLoginModal && (
+      {auth.currentUser == null && showLoginModal && (
         <div id="top"onClick={() => setShowLoginModal(false)} className="fixed inset-0 flex items-center justify-center bg-[#444]/60 z-50">
           
             <div id="box" onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 relative">
