@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from 'react';
 import { auth, db } from '../firebase/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { collection, doc, getDocs, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 
@@ -78,7 +78,7 @@ const Register: React.FC = () => {
                 username,
                 email: trimmedEmail,
                 uid: newuser.user.uid,
-                accountCreation: Date(),
+                accountCreation: serverTimestamp(),
                 likedItems: []
             });
 

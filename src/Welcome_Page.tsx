@@ -575,7 +575,7 @@ export default function WelcomePage() {
               </div>
 
               {/* Scrollable Content */}
-              <div className="overflow-y-auto p-6 h-4/5">
+              <div className="overflow-y-auto p-6 pt-2 h-4/5">
                 {/* Title and Price */}
                 <div className="mb-4">
                   <h3 className="text-3xl font-bold text-gray-900 mb-2">{newTitle || "Title"}</h3>
@@ -587,10 +587,10 @@ export default function WelcomePage() {
                   <span className="text-lg">{newLocation || "Location"}</span>
                 </div>
                 {/* Description */}
-                <div className="mb-6 h-1/2">
+                <div className="mb-6 h-4/7">
                   <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
                   <textarea 
-                    className="text-gray-800 rounded-xl p-4 pt-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
+                    className="text-gray-800 rounded-xl p-4 pt-2 pb-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
                     value={newDescription || "Enter description..."}
                     disabled>
                   </textarea>
@@ -598,7 +598,7 @@ export default function WelcomePage() {
               </div>
 
               {/* Seller Info */}
-                <div className="bg-gray-100 rounded-xl p-4 m-6">
+                <div className="bg-gray-100 rounded-xl p-4 m-6 mt-0 h-1/5">
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
