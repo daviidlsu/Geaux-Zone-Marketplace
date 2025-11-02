@@ -45,7 +45,6 @@ export default function WelcomePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
-  const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state HERE
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
   const [newTitle, setNewTitle] = useState<string>("");
@@ -228,7 +227,6 @@ export default function WelcomePage() {
         const userCred = await signInWithEmailAndPassword(auth, email, password)
         const User = userCred.user
         if (User){
-          //setLoggedIn(true); HERE
           const docSnap = await getDoc(doc(db, 'Users', User.uid))
           if (docSnap.exists()){setCurrentUserData(docSnap.data() as userData)}
           navigate('/');
