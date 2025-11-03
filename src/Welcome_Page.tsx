@@ -5,7 +5,7 @@ import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
-import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
+import { collection, addDoc, getDocs, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -165,7 +165,7 @@ export default function WelcomePage() {
     return filteredListings.map((listing) => (
       <div
         key={listing.docId}
-        onClick={() => handleListing(listing)}
+        onClick={() => setSelectedListing(listing)}
         className="bg-white rounded-xl shadow-sm hover:shadow-xl cursor-pointer border border-gray-200 overflow-hidden group"
       >
         <div className="aspect-square bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
@@ -188,16 +188,6 @@ export default function WelcomePage() {
         </div>
       </div>
     ));
-  }
-  // Listing handler (Sets selected listing))
-  async function handleListing(listing: Listing){
-    setSelectedListing(listing);
-  }
-
-  // Closes selected listing
-  const handleCloseListing = () => {
-    setSelectedListing(null);
-    setListingOwner(null);
   }
 
   // Contact seller handler
@@ -225,18 +215,16 @@ export default function WelcomePage() {
     const {email, password} = Object.fromEntries(formData.entries()) as Record<string,string>;
     // TODO: sanitize user input
     try{
-        const userCred = await signInWithEmailAndPassword(auth, email, password)
-        const User = userCred.user
-        if (User){
-          navigate('/');
-          toast.success("Login Successful!", {toastId: 'login-success'});
-          setShowLoginModal(false); // Close modal on successful login
-        }
-        else {toast.error("User not found.", {toastId:'user-not-found'})}
+        setLoading(true);
+        await signInWithEmailAndPassword(auth, email, password)
+        navigate('/');
+        toast.success("Login Successful!", {toastId: 'login-success'});
+        setShowLoginModal(false);
     }catch(error){
         toast.error("Login Failed. Please check your credentials.", {toastId: 'login-failed'});
         console.log(error);
     }
+    setLoading(false);
   }
 
   // Logout handler
@@ -249,20 +237,6 @@ export default function WelcomePage() {
       console.error("Error signing out:", error);
     }
   }
-  // Register button handler
-  const handleRegister = () => {
-    navigate('/register');
-  }
-
-  // Create listing handler
-  const handleCreateListing = () => {
-    if (currentUser == null) {
-      toast.warn("Please login to create a listing.", {toastId:'login-to-create'});
-      setShowLoginModal(true);
-    } else {
-      setShowCreateListing(true);
-    }
-  };
 
   // Close create listing modal
   const handleCloseNewListingModal = () => {
@@ -290,6 +264,7 @@ export default function WelcomePage() {
       return;
     }
     try {
+      setLoading(true);
       await addDoc(collection(db, "Inventory"), {
         Description: newDescription,
         available: true,
@@ -301,11 +276,12 @@ export default function WelcomePage() {
         sellerUID: currentUser?.uid || "anonymous",
         title: newTitle
       });
+      toast.success("Listing created successfully!");
     } catch (e) {
       console.error("Error adding document: ", e);
     }
     handleCloseNewListingModal();
-    toast.success("Listing created successfully!");
+    setLoading(false);
   };
 
   return (
@@ -329,7 +305,7 @@ export default function WelcomePage() {
                 {currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
               </button>
               {currentUser == null && (
-                <button onClick={handleRegister} className="px-2 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
+                <button onClick={()=>navigate("/register")} className="px-2 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
               )}
               {currentUser != null && (
                 <button className="w-10 h-10 rounded-full bg-purple-950 text-white font-bold items-center justify-center flex">
@@ -401,7 +377,10 @@ export default function WelcomePage() {
       </div>
       
       {/* New Listing Button */}
-      <button onClick={handleCreateListing} className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
+      <button onClick={currentUser == null 
+        ? ()=> {toast.warn("Please login to create a listing.", {toastId:'login-to-create'}); setShowLoginModal(true)}
+        : ()=> setShowCreateListing(true)} 
+        className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
         <span className="text-2xl text-purple-900 font-bold leading-none absolute inset-0  mb-1 flex items-center justify-center transition-all duration-300 group-hover:opacity-0 group-hover:scale-0">
           +
         </span>
@@ -414,7 +393,7 @@ export default function WelcomePage() {
       {selectedListing && listingOwner!=null &&(
         <div
           className="fixed inset-0 bg-[#444]/70 z-50 flex items-center justify-center p-4"
-          onClick={handleCloseListing}
+          onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
         >
           <div
             className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex"
@@ -438,7 +417,7 @@ export default function WelcomePage() {
                   {selectedListing.categoryID}
                 </span>
                 <button
-                  onClick={handleCloseListing}
+                  onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
                   className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full transition-all"
                 >
                   <X size={30} color="#59168b" />
@@ -690,6 +669,7 @@ export default function WelcomePage() {
                 <button
                   onClick={handleSubmitListing}
                   className="flex-1 px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+                  disabled={loading}
                 >
                   Create Listing
                 </button>
@@ -756,13 +736,13 @@ export default function WelcomePage() {
               {/* Submit button */}
               <button 
                 className={`w-full px-4 py-3 rounded-lg font-semibold text-white ${
-                  isLoading || !lsuEmailRegex.test(email.trim()) || password.length === 0
+                  loading || !lsuEmailRegex.test(email.trim()) || password.length === 0
                   ? 'bg-purple-900/60 cursor-not-allowed opacity-80'
                   : 'bg-purple-900 hover:bg-purple-800'
                 }`}
                 type="submit"
-                disabled={isLoading || !lsuEmailRegex.test(email.trim()) || password.length === 0}>
-                  {isLoading ? 'Logging in...' : 'Login'} 
+                disabled={loading || !lsuEmailRegex.test(email.trim()) || password.length === 0}>
+                  {loading ? 'Logging in...' : 'Login'} 
               </button> 
               <div className="mt-4 text-center text-sm text-gray-600">
                 Don't have an account?{' '}

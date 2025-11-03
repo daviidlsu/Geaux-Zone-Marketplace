@@ -37,11 +37,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // This observer is the key: it listens for state changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        // Fetch additional user data from Firestore
         const docSnap = await getDoc(doc(db, 'Users', user.uid));
         if (docSnap.exists()) {
           setCurrentUserData(docSnap.data() as userData);

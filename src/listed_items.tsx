@@ -365,7 +365,7 @@ export default function Listings() {
             <div className="max-w-7xl mx-auto px-6 py-8">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {filteredNum} {filteredNum === 1 ? "Listing" : "Listings"} Available
+                  {filteredNum} {filteredNum === 1 ? "Listed Item" : "Listed Items"}
                 </h2>
               </div>
               <div id="listing-grid" className="grid grid-col h-full gap-6">
