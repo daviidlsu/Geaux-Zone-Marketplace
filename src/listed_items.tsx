@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from 'react-router-dom';
-import { auth, db } from "./firebase/firebase";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { db } from "./firebase/firebase";
+import { useAuth } from "./auth/auth.tsx";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { Search, Filter, MapPin, Heart, X, Menu, Library, House} from "lucide-react";
-import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, query, Timestamp, where, updateDoc } from "firebase/firestore";
 
 import "./index.css"
 
@@ -24,15 +24,11 @@ interface Listing {
   available: boolean;
 }
 
-interface userData {
-  uid: string;
-  username: string;
-  accountCreation: Timestamp;
-}
-
 export default function Listings() {
     const navigate = useNavigate();
-    const [currentUserData, setCurrentUserData] = useState<userData | null>(null);
+
+    const { currentUser, currentUserData, isLoading, logout } = useAuth();
+
     const [filteredNum, setFilteredNum] = useState<number>(0);
     const [listings, setListings] = useState<Listing[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -62,7 +58,7 @@ export default function Listings() {
           const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
           const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
             const data = doc.data() as Listing;
-            return auth.currentUser?.uid === data.sellerUID;} // Only fetch listings for current user
+            return currentUser?.uid === data.sellerUID;} // Only fetch listings for current user
           ).map(doc => {
             const data = doc.data() as Listing;
             return {
@@ -96,7 +92,7 @@ export default function Listings() {
             setLoading(false);
         };
         loadListings();
-    }, [auth.currentUser, reloadTrigger]);
+    }, [currentUser, reloadTrigger]);
 
     // Update filtered listings count
     useEffect(() => {
@@ -194,8 +190,7 @@ export default function Listings() {
 
     const handleLogout = async () => {
         try {
-            await signOut(auth);
-            setCurrentUserData(null);
+            await logout();
             navigate('/');
             toast.success("Logout Successful!", {toastId: 'logout-success'});
         } catch (error) {
@@ -274,7 +269,7 @@ export default function Listings() {
                     <button onClick={()=>handleLogout()} className="px-4 py-1 rounded-2xl text-white transition-colors font-semibold">
                         Logout
                     </button>
-                    {auth.currentUser != null && (
+                    {currentUser != null && (
                         <button className="w-10 h-10 rounded-full bg-purple-950 text-white font-bold items-center justify-center flex">
                             {currentUserData?.username.charAt(0).toUpperCase()}
                         </button>

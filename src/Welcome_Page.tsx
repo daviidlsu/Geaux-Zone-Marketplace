@@ -1,7 +1,8 @@
 import { useState, FormEvent, useEffect } from "react";
+import { useAuth } from "./auth/auth.tsx";
 import { Search, Filter, MapPin, Heart, X, Menu, Library, House} from "lucide-react";
 import { auth, db } from "./firebase/firebase";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
@@ -28,22 +29,17 @@ interface sellerInfo {
   username: string;
 }
 
-interface userData {
-  uid: string;
-  username: string;
-  accountCreation: Timestamp;
-}
-
 export default function WelcomePage() {
   const navigate = useNavigate();
-  const [currentUserData, setCurrentUserData] = useState<userData | null>(null);
+
+  const { currentUser, currentUserData, isLoading, logout } = useAuth();
+
   const [email, setEmail] = useState<string>('')
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filteredNum, setFilteredNum] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
@@ -72,7 +68,7 @@ export default function WelcomePage() {
       const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
       const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
         const data = doc.data() as Listing;
-        return auth.currentUser?.uid !== data.sellerUID;}
+        return currentUser?.uid !== data.sellerUID;}
       ).map(doc => {
         const data = doc.data() as Listing;
         return {
@@ -115,7 +111,7 @@ export default function WelcomePage() {
       setLoading(false);
     };
     loadListings();
-  }, [auth.currentUser]);
+  }, [currentUser]);
 
   // Gathers seller info upon selecting a listing
   useEffect(() => {
@@ -206,7 +202,7 @@ export default function WelcomePage() {
 
   // Contact seller handler
   const handleContactSeller = () => {
-    if (auth.currentUser == null) {
+    if (currentUser == null) {
       toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
     } else {
       // Implement contact seller functionality here
@@ -215,7 +211,7 @@ export default function WelcomePage() {
 
   // Favorite listing handler
   const handleFavorite = () => {
-    if (auth.currentUser == null) {
+    if (currentUser == null) {
       toast.warn("Please Login or Register to favorite listings.", {toastId: 'favorite-error'});
     } else {
       // Implement favorite functionality here
@@ -229,20 +225,15 @@ export default function WelcomePage() {
     const {email, password} = Object.fromEntries(formData.entries()) as Record<string,string>;
     // TODO: sanitize user input
     try{
-        setIsLoading(true);
         const userCred = await signInWithEmailAndPassword(auth, email, password)
         const User = userCred.user
         if (User){
-          const docSnap = await getDoc(doc(db, 'Users', User.uid))
-          if (docSnap.exists()){setCurrentUserData(docSnap.data() as userData)}
           navigate('/');
           toast.success("Login Successful!", {toastId: 'login-success'});
           setShowLoginModal(false); // Close modal on successful login
-          setIsLoading(false);
         }
         else {toast.error("User not found.", {toastId:'user-not-found'})}
     }catch(error){
-        setIsLoading(false);
         toast.error("Login Failed. Please check your credentials.", {toastId: 'login-failed'});
         console.log(error);
     }
@@ -251,8 +242,7 @@ export default function WelcomePage() {
   // Logout handler
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      setCurrentUserData(null);
+      await logout();
       navigate('/');
       toast.success("Logout Successful!", {toastId: 'logout-success'});
     } catch (error) {
@@ -266,7 +256,7 @@ export default function WelcomePage() {
 
   // Create listing handler
   const handleCreateListing = () => {
-    if (auth.currentUser == null) {
+    if (currentUser == null) {
       toast.warn("Please login to create a listing.", {toastId:'login-to-create'});
       setShowLoginModal(true);
     } else {
@@ -308,7 +298,7 @@ export default function WelcomePage() {
         image: newImage || "https://via.placeholder.com/300x200",
         location: newLocation,      
         price: newPrice || null,
-        sellerUID: auth.currentUser?.uid || "anonymous",
+        sellerUID: currentUser?.uid || "anonymous",
         title: newTitle
       });
     } catch (e) {
@@ -323,7 +313,7 @@ export default function WelcomePage() {
       {/* Header Section */}
       <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <button onClick={ auth.currentUser ? ()=> setShowMenu(true) : ()=> {setShowLoginModal(true);toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}} className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center">
+          <button onClick={ currentUser ? ()=> setShowMenu(true) : ()=> {setShowLoginModal(true);toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}} className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center">
             <Menu className="stroke-white w-8 h-8"/>
           </button>
           <div className="flex items-center justify-between w-full ml-[-72px]">
@@ -332,16 +322,16 @@ export default function WelcomePage() {
               <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
             </div>
             <div className="flex gap-2 font-sans">
-              <button onClick={auth.currentUser ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
-                ${auth.currentUser 
+              <button onClick={ currentUser ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
+                ${currentUser 
                   ? 'text-white hover:text-yellow-600'
                   : 'text-white hover:text-yellow-600'}`}> {/*Determines button style based on login state*/}
-                {auth.currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
+                {currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
               </button>
-              {auth.currentUser == null && (
+              {currentUser == null && (
                 <button onClick={handleRegister} className="px-2 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
               )}
-              {auth.currentUser != null && (
+              {currentUser != null && (
                 <button className="w-10 h-10 rounded-full bg-purple-950 text-white font-bold items-center justify-center flex">
                   {currentUserData?.username.charAt(0).toUpperCase()}
                 </button>
@@ -710,7 +700,7 @@ export default function WelcomePage() {
       )}
 
       {/* Login Modal */}
-      {auth.currentUser == null && showLoginModal && (
+      {currentUser == null && showLoginModal && (
         <div id="top"onClick={() => setShowLoginModal(false)} className="fixed inset-0 flex items-center justify-center bg-[#444]/60 z-50">
           
             <div id="box" onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 relative">
