@@ -173,7 +173,7 @@ export default function WelcomePage() {
           <div className="flex items-start justify-between mb-2">
             <h3 className="font-semibold text-gray-900 group-hover:text-purple-900 transition-colors flex-grow truncate">{listing.title}</h3>
             <div className="flex w-1/10 h-1/10 center-items justify-center">
-            <button onClick={(e)=>{e.stopPropagation();handleFavorite}} className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
+            <button onClick={(e)=>{e.stopPropagation();handleFavorite()}} className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
               <Heart className="w-5 h-5" />
             </button>
             </div>
