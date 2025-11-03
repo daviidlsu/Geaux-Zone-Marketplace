@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from "react";
-import { Search, Filter, MapPin, Heart, X, Menu} from "lucide-react";
+import { Search, Filter, MapPin, Heart, X, Menu, Library} from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
@@ -60,6 +60,10 @@ export default function WelcomePage() {
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
+
+  const menuItems = [
+    { name: 'Your Listings', icon: Library, action: () => navigate('/') },
+  ];
 
   // Fetch listings from Firestore
   const fetchListings = async (): Promise<Listing[]> => {
@@ -318,7 +322,7 @@ export default function WelcomePage() {
       {/* Header Section */}
       <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <button onClick={()=>setShowMenu(prev=>!prev)} className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center">
+          <button onClick={currentUserData?()=>setShowMenu(true):()=>{setShowLoginModal(true);toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}} className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center">
             <Menu className="stroke-white w-8 h-8"/>
           </button>
           <div className="flex items-center justify-between w-full ml-[-72px]">
@@ -791,6 +795,22 @@ export default function WelcomePage() {
                   <X className="w-6 h-6 text-gray-700" />
                 </button>
               </div>
+              <nav className="flex-grow space-y-2">
+                {menuItems.map((item) => {
+                  return (
+                    <a
+                      key={item.name}
+                      onClick={() => {setShowMenu(false);item.action()}}
+                      className="flex items-center justify-between p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center">
+                          <item.icon className="w-5 h-5 mr-3" />
+                          <span className="font-medium">{item.name}</span>
+                        </div>
+                    </a>
+                  );
+                })}
+              </nav>
             </div>
           </div>
         </div>
