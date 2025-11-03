@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from "react";
-import { Search, Filter, MapPin, Heart, X, Menu, Library} from "lucide-react";
+import { Search, Filter, MapPin, Heart, X, Menu, Library, House} from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
@@ -15,7 +15,7 @@ interface Listing {
   categoryID: Category;
   Description: string;
   price: number;
-  dateListed: string;
+  dateListed: Timestamp;
   image: string;
   location: string;
   sellerUID: string;
@@ -62,7 +62,8 @@ export default function WelcomePage() {
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
   const menuItems = [
-    { name: 'Your Listings', icon: Library, action: () => navigate('/') },
+    { name: 'Home', icon: House, action: () => navigate('/') },
+    { name: 'Your Listings', icon: Library, action: () => navigate('/my-listings') },
   ];
 
   // Fetch listings from Firestore
@@ -322,7 +323,7 @@ export default function WelcomePage() {
       {/* Header Section */}
       <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <button onClick={currentUserData?()=>setShowMenu(true):()=>{setShowLoginModal(true);toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}} className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center">
+          <button onClick={ auth.currentUser ? ()=> setShowMenu(true) : ()=> {setShowLoginModal(true);toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}} className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center">
             <Menu className="stroke-white w-8 h-8"/>
           </button>
           <div className="flex items-center justify-between w-full ml-[-72px]">
@@ -330,7 +331,7 @@ export default function WelcomePage() {
               <img className="w-10 h-10 " src="/geauxzone_tiger.png"></img>
               <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
             </div>
-            <div className="flex gap-3 font-sans">
+            <div className="flex gap-2 font-sans">
               <button onClick={auth.currentUser ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
                 ${auth.currentUser 
                   ? 'text-white hover:text-yellow-600'
@@ -338,7 +339,12 @@ export default function WelcomePage() {
                 {auth.currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
               </button>
               {auth.currentUser == null && (
-                <button onClick={handleRegister} className="px-5 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
+                <button onClick={handleRegister} className="px-2 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
+              )}
+              {auth.currentUser != null && (
+                <button className="w-10 h-10 rounded-full bg-purple-950 text-white font-bold items-center justify-center flex">
+                  {currentUserData?.username.charAt(0).toUpperCase()}
+                </button>
               )}
             </div>
           </div>
@@ -346,8 +352,8 @@ export default function WelcomePage() {
       </nav>
 
       {/* Search Bar */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3">
+      <div className="bg-white border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-6 pb-2 flex gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             {/*Possibly remove the category reset, if user needs to search in specific category*/}
@@ -375,7 +381,7 @@ export default function WelcomePage() {
 
       {/* Categories */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-6 py-4 pt-2">
           <div className="flex gap-3 overflow-x-auto">
             {categories.map((category) => (
               <button
@@ -784,10 +790,10 @@ export default function WelcomePage() {
           <div 
             className={`fixed top-0 left-0 w-64 h-full rounded-r-2xl bg-white shadow-2xl z-[100] transform transition-transform duration-300 ease-in-out ${showMenu ? 'translate-x-0' : '-translate-x-full'}`}
             onClick={(e)=>e.stopPropagation()}>
-            <div className="p-6 flex flex-col h-full">
-            {/* Header with Close Button */}
+            <div className="p-4 flex flex-col h-full">
+              {/* Header with Close Button */}
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold text-purple-900">Menu</h2>
+                <h2 className="text-2xl ml-2 font-bold text-purple-900">Menu</h2>
                 <button 
                   onClick={()=>setShowMenu(false)} 
                   className="p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -795,26 +801,26 @@ export default function WelcomePage() {
                   <X className="w-6 h-6 text-gray-700" />
                 </button>
               </div>
-              <nav className="flex-grow space-y-2">
+              <nav className="flex-grow">
                 {menuItems.map((item) => {
                   return (
                     <a
                       key={item.name}
                       onClick={() => {setShowMenu(false);item.action()}}
-                      className="flex items-center justify-between p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="flex items-center">
-                          <item.icon className="w-5 h-5 mr-3" />
-                          <span className="font-medium">{item.name}</span>
-                        </div>
+                      className="flex items-center justify-between p-3 pl-1 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors hover:cursor-pointer"
+                    >
+                      <div className="flex items-center">
+                        <item.icon className="w-5 h-5 mr-3" />
+                        <span className="font-medium">{item.name}</span>
+                      </div>
                     </a>
                   );
                 })}
-              </nav>
+                </nav>
+              </div>
             </div>
           </div>
-        </div>
-      </>
+        </>
 
       {/* Toast Container */}
       <ToastContainer
