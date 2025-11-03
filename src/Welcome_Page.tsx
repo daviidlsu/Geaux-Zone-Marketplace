@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from "react";
-import { Search, Filter, MapPin, Heart, X} from "lucide-react";
+import { Search, Filter, MapPin, Heart, X, Menu} from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
@@ -55,6 +55,7 @@ export default function WelcomePage() {
   const [newImage, setNewImage] = useState<string>("");
   const [password, setPassword] = useState('')
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
+  const [showMenu, setShowMenu] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
@@ -317,21 +318,25 @@ export default function WelcomePage() {
       {/* Header Section */}
       <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img className="w-10 h-10 " src="/geauxzone_tiger.png">
-            </img>
-            <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
-          </div>
-          <div className="flex gap-3 font-sans">
-            <button onClick={auth.currentUser ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
-              ${auth.currentUser 
-                ? 'text-white hover:text-yellow-600'
-                : 'text-white hover:text-yellow-600'}`}> {/*Determines button style based on login state*/}
-              {auth.currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
-            </button>
-            {auth.currentUser == null && (
-              <button onClick={handleRegister} className="px-5 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
-            )}
+          <button onClick={()=>setShowMenu(prev=>!prev)} className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center">
+            <Menu className="stroke-white w-8 h-8"/>
+          </button>
+          <div className="flex items-center justify-between w-full ml-[-72px]">
+            <div className="flex items-center gap-3">
+              <img className="w-10 h-10 " src="/geauxzone_tiger.png"></img>
+              <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
+            </div>
+            <div className="flex gap-3 font-sans">
+              <button onClick={auth.currentUser ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
+                ${auth.currentUser 
+                  ? 'text-white hover:text-yellow-600'
+                  : 'text-white hover:text-yellow-600'}`}> {/*Determines button style based on login state*/}
+                {auth.currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
+              </button>
+              {auth.currentUser == null && (
+                <button onClick={handleRegister} className="px-5 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
+              )}
+            </div>
           </div>
         </div>
       </nav>
@@ -767,6 +772,29 @@ export default function WelcomePage() {
           </div>
         </div>
       )}
+
+      {/* Menu Modal */}
+      <>
+        <div className={`fixed inset-0 bg-black/50 z-[99] transition-opacity duration-300 ${showMenu ? 'opacity-100 visible': 'opacity-0 invisible'}`}
+          onClick={()=>setShowMenu(false)}>
+          <div 
+            className={`fixed top-0 left-0 w-64 h-full rounded-r-2xl bg-white shadow-2xl z-[100] transform transition-transform duration-300 ease-in-out ${showMenu ? 'translate-x-0' : '-translate-x-full'}`}
+            onClick={(e)=>e.stopPropagation()}>
+            <div className="p-6 flex flex-col h-full">
+            {/* Header with Close Button */}
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-purple-900">Menu</h2>
+                <button 
+                  onClick={()=>setShowMenu(false)} 
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  aria-label="Close menu">
+                  <X className="w-6 h-6 text-gray-700" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
 
       {/* Toast Container */}
       <ToastContainer
