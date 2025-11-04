@@ -5,7 +5,7 @@ import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
-import { collection, addDoc, getDocs, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
+import { arrayUnion, arrayRemove, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -39,9 +39,11 @@ export default function WelcomePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [filteredNum, setFilteredNum] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [showLikedOnly, setShowLikedOnly] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [likedItems, setLikedItems] = useState<string[]>([]);
   const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
   const [newTitle, setNewTitle] = useState<string>("");
   const [newPrice, setNewPrice] = useState<number | null>(null);
@@ -92,15 +94,49 @@ export default function WelcomePage() {
       return [];
     }
   }
+
   // Update filtered listings count
   useEffect(() => {
     const filteredListings = listings.filter((listing) => {
       const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
       const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      const isLiked = likedItems.includes(listing.docId); //Collects liked items from user data
+      const matchesLikedFilter = !showLikedOnly || isLiked;
+      return matchesCategory && matchesSearch && matchesLikedFilter;
     });
     setFilteredNum(filteredListings.length);
-  }, [listings, searchQuery, selectedCategory]);
+  }, [listings, searchQuery, selectedCategory, showLikedOnly]);
+
+  // Loads user data on auth change
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try{
+          const docSnap = await getDoc(doc(db, 'Users', user.uid))
+          if (docSnap.exists()){
+            setCurrentUserData(docSnap.data() as userData)
+            const querySnapshot = await getDocs(query(collection(db, "Favorites"), where("userUID", "==", user.uid)));
+            const newLikedItems: string[] = [];
+            querySnapshot.forEach((doc) => {
+              const likedItemID = doc.data().listingID
+              newLikedItems.push(likedItemID);
+            });
+            setLikedItems(newLikedItems)
+            console.log(newLikedItems);
+          }
+        else {
+          console.error("No user data found for UID:", user.uid);
+          setCurrentUserData(null);
+        }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setCurrentUserData(null);
+        }
+      } else {
+        setCurrentUserData(null);
+      }
+    }); return () => unsubscribe();
+  }, []);
 
   // Called upon loading page to fetch listings
   useEffect(() => {
@@ -152,7 +188,9 @@ export default function WelcomePage() {
     const filteredListings = listings.filter((listing) => {
       const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
       const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      const isLiked = likedItems.includes(listing.docId); //Collects liked items from user data
+      const matchesLikedFilter = !showLikedOnly || isLiked;
+      return matchesCategory && matchesSearch && matchesLikedFilter;
     });
 
     if (filteredNum === 0) {
@@ -162,6 +200,7 @@ export default function WelcomePage() {
         </div>
       );
     }
+
     return filteredListings.map((listing) => (
       <div
         key={listing.docId}
@@ -175,8 +214,9 @@ export default function WelcomePage() {
           <div className="flex items-start justify-between mb-2">
             <h3 className="font-semibold text-gray-900 group-hover:text-purple-900 transition-colors flex-grow truncate">{listing.title}</h3>
             <div className="flex w-1/10 h-1/10 center-items justify-center">
-            <button onClick={(e)=>{e.stopPropagation();handleFavorite}} className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
-              <Heart className="w-5 h-5" />
+            <button onClick={(e)=>{e.stopPropagation();handleFavorite(listing.docId)}} className={`transition-colors flex-shrink-0
+              ${likedItems.includes(listing.docId) ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}> {/* Red heart border if liked, gray if not, red on hover */}
+              <Heart className={`w-5 h-5 ${likedItems.includes(listing.docId) ? "fill-red-500 hover:stroke-white" : "fill-none"}`}/> {/* Red heart if liked, white on hover. Empty heart if not liked */}
             </button>
             </div>
           </div>
@@ -200,11 +240,32 @@ export default function WelcomePage() {
   }
 
   // Favorite listing handler
-  const handleFavorite = () => {
+  const handleFavorite = async (listingid: string) => {
     if (currentUser == null) {
       toast.warn("Please Login or Register to favorite listings.", {toastId: 'favorite-error'});
-    } else {
-      // Implement favorite functionality here
+      return;
+    } 
+    if (likedItems.includes(listingid)) {
+      const favoriteQuery = query(
+        collection(db, "Favorites"), 
+        where("userUID", "==", auth.currentUser?.uid), 
+        where("listingID", "==", listingid)
+      );
+      const querySnapshot = await getDocs(favoriteQuery);
+      querySnapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
+      setLikedItems(prev => prev.filter(id => id !== listingid));
+      toast.success("Removed from favorites!", {toastId: 'remove-favorite-success'});
+    }
+    else {
+      await addDoc(collection(db, "Favorites"), {
+        userUID: auth.currentUser?.uid,
+        listingID: listingid,
+        timestamp: serverTimestamp()
+      });
+      setLikedItems(prev => [...prev, listingid]);
+      toast.success("Added to favorites!", {toastId: 'add-favorite-success'});
     }
   }
 
@@ -231,6 +292,8 @@ export default function WelcomePage() {
   const handleLogout = async () => {
     try {
       await logout();
+      setCurrentUserData(null);
+      setLikedItems([]);
       navigate('/');
       toast.success("Logout Successful!", {toastId: 'logout-success'});
     } catch (error) {
@@ -282,6 +345,7 @@ export default function WelcomePage() {
     }
     handleCloseNewListingModal();
     setLoading(false);
+    toast.success("Listing created successfully!", {toastId: 'create-listing-success'});
   };
 
   return (
@@ -317,9 +381,14 @@ export default function WelcomePage() {
         </div>
       </nav>
 
+
+
       {/* Search Bar */}
-      <div className="bg-white border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-6 pb-2 flex gap-3">
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3">
+          <button onClick={auth.currentUser ? ()=>setShowLikedOnly(prev=>!prev) : () => toast.warn("Please login to view liked listings", {toastId:"like-filter"})} className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${showLikedOnly ? "bg-purple-900" : "bg-white"}`}>
+            <Heart className={`w-6 h-6 stroke-2 transition-all duration-200 ${showLikedOnly ? "fill-red-500 stroke-red-500" : "fill-none stroke-purple-900 group-hover:fill-purple-900 group-hover:stroke-purple-900"}`}/>
+          </button>
           <div className="flex-1 relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             {/*Possibly remove the category reset, if user needs to search in specific category*/}
@@ -338,7 +407,7 @@ export default function WelcomePage() {
                 <X color="gray" size={20}></X>
             </button>)}
           </div>
-          <button className="px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2">
+          <button className="px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2">
             <Filter className="w-5 h-5" />
             Filters
           </button>
@@ -466,10 +535,11 @@ export default function WelcomePage() {
                     Contact Seller
                   </button>
                   {/* Favorite Button */}
-                    <button onClick={() => {handleFavorite();}}
-                      className="px-4 py-3 border-2 border-gray-300 rounded-xl hover:border-purple-900 hover:text-purple-900 transition-all"
+                    <button onClick={() => {handleFavorite(selectedListing.docId);}}
+                      className={`px-2 py-2 rounded-xl hover:border-purple-900 hover:text-purple-900 transition-all 
+                        ${likedItems.includes(selectedListing.docId) ? "" : ""}`}
                     >
-                    <Heart className="w-6 h-6" />
+                    <Heart className={`w-10 h-10 stroke-2 ${likedItems.includes(selectedListing.docId) ? "fill-red-500 stroke-red-500 hover:fill-white": "fill-none stroke-gray-500 hover:fill-red-500 hover:stroke-red-600 hover:stroke-1" } `} />
                   </button>
                 </div>
               </div>
@@ -507,7 +577,7 @@ export default function WelcomePage() {
               </div>
 
               {/* Scrollable Content */}
-              <div className="overflow-y-auto p-6 h-4/5">
+              <div className="overflow-y-auto p-6 pt-2 h-4/5">
                 {/* Title and Price */}
                 <div className="mb-4">
                   <h3 className="text-3xl font-bold text-gray-900 mb-2">{newTitle || "Title"}</h3>
@@ -519,10 +589,10 @@ export default function WelcomePage() {
                   <span className="text-lg">{newLocation || "Location"}</span>
                 </div>
                 {/* Description */}
-                <div className="mb-6 h-1/2">
+                <div className="mb-6 h-4/7">
                   <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
                   <textarea 
-                    className="text-gray-800 rounded-xl p-4 pt-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
+                    className="text-gray-800 rounded-xl p-4 pt-2 pb-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
                     value={newDescription || "Enter description..."}
                     disabled>
                   </textarea>
@@ -530,7 +600,7 @@ export default function WelcomePage() {
               </div>
 
               {/* Seller Info */}
-                <div className="bg-gray-100 rounded-xl p-4 m-6">
+                <div className="bg-gray-100 rounded-xl p-4 m-6 mt-0 h-1/5">
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
