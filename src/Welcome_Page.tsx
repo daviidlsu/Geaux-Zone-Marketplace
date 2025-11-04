@@ -308,6 +308,7 @@ export default function WelcomePage() {
     try {
       await signOut(auth);
       setCurrentUserData(null);
+      setLikedItems([]);
       navigate('/');
       toast.success("Logout Successful!", {toastId: 'logout-success'});
     } catch (error) {
@@ -370,7 +371,7 @@ export default function WelcomePage() {
       console.error("Error adding document: ", e);
     }
     handleCloseNewListingModal();
-    toast.success("Listing created successfully!");
+    toast.success("Listing created successfully!", {toastId: 'create-listing-success'});
   };
 
   return (
@@ -402,7 +403,7 @@ export default function WelcomePage() {
       {/* Search Bar */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3">
-          <button onClick={()=>setShowLikedOnly(prev=>!prev)} className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${showLikedOnly ? "bg-purple-900" : "bg-white"}`}>
+          <button onClick={auth.currentUser ? ()=>setShowLikedOnly(prev=>!prev) : () => toast.warn("Please login to view liked listings", {toastId:"like-filter"})} className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${showLikedOnly ? "bg-purple-900" : "bg-white"}`}>
             <Heart className={`w-6 h-6 stroke-2 transition-all duration-200 ${showLikedOnly ? "fill-red-500 stroke-red-500" : "fill-none stroke-purple-900 group-hover:fill-purple-900 group-hover:stroke-purple-900"}`}/>
           </button>
           <div className="flex-1 relative">
