@@ -4,9 +4,10 @@ import { db } from "./firebase/firebase";
 import { useAuth } from "./auth/auth.tsx";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { Search, Filter, MapPin, Heart, X, Menu, Library, House, Trash2, TriangleAlert } from "lucide-react";
-import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc} from "firebase/firestore";
+import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
 
 import "./index.css"
+import firebase from "firebase/compat/app";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -164,7 +165,7 @@ export default function Listings() {
                 {/* TABLE BODY */}
                 <tbody className="divide-y divide-gray-200 bg-white">
                     {filteredListings.map((listing) => (
-                        <tr key={listing.docId} onClick={()=>handleOpenEditListingModal(listing)} className="hover:bg-purple-50 transition-colors cursor-pointer">
+                        <tr key={listing.docId} onClick={()=>{handleOpenEditListingModal(listing);setSearchQuery("")}} className="hover:bg-purple-50 transition-colors cursor-pointer">
                             {/* Title Column */}
                             <td className="whitespace-nowrap py-4 pl-6 pr-3 text-m font-medium text-gray-900 truncate max-w-xs">
                                 {listing.title}
@@ -254,23 +255,24 @@ export default function Listings() {
     };
 
     const handleDeleteListing = async (listing:Listing) => {
-        //await deleteDoc(doc(db, "Inventory", listing.docId));
-
-        // NOT FINISHED
-        // Remove associated favorites records (Need to add admin Firebase to use batch())
-
-        /* const admin = require("firebase-admin");
-        admin.initializeApp();
+      console.log(listing)
+        // Clean up associated favorite records
+        const batch = writeBatch(db);
         const favoritesRef=collection(db, "Favorites");
-        const querySnapshot = await getDocs(query(favoritesRef, where("listingID", "==", listing.id)));
+        console.log(favoritesRef)
+        const querySnapshot = await getDocs(query(favoritesRef, where("listingID", "==", listing.docId)));
         if (querySnapshot.empty) {
-            console.log(`No favorite records found for listing:${listing.id}. Cleanup complete.`);
+            console.log(`No favorite records found for listing:${listing.docId}. Cleanup complete.`);
         }
-        const batch = firestore().batch()
-        querySnapshot.forEach((doc) => {
+        else {
+          querySnapshot.forEach((doc) => {
             batch.delete(doc.ref)
-        });
-        await batch.commit() */
+          }
+        )};
+        await batch.commit()
+
+        // Delete the listing document
+        await deleteDoc(doc(db, "Inventory", listing.docId));
         setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
         setShowDeleteConfirm(false);
         handleCloseEditListingModal();
