@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { arrayUnion, arrayRemove, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
+import Navbar from "./components/navbar.tsx";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -354,35 +355,13 @@ export default function WelcomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
-      <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <button onClick={ currentUser ? ()=> setShowMenu(true) : ()=> {setShowLoginModal(true);toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}} className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center">
-            <Menu className="stroke-white w-8 h-8"/>
-          </button>
-          <div className="flex items-center justify-between w-full ml-[-72px]">
-            <div className="flex items-center gap-3">
-              <img className="w-10 h-10 " src="/geauxzone_tiger.png"></img>
-              <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
-            </div>
-            <div className="flex gap-2 font-sans">
-              <button onClick={ currentUser ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
-                ${currentUser 
-                  ? 'text-white hover:text-yellow-600'
-                  : 'text-white hover:text-yellow-600'}`}> {/*Determines button style based on login state*/}
-                {currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
-              </button>
-              {currentUser == null && (
-                <button onClick={()=>navigate("/register")} className="px-2 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
-              )}
-              {currentUser != null && (
-                <button className="w-10 h-10 rounded-full bg-purple-950 text-white font-bold items-center justify-center flex">
-                  {currentUserData?.username.charAt(0).toUpperCase()}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar
+        handleLogout={handleLogout}
+        setShowLoginModal={setShowLoginModal}
+        setShowMenu={setShowMenu}
+        navigate={navigate}
+        toastWarn={toast.warn}
+      />
 
 
 

@@ -5,6 +5,7 @@ import Welcome_Page from './Welcome_Page.tsx';
 import Listings from './listed_items.tsx';
 import { AuthProvider } from './auth/auth.tsx';
 import { ProtectedRoute } from './auth/ProtectedRoute.tsx';
+import { PublicRoute } from './auth/PublicRoute.tsx';
 
 function App() {
   return (
@@ -13,14 +14,24 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Welcome_Page />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
+
+          <Route path="/register" 
+            element={<PublicRoute>
+              <Register />
+            </PublicRoute>}
+          />
+
+          <Route path="/login" 
+            element={<PublicRoute>
+              <Login />
+            </PublicRoute>} 
+          />
 
           {/* Protected Routes */}
           <Route
             path="/my-listings"
-            element={<ProtectedRoute
-              ><Listings />
+            element={<ProtectedRoute>
+              <Listings />
             </ProtectedRoute>}
           />
           {/* Catch-all route for undefined paths */}

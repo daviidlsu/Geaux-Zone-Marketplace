@@ -5,7 +5,7 @@ import { useAuth } from "./auth/auth.tsx";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { Search, Filter, MapPin, Heart, X, Menu, Library, House, Trash2, TriangleAlert } from "lucide-react";
 import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
-
+import Navbar from "./components/navbar.tsx";
 import "./index.css"
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
@@ -189,6 +189,7 @@ export default function Listings() {
     );
 }
 
+
     const handleLogout = async () => {
         try {
             await logout();
@@ -280,29 +281,13 @@ export default function Listings() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header Section */}
-            <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
-              <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                <button onClick={()=>setShowMenu(true)} className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center">
-                  <Menu className="stroke-white w-8 h-8"/>
-                </button>
-                <div className="flex items-center justify-between w-full ml-[-72px]">
-                  <div className="flex items-center gap-3">
-                    <img className="w-10 h-10 " src="/geauxzone_tiger.png"></img>
-                    <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
-                  </div>
-                  <div className="flex gap-2 font-sans">
-                    <button onClick={()=>handleLogout()} className="px-4 py-1 rounded-2xl text-white transition-colors font-semibold">
-                        Logout
-                    </button>
-                    {currentUser != null && (
-                        <button className="w-10 h-10 rounded-full bg-purple-950 text-white font-bold items-center justify-center flex">
-                            {currentUserData?.username.charAt(0).toUpperCase()}
-                        </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </nav>
+            <Navbar
+              handleLogout={handleLogout}
+              setShowLoginModal={()=>{}}
+              setShowMenu={setShowMenu}
+              navigate={navigate}
+              toastWarn={toast.warn}
+            />
 
             {/* Menu Modal */}
             <>

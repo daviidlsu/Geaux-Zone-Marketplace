@@ -3,6 +3,7 @@ import { auth } from '../firebase/firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useNavigate, Link } from 'react-router-dom'
 import { toast, ToastContainer, Zoom } from 'react-toastify'
+import Navbar from '../components/navbar'
 
 const Login = () => {
     const navigate = useNavigate()
@@ -52,18 +53,13 @@ const Login = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col bg-[url('/lsu_fall.jpg')] bg-bottom">
             {/* Top navigation like Welcome page */}
-            <header className="bg-purple-900 ">
-                <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <img className="w-10 h-10 " src="/geauxzone_tiger.png">
-                        </img>
-                        <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
-                    </div>
-                    <div>
-                        <Link to="/" className="px-4 py-1 rounded-2xl bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300">Home</Link>
-                    </div>
-                </div>
-            </header>
+            <Navbar
+                handleLogout={{} as unknown as () => Promise<void>}
+                setShowLoginModal={()=>{}}
+                setShowMenu={()=>toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}
+                navigate={navigate}
+                toastWarn={toast.warn}
+            />
 
             {/* Centered login card */}
             <main className="flex-1 flex items-center justify-center py-12 px-4 opacity-99">

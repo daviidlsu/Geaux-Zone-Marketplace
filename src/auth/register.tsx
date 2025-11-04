@@ -4,12 +4,12 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, doc, getDocs, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast, ToastContainer, Zoom } from 'react-toastify';
-
+import { useAuth } from '../auth/auth';
+import Navbar from "../components/navbar"
 import "../index.css"
 
 const Register: React.FC = () => {
     const navigate = useNavigate();
-    const toastID = "current-toast";
 
     const [username, setUsername] = useState('');
     const [invalidUsername, setInvalidUsername] = useState<boolean>(false);
@@ -32,32 +32,32 @@ const Register: React.FC = () => {
 
         // Basic validations
         if (!username) {
-            toast.warn("Please enter a username", { toastId: toastID });
+            toast.warn("Please enter a username", { toastId: "username-toast" });
             setInvalidUsername(true);
             return;
         }
         if (!trimmedEmail || !lsuEmailRegex.test(trimmedEmail)) {
-            toast.warn("Please enter a valid @lsu.edu email", { toastId: toastID });
+            toast.warn("Please enter a valid @lsu.edu email", { toastId: "email-toast" });
             setInvalidEmail(true);
             return;
         }
         if (!password) {
-            toast.warn("Please enter a password", { toastId: toastID });
+            toast.warn("Please enter a password", { toastId: "pass-toast" });
             setInvalidPass(true);
             return;
         }
         if (!repassword) {
-            toast.warn("Please re-enter your password", { toastId: toastID });
+            toast.warn("Please re-enter your password", { toastId: "repass-toast" });
             setInvalidRepass(true);
             return;
         }
         if (password.length < 8 || !/[!@#$%^&*_]/.test(password)) {
-            toast.warn("Password does not meet requirements", { toastId: toastID });
+            toast.warn("Password does not meet requirements", { toastId: "pass-len-toast" });
             setInvalidPass(true);
             return;
         }
         if (password !== repassword) {
-            toast.warn("Passwords do not match", { toastId: toastID });
+            toast.warn("Passwords do not match", { toastId: "pass-match-toast" });
             setInvalidRepass(true);
             return;
         }
@@ -69,7 +69,7 @@ const Register: React.FC = () => {
             const qSnapshot = await getDocs(q);
             console.log(qSnapshot)
             if (!qSnapshot.empty) {
-                toast.warn("Email already in use", { toastId: toastID });
+                toast.warn("Email already in use", { toastId: "email-exists-toast" });
                 return;
             }
 
@@ -86,12 +86,12 @@ const Register: React.FC = () => {
                 chats: []
             });
 
-            toast.success("Account created!", { toastId: toastID });
-            toast.success("Redirecting to login...", { toastId: toastID });
+            toast.success("Account created!", { toastId: "account-creat-toast" });
+            toast.success("Redirecting to login...", { toastId: "redirect-toast" });
             setTimeout(() => navigate('/login'), 2000);
         } catch (err: any) {
             console.error(err);
-            toast.error("An error occurred. Please try again.", { toastId: toastID });
+            toast.error("An error occurred. Please try again.", { toastId: "create-error-toast" });
             setError("An error occurred. Please try again.");
         } finally {
             setSubmitting(false);
@@ -100,19 +100,13 @@ const Register: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
-            <header className="bg-purple-900 shadow-md">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-yellow-400 rounded-lg flex items-center justify-center font-bold text-purple-900 text-lg">
-                            LSU
-                        </div>
-                        <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
-                    </div>
-                    <div>
-                        <Link to="/" className="px-4 py-1 rounded-2xl bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300">Home</Link>
-                    </div>
-                </div>
-            </header>
+            <Navbar
+                handleLogout={{} as unknown as () => Promise<void>}
+                setShowLoginModal={()=>{}}
+                setShowMenu={()=>toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}
+                navigate={navigate}
+                toastWarn={toast.warn}
+            />
 
             <main className="flex-1 flex items-center justify-center py-12 px-4">
                 <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
