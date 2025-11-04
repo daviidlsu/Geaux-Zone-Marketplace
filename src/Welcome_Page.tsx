@@ -22,6 +22,7 @@ interface Listing {
   location: string;
   sellerUID: string;
   available: boolean;
+  lastModified: Timestamp;
 }
 
 interface sellerInfo {
@@ -226,11 +227,23 @@ export default function WelcomePage() {
     const docRef = doc(db, "Inventory", listing.docId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      setSelectedListing(listing);
+      const updatedListing = {
+        docId: docSnap.id,
+        ...docSnap.data()
+      } as Listing;
+      // If listing has been modified since listings were fetched, update selected listing
+      if (updatedListing.lastModified !== listing.lastModified){
+        setListings(prevListings => prevListings.map(item=>
+          item.docId === listing.docId ? updatedListing : item)
+        )
+        setSelectedListing(updatedListing)
+      } else {
+        setSelectedListing(listing);
+      }
     } else {
       toast.error("This listing is no longer available.", {toastId: 'listing-unavailable'});
       setListings(prevListings => prevListings.filter(item => item.docId !== listing.docId));
-      await reloadData();
+      /* await reloadData(); */
       setSelectedListing(null);
     }
   }
@@ -341,7 +354,8 @@ export default function WelcomePage() {
         location: newLocation,      
         price: newPrice || null,
         sellerUID: currentUser?.uid || "anonymous",
-        title: newTitle
+        title: newTitle,
+        lastModified: serverTimestamp()
       });
       toast.success("Listing created successfully!");
     } catch (e) {

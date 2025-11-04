@@ -4,7 +4,7 @@ import { db } from "./firebase/firebase";
 import { useAuth } from "./auth/auth.tsx";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { Search, Filter, MapPin, Heart, X, Menu, Library, House, Trash2, TriangleAlert } from "lucide-react";
-import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
+import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "firebase/firestore";
 import Navbar from "./components/navbar.tsx";
 import "./index.css"
 
@@ -22,6 +22,7 @@ interface Listing {
   location: string;
   sellerUID: string;
   available: boolean;
+  lastModified: Timestamp;
 }
 
 export default function Listings() {
@@ -244,7 +245,8 @@ export default function Listings() {
           image: newImage || "https://via.placeholder.com/300x200",
           location: newLocation,      
           price: newPrice || null,
-          title: newTitle
+          title: newTitle,
+          lastModified: serverTimestamp()
         });
         setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
       } catch (e) {
