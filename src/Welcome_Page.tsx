@@ -46,7 +46,6 @@ export default function WelcomePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
-  const [loggedIn, setLoggedIn] = useState<boolean>(false); // Placeholder for authentication state 
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [likedItems, setLikedItems] = useState<string[]>([]);
   const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
@@ -285,12 +284,18 @@ export default function WelcomePage() {
     const {email, password} = Object.fromEntries(formData.entries()) as Record<string,string>;
     // TODO: sanitize user input
     try{
-      setIsLoading(true);
-      await signInWithEmailAndPassword(auth, email, password)
-      navigate('/');
-      toast.success("Login Successful!", {toastId: 'login-success'});
-      setShowLoginModal(false); // Close modal on successful login
-      setIsLoading(false);
+        setIsLoading(true);
+        const userCred = await signInWithEmailAndPassword(auth, email, password)
+        const User = userCred.user
+        if (User){
+          const docSnap = await getDoc(doc(db, 'Users', User.uid))
+          if (docSnap.exists()){setCurrentUserData(docSnap.data() as userData)}
+          navigate('/');
+          toast.success("Login Successful!", {toastId: 'login-success'});
+          setShowLoginModal(false); // Close modal on successful login
+          setIsLoading(false);
+        }
+        else {toast.error("User not found.", {toastId:'user-not-found'})}
     }catch(error){
         setIsLoading(false);
         toast.error("Login Failed. Please check your credentials.", {toastId: 'login-failed'});
