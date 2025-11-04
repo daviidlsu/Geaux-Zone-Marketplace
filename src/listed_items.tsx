@@ -7,7 +7,6 @@ import { Search, Filter, MapPin, Heart, X, Menu, Library, House, Trash2, Triangl
 import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
 
 import "./index.css"
-import firebase from "firebase/compat/app";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 

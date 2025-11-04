@@ -107,46 +107,36 @@ export default function WelcomePage() {
     setFilteredNum(filteredListings.length);
   }, [listings, searchQuery, selectedCategory, showLikedOnly]);
 
-  // Loads user data on auth change
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        try{
-          const docSnap = await getDoc(doc(db, 'Users', user.uid))
-          if (docSnap.exists()){
-            setCurrentUserData(docSnap.data() as userData)
-            const querySnapshot = await getDocs(query(collection(db, "Favorites"), where("userUID", "==", user.uid)));
-            const newLikedItems: string[] = [];
-            querySnapshot.forEach((doc) => {
-              const likedItemID = doc.data().listingID
-              newLikedItems.push(likedItemID);
-            });
-            setLikedItems(newLikedItems)
-            console.log(newLikedItems);
-          }
-        else {
-          console.error("No user data found for UID:", user.uid);
-          setCurrentUserData(null);
-        }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-          setCurrentUserData(null);
-        }
-      } else {
-        setCurrentUserData(null);
-      }
-    }); return () => unsubscribe();
-  }, []);
-
-  // Called upon loading page to fetch listings
-  useEffect(() => {
+  // Loads all listings and liked items
+  const reloadData = async () => {
     const loadListings = async () => {
       setLoading(true);
       const fetchedListings = await fetchListings();
       setListings(fetchedListings);
+
+      if (currentUser) {
+        try {
+          const favoritesQuery = query(collection(db, "Favorites"), where("userUID", "==", currentUser.uid));
+          const favoritesSnapshot = await getDocs(favoritesQuery);
+          const favoriteListingIDs: string[] = [];
+          favoritesSnapshot.forEach((doc) => {
+            const data = doc.data().listingID;
+            favoriteListingIDs.push(data);
+          });
+          setLikedItems(favoriteListingIDs);
+        } catch (error) {
+          console.error("Error fetching favorite listings: ", error);
+        }
+      }
+      else {setLikedItems([]);}
       setLoading(false);
     };
     loadListings();
+  }
+
+  // Called upon loading page to fetch listings
+  useEffect(() => {
+    reloadData();
   }, [currentUser]);
 
   // Gathers seller info upon selecting a listing
@@ -204,7 +194,7 @@ export default function WelcomePage() {
     return filteredListings.map((listing) => (
       <div
         key={listing.docId}
-        onClick={() => setSelectedListing(listing)}
+        onClick={() => handleSelectListing(listing)}
         className="bg-white rounded-xl shadow-sm hover:shadow-xl cursor-pointer border border-gray-200 overflow-hidden group"
       >
         <div className="aspect-square bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
@@ -228,6 +218,20 @@ export default function WelcomePage() {
         </div>
       </div>
     ));
+  }
+
+  // Listing selection handler\
+  const handleSelectListing = async (listing: Listing) => {
+    const docRef = doc(db, "Inventory", listing.docId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      setSelectedListing(listing);
+    } else {
+      toast.error("This listing is no longer available.", {toastId: 'listing-unavailable'});
+      setListings(prevListings => prevListings.filter(item => item.docId !== listing.docId));
+      await reloadData();
+      setSelectedListing(null);
+    }
   }
 
   // Contact seller handler
@@ -292,7 +296,6 @@ export default function WelcomePage() {
   const handleLogout = async () => {
     try {
       await logout();
-      setCurrentUserData(null);
       setLikedItems([]);
       navigate('/');
       toast.success("Logout Successful!", {toastId: 'logout-success'});
