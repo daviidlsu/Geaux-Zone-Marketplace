@@ -56,6 +56,9 @@ export default function WelcomePage() {
   const [password, setPassword] = useState('')
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [previewImageIndex, setPreviewImageIndex] = useState<number>(0);
+ 
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
@@ -196,6 +199,7 @@ export default function WelcomePage() {
   const handleCloseListing = () => {
     setSelectedListing(null);
     setListingOwner(null);
+    setUploadedImages([]);
   }
 
   // Contact seller handler
@@ -268,6 +272,24 @@ export default function WelcomePage() {
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files;
+  if (files) {
+    const fileArray = Array.from(files);
+    // Limit to 5 images
+    if (uploadedImages.length + fileArray.length > 5) {
+      toast.warn("You can only upload up to 5 images.");
+      return;
+    }
+    setUploadedImages([...uploadedImages, ...fileArray]);
+  }
+};
+
+const handleRemoveImage = (index: number) => {
+  setUploadedImages(uploadedImages.filter((_, i) => i !== index));
+  setPreviewImageIndex(0); // Always go back to first image
+};
+
   // Close create listing modal
   const handleCloseNewListingModal = () => {
     setNewTitle("");
@@ -276,6 +298,8 @@ export default function WelcomePage() {
     setNewLocation("");
     setNewDescription("");
     setNewImage("");
+    setPreviewImageIndex(0);
+    setUploadedImages([]);
     setShowCreateListing(false);
   }
 
@@ -293,13 +317,17 @@ export default function WelcomePage() {
       toast.warn("Please select a category.", {toastId: 'category-error'});
       return;
     }
+    if (uploadedImages.length === 0) {
+    alert("Please upload at least one photo.");
+    return;
+  }
     try {
       await addDoc(collection(db, "Inventory"), {
         Description: newDescription,
         available: true,
         categoryID: newCategory,
         dateListed: new Date(), // Store current date
-        image: newImage || "https://via.placeholder.com/300x200",
+        image: newImage || "https://via.placeholder.com/300x200", // Replace with uploaded image URL
         location: newLocation,      
         price: newPrice || null,
         sellerUID: auth.currentUser?.uid || "anonymous",
@@ -497,25 +525,64 @@ export default function WelcomePage() {
       {/* Create Listing Modal */}
       {showCreateListing && (
         <div
-          className="fixed inset-0 bg-white bg-opacity-80 z-50 flex grid-cols-2 items-center justify-center p-4 gap-2"
+          className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center p-4 gap-2"
           onClick={handleCloseNewListingModal}
         >
           {/* Listing Preview Container LEFT SIDE*/}
           <div
             className="relative bg-white rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden"
             onClick={(e) => e.stopPropagation()}>
-            {/* Left Side - Image */}
-            <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
+            
+            {/* Left Side - Image with Carousel */}
+            <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center relative">
               <img 
-                src={newImage || "https://img.freepik.com/free-photo/blurred-abstract-background_58702-1509.jpg?semt=ais_hybrid&w=740&q=80"} 
+                src={
+                  uploadedImages.length > 0 
+                    ? URL.createObjectURL(uploadedImages[previewImageIndex]) 
+                    : "https://img.freepik.com/free-photo/blurred-abstract-background_58702-1509.jpg?semt=ais_hybrid&w=740&q=80"
+                } 
                 alt={newTitle} 
                 className="w-full h-full object-cover rounded-tl-2xl rounded-bl-2xl" 
               />
+              
+              {/* Carousel Navigation - Only show if more than 1 image */}
+              {uploadedImages.length > 1 && (
+                <>
+                  {/* Previous Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewImageIndex(previewImageIndex === 0 ? uploadedImages.length - 1 : previewImageIndex - 1);
+                    }}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-all z-10"
+                  >
+                    <span className="text-2xl">‹</span>
+                  </button>
+                  
+                  {/* Next Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewImageIndex(previewImageIndex === uploadedImages.length - 1 ? 0 : previewImageIndex + 1);
+                    }}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-all z-10"
+                  >
+                    <span className="text-2xl">›</span>
+                  </button>
+                  
+                  {/* Image Counter */}
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm font-medium">
+                    {previewImageIndex + 1} / {uploadedImages.length}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Right Side - Listing Info */}
             <div className="w-1/2 flex flex-col">
-              {/* Header with Close Button */}
+              {/* Header */}
               <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
                   {newCategory || "Category"}
@@ -546,26 +613,30 @@ export default function WelcomePage() {
               </div>
 
               {/* Seller Info */}
-                <div className="bg-gray-100 rounded-xl p-4 m-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
-                    <div>
-                      <p className="font-semibold text-gray-900">{currentUserData?.username}</p>
-                      <p className="text-sm text-gray-600">Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
-                    </div>
+              <div className="bg-gray-100 rounded-xl p-4 m-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {currentUserData?.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{currentUserData?.username}</p>
+                    <p className="text-sm text-gray-600">
+                      Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}
+                    </p>
                   </div>
                 </div>
+              </div>
             </div>
           </div>
 
-          {/* Input Form Container  RIGHT SIDE*/}
-            <div
-              className="flex flex-col relative bg-white border-1 border-gray-300 rounded-2xl max-w-3xl w-2/3 max-h-[90vh] shadow-xl overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
+          {/* Input Form Container RIGHT SIDE*/}
+          <div
+            className="flex flex-col relative bg-white border border-gray-300 rounded-2xl max-w-3xl w-2/3 max-h-[90vh] shadow-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
-            <div className="z-50 sticky top-0 bg-white border-b bg-opacity-0 border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+            <div className="z-50 sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-2xl font-bold text-gray-900">Create New Listing</h2>
             </div>
 
@@ -592,7 +663,7 @@ export default function WelcomePage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Price <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative z-0">
+                    <div className="relative">
                       <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
                       <input
                         type="text"
@@ -600,7 +671,6 @@ export default function WelcomePage() {
                         onChange={(e) => setNewPrice(e.target.value ? parseFloat(e.target.value) : null)}
                         placeholder="0"
                         className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        min="0"
                       />
                     </div>
                   </div>
@@ -636,25 +706,67 @@ export default function WelcomePage() {
                   />
                 </div>
 
-                {/* Image URL */}
+                {/* Image Upload */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Image URL (optional)
+                    Upload Photos <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={newImage}
-                    onChange={(e) => setNewImage(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                  <div className="flex gap-1.5 mt-1">
-                  <button className="text-center w-20 px-4 py-1 text-xs text-white font-semibold rounded-lg bg-purple-900 hover:bg-purple-800">
-                    Upload
-                  </button>
-                  <p className="text-sm text-gray-500 mt-0">Upload from your device (coming soon)
-                  </p>
+                  
+                  {/* Upload Button */}
+                  <div className="mb-4">
+                    <label className="cursor-pointer">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-all">
+                        <div className="flex flex-col items-center">
+                          <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          <p className="text-gray-600 font-medium">Click to upload photos</p>
+                          <p className="text-gray-400 text-sm mt-1">PNG, JPG up to 5 images</p>
+                        </div>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
                   </div>
+
+                  {/* Image Preview Grid */}
+                  {uploadedImages.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 gap-3">
+                        {uploadedImages.map((file, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`Upload ${index + 1}`}
+                              className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            >
+                              ×
+                            </button>
+                            {index === 0 && (
+                              <span className="absolute bottom-1 left-1 bg-purple-900 text-white text-xs px-2 py-1 rounded">
+                                Cover
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <p className="text-sm text-gray-500 mt-2">
+                    {uploadedImages.length}/5 images uploaded
+                    {uploadedImages.length > 0 && " • First image will be the cover photo"}
+                  </p>
                 </div>
 
                 {/* Description */}
