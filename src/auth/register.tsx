@@ -99,7 +99,7 @@ const Register: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="min-h-screen bg-center bg-[url('/lsu-register.jpg')] flex flex-col">
             <Navbar
                 handleLogout={{} as unknown as () => Promise<void>}
                 setShowLoginModal={()=>{}}
@@ -108,26 +108,28 @@ const Register: React.FC = () => {
                 toastWarn={toast.warn}
             />
 
-            <main className="flex-1 flex items-center justify-center py-12 px-4">
-                <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-                    <div className="text-center mb-6">
-                        <div className="mx-auto w-16 h-16 bg-yellow-400 rounded-lg flex items-center justify-center font-bold text-purple-900 text-2xl">LSU</div>
-                        <h1 className="text-2xl font-bold text-gray-900 mt-4">Create an account</h1>
+            <main className="flex-1 flex items-center justify-center py-2 px-4">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 pt-6 pb-4">
+                    <div className="text-center mb-4">
+                        <div className="mx-auto w-24 h-24 bg-purple-900 rounded-lg flex items-center justify-center">
+                            <img className="w-16 h-16 " src="/geauxzone_tiger.png"></img>
+                        </div>                        
+                        <h1 className="text-2xl font-bold text-gray-900 mt-2">Create an account</h1>
                         <p className="text-sm text-gray-500">Register with your @lsu.edu account</p>
                     </div>
 
                     <form onSubmit={handleRegister} noValidate>
-                        <label className="block text-sm font-medium text-gray-700">Username</label>
+                        <label className="block mt-1 text-sm font-medium text-gray-700">Username</label>
                         <input
                             type="text"
                             name="username"
                             value={username}
                             onChange={(e) => {setUsername(e.target.value); setInvalidUsername(false)}}
                             placeholder="Display name"
-                            className={`mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidUsername ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
+                            className={`mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidUsername ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
                         />
 
-                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <label className="block mt-1 text-sm font-medium text-gray-700">Email</label>
                         <input
                             id="email"
                             type="email"
@@ -148,17 +150,17 @@ const Register: React.FC = () => {
                             <label className="ml-1 text-sm font-medium text-red-500">Please enter a valid school email</label>
                         )}
 
-                        <label className="block mt-4 text-sm font-medium text-gray-700">Password</label>
+                        <label className="block mt-1 text-sm font-medium text-gray-700">Password</label>
                         <input
                             type="password"
                             name="password"
                             value={password}
                             onChange={(e) => {setPassword(e.target.value); setInvalidPass(false)}}
                             placeholder="Create a password"
-                            className={`mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidPass ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
+                            className={`mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidPass ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
                         />
 
-                        <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+                        <label className="block mt-1 text-sm font-medium text-gray-700">Confirm Password</label>
                         <input
                             type="password"
                             name="repassword"
@@ -182,7 +184,7 @@ const Register: React.FC = () => {
                             {submitting ? 'Creating account…' : 'Create account'}
                         </button>
 
-                        <div className="mt-4 text-center text-sm text-gray-600">
+                        <div className="mt-4 mb-0 text-center text-sm text-gray-600">
                             Already have an account?{' '}
                             <Link to="/login" className="font-semibold text-purple-900 hover:underline">Sign in</Link>
                         </div>
