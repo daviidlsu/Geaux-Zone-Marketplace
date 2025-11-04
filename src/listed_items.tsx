@@ -3,8 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { db } from "./firebase/firebase";
 import { useAuth } from "./auth/auth.tsx";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
-import { Search, Filter, MapPin, Heart, X, Menu, Library, House} from "lucide-react";
-import { collection, getDocs, doc, query, Timestamp, where, updateDoc } from "firebase/firestore";
+import { Search, Filter, MapPin, Heart, X, Menu, Library, House, Trash2, TriangleAlert } from "lucide-react";
+import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc} from "firebase/firestore";
 
 import "./index.css"
 
@@ -44,6 +44,7 @@ export default function Listings() {
     const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
     const [showSelectedListing, setShowSelectedListing] = useState<boolean>(false);
     const [showMenu, setShowMenu] = useState<boolean>(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
 
      const menuItems = [
         { name: 'Home', icon: House, action: () => navigate('/') },
@@ -251,6 +252,29 @@ export default function Listings() {
       handleCloseEditListingModal();
       toast.success("Listing changed successfully!");
     };
+
+    const handleDeleteListing = async (listing:Listing) => {
+        //await deleteDoc(doc(db, "Inventory", listing.docId));
+
+        // NOT FINISHED
+        // Remove associated favorites records (Need to add admin Firebase to use batch())
+
+        /* const admin = require("firebase-admin");
+        admin.initializeApp();
+        const favoritesRef=collection(db, "Favorites");
+        const querySnapshot = await getDocs(query(favoritesRef, where("listingID", "==", listing.id)));
+        if (querySnapshot.empty) {
+            console.log(`No favorite records found for listing:${listing.id}. Cleanup complete.`);
+        }
+        const batch = firestore().batch()
+        querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref)
+        });
+        await batch.commit() */
+        setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
+        setShowDeleteConfirm(false);
+        handleCloseEditListingModal();
+    }
     
     return (
         <div className="min-h-screen bg-gray-50">
@@ -320,7 +344,7 @@ export default function Listings() {
 
             {/* Search Bar */}
             <div className="bg-white border-gray-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 py-6 pb-2 flex gap-3">
+                <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3">
                     <div className="flex-1 relative">
                         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         {/*Possibly remove the category reset, if user needs to search in specific category*/}
@@ -340,25 +364,6 @@ export default function Listings() {
                         </button>)}
                     </div>
                 </div>
-            </div>
-
-            {/* Categories */}
-            <div className="bg-white border-b border-gray-200">
-              <div className="max-w-7xl mx-auto px-6 py-4 pt-2">
-                <div className="flex gap-3 overflow-x-auto">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all ${
-                        selectedCategory === category ? "bg-purple-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Listings Grid */}
@@ -553,24 +558,50 @@ export default function Listings() {
                           </div>
             
                           {/* Action Buttons */}
-                          <div className="mt-6 flex gap-3">
+                          <div className="mt-6 flex gap-2">
+                            <button 
+                              onClick={()=>setShowDeleteConfirm(true)}
+                              className="flex justify-center items-center w-14 h-12 border-2 border-red-300 text-red-300 rounded-lg font-semibold hover:bg-red-500 hover:text-white transition-all">
+                                  <Trash2 className="w-6 h-6"/>
+                            </button>
                             <button
                               onClick={handleCloseEditListingModal}
-                              className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+                              className="flex h-12 w-1/3 border-2 border-gray-300 justify-center items-center text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
                             >
                               Cancel
                             </button>
                             <button
                               onClick={()=>handleChangeListing(selectedListing!)}
-                              className="flex-1 px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+                              className="flex h-12 w-2/3 bg-purple-900 justify-center items-center text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
                             >
-                              Change Listing
+                              Save Changes
                             </button>
                           </div>
                         </div>
                       </div>
                     </div>
                   )}
+            { showDeleteConfirm && (
+              <div onClick={()=>setShowDeleteConfirm(false)} className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
+                <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm bg-white rounded-xl shadow-2xl p-6 space-y-4 transform transition-all">
+                  <div className="text-xl font-semibold mb-0">Are you sure?</div>
+                  <span className="text-md font-semibold text-red-500">This will PERMANENTLY delete this listing</span>
+                  <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    onClick={()=>setShowDeleteConfirm(false)}
+                    className="flex px-4 py-2 rounded-full hover:bg-gray-100 transition-colors">
+                      Cancel
+                  </button>
+                  <button
+                  onClick={()=>handleDeleteListing(selectedListing!)}
+                    className="flex px-4 py-2 bg-red-500 text-white text-bold rounded-full hover:bg-red-600 transition-colors">
+                      Delete
+                      <TriangleAlert  className="ml-1"/>
+                  </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Toast Container */}
             <ToastContainer
@@ -584,5 +615,4 @@ export default function Listings() {
             />
         </div>
     );
-};
-              
+  };
