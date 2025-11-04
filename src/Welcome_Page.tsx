@@ -1,7 +1,8 @@
 import { useState, FormEvent, useEffect } from "react";
-import { Search, Filter, MapPin, Heart, X} from "lucide-react";
+import { useAuth } from "./auth/auth.tsx";
+import { Search, Filter, MapPin, Heart, X, Menu, Library, House} from "lucide-react";
 import { auth, db } from "./firebase/firebase";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { arrayUnion, arrayRemove, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
@@ -15,7 +16,7 @@ interface Listing {
   categoryID: Category;
   Description: string;
   price: number;
-  dateListed: string;
+  dateListed: Timestamp;
   image: string;
   location: string;
   sellerUID: string;
@@ -28,15 +29,11 @@ interface sellerInfo {
   username: string;
 }
 
-interface userData {
-  uid: string;
-  username: string;
-  accountCreation: Timestamp;
-}
-
 export default function WelcomePage() {
   const navigate = useNavigate();
-  const [currentUserData, setCurrentUserData] = useState<userData | null>(null);
+
+  const { currentUser, currentUserData, isLoading, logout } = useAuth();
+
   const [email, setEmail] = useState<string>('')
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -44,7 +41,6 @@ export default function WelcomePage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showLikedOnly, setShowLikedOnly] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [likedItems, setLikedItems] = useState<string[]>([]);
@@ -57,10 +53,16 @@ export default function WelcomePage() {
   const [newImage, setNewImage] = useState<string>("");
   const [password, setPassword] = useState('')
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
+  const [showMenu, setShowMenu] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
+
+  const menuItems = [
+    { name: 'Home', icon: House, action: () => navigate('/') },
+    { name: 'Your Listings', icon: Library, action: () => navigate('/my-listings') },
+  ];
 
   // Fetch listings from Firestore
   const fetchListings = async (): Promise<Listing[]> => {
@@ -68,7 +70,7 @@ export default function WelcomePage() {
       const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
       const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
         const data = doc.data() as Listing;
-        return auth.currentUser?.uid !== data.sellerUID;}
+        return currentUser?.uid !== data.sellerUID;}
       ).map(doc => {
         const data = doc.data() as Listing;
         return {
@@ -145,7 +147,7 @@ export default function WelcomePage() {
       setLoading(false);
     };
     loadListings();
-  }, [auth.currentUser]);
+  }, [currentUser]);
 
   // Gathers seller info upon selecting a listing
   useEffect(() => {
@@ -202,7 +204,7 @@ export default function WelcomePage() {
     return filteredListings.map((listing) => (
       <div
         key={listing.docId}
-        onClick={() => handleListing(listing)}
+        onClick={() => setSelectedListing(listing)}
         className="bg-white rounded-xl shadow-sm hover:shadow-xl cursor-pointer border border-gray-200 overflow-hidden group"
       >
         <div className="aspect-square bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
@@ -227,20 +229,10 @@ export default function WelcomePage() {
       </div>
     ));
   }
-  // Listing handler (Sets selected listing))
-  async function handleListing(listing: Listing){
-    setSelectedListing(listing);
-  }
-
-  // Closes selected listing
-  const handleCloseListing = () => {
-    setSelectedListing(null);
-    setListingOwner(null);
-  }
 
   // Contact seller handler
   const handleContactSeller = () => {
-    if (auth.currentUser == null) {
+    if (currentUser == null) {
       toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
     } else {
       // Implement contact seller functionality here
@@ -249,7 +241,7 @@ export default function WelcomePage() {
 
   // Favorite listing handler
   const handleFavorite = async (listingid: string) => {
-    if (auth.currentUser == null) {
+    if (currentUser == null) {
       toast.warn("Please Login or Register to favorite listings.", {toastId: 'favorite-error'});
       return;
     } 
@@ -284,29 +276,22 @@ export default function WelcomePage() {
     const {email, password} = Object.fromEntries(formData.entries()) as Record<string,string>;
     // TODO: sanitize user input
     try{
-        setIsLoading(true);
-        const userCred = await signInWithEmailAndPassword(auth, email, password)
-        const User = userCred.user
-        if (User){
-          const docSnap = await getDoc(doc(db, 'Users', User.uid))
-          if (docSnap.exists()){setCurrentUserData(docSnap.data() as userData)}
-          navigate('/');
-          toast.success("Login Successful!", {toastId: 'login-success'});
-          setShowLoginModal(false); // Close modal on successful login
-          setIsLoading(false);
-        }
-        else {toast.error("User not found.", {toastId:'user-not-found'})}
+        setLoading(true);
+        await signInWithEmailAndPassword(auth, email, password)
+        navigate('/');
+        toast.success("Login Successful!", {toastId: 'login-success'});
+        setShowLoginModal(false);
     }catch(error){
-        setIsLoading(false);
         toast.error("Login Failed. Please check your credentials.", {toastId: 'login-failed'});
         console.log(error);
     }
+    setLoading(false);
   }
 
   // Logout handler
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       setCurrentUserData(null);
       setLikedItems([]);
       navigate('/');
@@ -315,20 +300,6 @@ export default function WelcomePage() {
       console.error("Error signing out:", error);
     }
   }
-  // Register button handler
-  const handleRegister = () => {
-    navigate('/register');
-  }
-
-  // Create listing handler
-  const handleCreateListing = () => {
-    if (auth.currentUser == null) {
-      toast.warn("Please login to create a listing.", {toastId:'login-to-create'});
-      setShowLoginModal(true);
-    } else {
-      setShowCreateListing(true);
-    }
-  };
 
   // Close create listing modal
   const handleCloseNewListingModal = () => {
@@ -356,6 +327,7 @@ export default function WelcomePage() {
       return;
     }
     try {
+      setLoading(true);
       await addDoc(collection(db, "Inventory"), {
         Description: newDescription,
         available: true,
@@ -364,13 +336,15 @@ export default function WelcomePage() {
         image: newImage || "https://via.placeholder.com/300x200",
         location: newLocation,      
         price: newPrice || null,
-        sellerUID: auth.currentUser?.uid || "anonymous",
+        sellerUID: currentUser?.uid || "anonymous",
         title: newTitle
       });
+      toast.success("Listing created successfully!");
     } catch (e) {
       console.error("Error adding document: ", e);
     }
     handleCloseNewListingModal();
+    setLoading(false);
     toast.success("Listing created successfully!", {toastId: 'create-listing-success'});
   };
 
@@ -379,21 +353,30 @@ export default function WelcomePage() {
       {/* Header Section */}
       <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img className="w-10 h-10 " src="/geauxzone_tiger.png">
-            </img>
-            <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
-          </div>
-          <div className="flex gap-3 font-sans">
-            <button onClick={auth.currentUser ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
-              ${auth.currentUser 
-                ? 'text-white hover:text-yellow-600'
-                : 'text-white hover:text-yellow-600'}`}> {/*Determines button style based on login state*/}
-              {auth.currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
-            </button>
-            {auth.currentUser == null && (
-              <button onClick={handleRegister} className="px-5 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
-            )}
+          <button onClick={ currentUser ? ()=> setShowMenu(true) : ()=> {setShowLoginModal(true);toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}} className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center">
+            <Menu className="stroke-white w-8 h-8"/>
+          </button>
+          <div className="flex items-center justify-between w-full ml-[-72px]">
+            <div className="flex items-center gap-3">
+              <img className="w-10 h-10 " src="/geauxzone_tiger.png"></img>
+              <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
+            </div>
+            <div className="flex gap-2 font-sans">
+              <button onClick={ currentUser ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
+                ${currentUser 
+                  ? 'text-white hover:text-yellow-600'
+                  : 'text-white hover:text-yellow-600'}`}> {/*Determines button style based on login state*/}
+                {currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
+              </button>
+              {currentUser == null && (
+                <button onClick={()=>navigate("/register")} className="px-2 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
+              )}
+              {currentUser != null && (
+                <button className="w-10 h-10 rounded-full bg-purple-950 text-white font-bold items-center justify-center flex">
+                  {currentUserData?.username.charAt(0).toUpperCase()}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </nav>
@@ -433,7 +416,7 @@ export default function WelcomePage() {
 
       {/* Categories */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-6 py-4 pt-2">
           <div className="flex gap-3 overflow-x-auto">
             {categories.map((category) => (
               <button
@@ -463,7 +446,10 @@ export default function WelcomePage() {
       </div>
       
       {/* New Listing Button */}
-      <button onClick={handleCreateListing} className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
+      <button onClick={currentUser == null 
+        ? ()=> {toast.warn("Please login to create a listing.", {toastId:'login-to-create'}); setShowLoginModal(true)}
+        : ()=> setShowCreateListing(true)} 
+        className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
         <span className="text-2xl text-purple-900 font-bold leading-none absolute inset-0  mb-1 flex items-center justify-center transition-all duration-300 group-hover:opacity-0 group-hover:scale-0">
           +
         </span>
@@ -476,7 +462,7 @@ export default function WelcomePage() {
       {selectedListing && listingOwner!=null &&(
         <div
           className="fixed inset-0 bg-[#444]/70 z-50 flex items-center justify-center p-4"
-          onClick={handleCloseListing}
+          onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
         >
           <div
             className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex"
@@ -500,7 +486,7 @@ export default function WelcomePage() {
                   {selectedListing.categoryID}
                 </span>
                 <button
-                  onClick={handleCloseListing}
+                  onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
                   className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full transition-all"
                 >
                   <X size={30} color="#59168b" />
@@ -753,6 +739,7 @@ export default function WelcomePage() {
                 <button
                   onClick={handleSubmitListing}
                   className="flex-1 px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+                  disabled={loading}
                 >
                   Create Listing
                 </button>
@@ -763,7 +750,7 @@ export default function WelcomePage() {
       )}
 
       {/* Login Modal */}
-      {auth.currentUser == null && showLoginModal && (
+      {currentUser == null && showLoginModal && (
         <div id="top"onClick={() => setShowLoginModal(false)} className="fixed inset-0 flex items-center justify-center bg-[#444]/60 z-50">
           
             <div id="box" onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 relative">
@@ -819,13 +806,13 @@ export default function WelcomePage() {
               {/* Submit button */}
               <button 
                 className={`w-full px-4 py-3 rounded-lg font-semibold text-white ${
-                  isLoading || !lsuEmailRegex.test(email.trim()) || password.length === 0
+                  loading || !lsuEmailRegex.test(email.trim()) || password.length === 0
                   ? 'bg-purple-900/60 cursor-not-allowed opacity-80'
                   : 'bg-purple-900 hover:bg-purple-800'
                 }`}
                 type="submit"
-                disabled={isLoading || !lsuEmailRegex.test(email.trim()) || password.length === 0}>
-                  {isLoading ? 'Logging in...' : 'Login'} 
+                disabled={loading || !lsuEmailRegex.test(email.trim()) || password.length === 0}>
+                  {loading ? 'Logging in...' : 'Login'} 
               </button> 
               <div className="mt-4 text-center text-sm text-gray-600">
                 Don't have an account?{' '}
@@ -835,6 +822,45 @@ export default function WelcomePage() {
           </div>
         </div>
       )}
+
+      {/* Menu Modal */}
+      <>
+        <div className={`fixed inset-0 bg-black/50 z-[99] transition-opacity duration-300 ${showMenu ? 'opacity-100 visible': 'opacity-0 invisible'}`}
+          onClick={()=>setShowMenu(false)}>
+          <div 
+            className={`fixed top-0 left-0 w-64 h-full rounded-r-2xl bg-white shadow-2xl z-[100] transform transition-transform duration-300 ease-in-out ${showMenu ? 'translate-x-0' : '-translate-x-full'}`}
+            onClick={(e)=>e.stopPropagation()}>
+            <div className="p-4 flex flex-col h-full">
+              {/* Header with Close Button */}
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl ml-2 font-bold text-purple-900">Menu</h2>
+                <button 
+                  onClick={()=>setShowMenu(false)} 
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  aria-label="Close menu">
+                  <X className="w-6 h-6 text-gray-700" />
+                </button>
+              </div>
+              <nav className="flex-grow">
+                {menuItems.map((item) => {
+                  return (
+                    <a
+                      key={item.name}
+                      onClick={() => {setShowMenu(false);item.action()}}
+                      className="flex items-center justify-between p-3 pl-1 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors hover:cursor-pointer"
+                    >
+                      <div className="flex items-center">
+                        <item.icon className="w-5 h-5 mr-3" />
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                    </a>
+                  );
+                })}
+                </nav>
+              </div>
+            </div>
+          </div>
+        </>
 
       {/* Toast Container */}
       <ToastContainer
