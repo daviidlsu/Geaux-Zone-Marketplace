@@ -357,13 +357,12 @@ export default function WelcomePage() {
         title: newTitle,
         lastModified: serverTimestamp()
       });
-      toast.success("Listing created successfully!");
+      toast.success("Listing created successfully!", {toastId:"creation-success"});
     } catch (e) {
       console.error("Error adding document: ", e);
     }
     handleCloseNewListingModal();
     setLoading(false);
-    toast.success("Listing created successfully!", {toastId: 'create-listing-success'});
   };
 
   return (
@@ -461,11 +460,11 @@ export default function WelcomePage() {
           onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
         >
           <div
-            className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex"
+            className="bg-white rounded-2xl max-w-5xl w-full h-[80vh] max-h-[90vh] overflow-hidden shadow-2xl flex"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Left Side - Image */}
-            <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
+            <div className="w-1/2 h-full aspect-video max-h-[800px] bg-white flex items-center justify-center">
               <img 
                 src={selectedListing.image} 
                 alt={selectedListing.title} 
@@ -504,27 +503,30 @@ export default function WelcomePage() {
                 </div>
 
                 {/* Description */}
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Description</h4>
-                  <p className="text-gray-700 leading-relaxed">{selectedListing.Description}</p>
+                <div className="mb-6 h-13/30">
+                  <h4 className="text-lg font-semibold text-gray-900 ml-2 mb-3">Description</h4>
+                  <textarea 
+                    className="text-gray-800 rounded-xl p-4 pt-2 pb-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
+                    value={selectedListing.Description || "Enter description..."}
+                    disabled>
+                  </textarea>
                 </div>
+              </div>
 
-                {/* Seller Info */}
-                {listingOwner && (
-                <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Seller Information</h4>
+              {/* Seller Info */}
+                <div className="bg-gray-100 rounded-xl p-4 m-6 mt-4 mb-2 py-2 h-1/7">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{listingOwner.username.charAt(0).toUpperCase()}</div>
+                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(listingOwner.username.charAt(0).toUpperCase())}</div>
                     <div>
                       <p className="font-semibold text-gray-900">{listingOwner.username}</p>
                       <p className="text-sm text-gray-600">Member since {listingOwner.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
                     </div>
                   </div>
-                </div>)}
-              </div>
+                </div>
 
               {/* Action Buttons - Fixed at Bottom */}
-              <div className="px-6 py-4 border-t border-gray-200 bg-white">
+              <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
                   {/* Contact Seller Button */}
                   <button onClick={() => {handleContactSeller();}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
@@ -588,7 +590,7 @@ export default function WelcomePage() {
                 <div className="mb-6 h-4/7">
                   <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
                   <textarea 
-                    className="text-gray-800 rounded-xl p-4 pt-2 pb-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
+                    className="text-gray-800 rounded-xl p-4 py-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
                     value={newDescription || "Enter description..."}
                     disabled>
                   </textarea>
@@ -596,7 +598,7 @@ export default function WelcomePage() {
               </div>
 
               {/* Seller Info */}
-                <div className="bg-gray-100 rounded-xl p-4 m-6 mt-0 h-1/5">
+                <div className="bg-gray-100 rounded-xl p-4 m-6 m-0 h-1/5">
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
