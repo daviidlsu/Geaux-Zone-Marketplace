@@ -2,8 +2,9 @@ import { FormEvent, useState } from 'react'
 import { auth } from '../firebase/firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useNavigate, Link } from 'react-router-dom'
-import { toast, ToastContainer, Zoom } from 'react-toastify'
+import { toast } from 'react-toastify'
 import Navbar from '../components/navbar'
+import CustomToastContainer from '../components/toast'
 
 const Login = () => {
     const navigate = useNavigate()
@@ -51,7 +52,7 @@ const Login = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col bg-[url('/lsu_fall.jpg')] bg-bottom">
+        <div className="min-h-screen bg-cover flex flex-col bg-[url('/lsu_fall.jpg')] bg-bottom">
             {/* Top navigation like Welcome page */}
             <Navbar
                 handleLogout={{} as unknown as () => Promise<void>}
@@ -128,15 +129,7 @@ const Login = () => {
                 </div>
             </main>
 
-            <ToastContainer
-                toastStyle={{ backgroundColor: '#421168ff', color: '#fff', border: '1.5px #421168ff' , borderRadius: '16px'}}
-                position="top-right"
-                autoClose={4000}
-                closeOnClick
-                hideProgressBar={true}
-                transition={Zoom}
-                theme="light"
-            />
+            <CustomToastContainer/>
         </div>
     )
 }

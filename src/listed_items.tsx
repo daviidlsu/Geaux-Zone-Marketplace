@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { db } from "./firebase/firebase";
 import { useAuth } from "./auth/auth.tsx";
-import { toast, ToastContainer, Zoom } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { Search, Filter, MapPin, Heart, X, Menu, Library, House, Trash2, TriangleAlert } from "lucide-react";
 import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "firebase/firestore";
 import Navbar from "./components/navbar.tsx";
-import "./index.css"
+import CustomToastContainer from "./components/toast.tsx";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -591,16 +591,7 @@ export default function Listings() {
               </div>
             )}
 
-            {/* Toast Container */}
-            <ToastContainer
-              toastStyle={{ backgroundColor: '#421168ff', color: '#fff', border: '1.5px #421168ff' , borderRadius: '16px'}}
-              position="top-right"
-              autoClose={4000}
-              closeOnClick
-              hideProgressBar={true}
-              transition={Zoom}
-              theme="dark"
-            />
+            <CustomToastContainer/>
         </div>
     );
   };

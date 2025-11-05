@@ -3,10 +3,10 @@ import { auth, db } from '../firebase/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, doc, getDocs, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
-import { toast, ToastContainer, Zoom } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { useAuth } from '../auth/auth';
 import Navbar from "../components/navbar"
-import "../index.css"
+import CustomToastContainer from '../components/toast';
 
 const Register: React.FC = () => {
     const navigate = useNavigate();
@@ -99,7 +99,7 @@ const Register: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-center bg-[url('/lsu-register.jpg')] flex flex-col">
+        <div className="min-h-screen bg-center bg-cover bg-[url('/lsu-register.jpg')] flex flex-col">
             <Navbar
                 handleLogout={{} as unknown as () => Promise<void>}
                 setShowLoginModal={()=>{}}
@@ -192,15 +192,7 @@ const Register: React.FC = () => {
                 </div>
             </main>
 
-            <ToastContainer
-                toastStyle={{ backgroundColor: '#421168ff', color: '#fff', border: '1.5px #421168ff' , borderRadius: '16px'}}
-                position="top-right"
-                autoClose={4000}
-                closeOnClick
-                hideProgressBar={true}
-                transition={Zoom}
-                theme="light"
-            />
+            <CustomToastContainer/>
         </div>
     );
 }
