@@ -127,6 +127,7 @@ const Register: React.FC = () => {
                             onChange={(e) => {setUsername(e.target.value); setInvalidUsername(false)}}
                             placeholder="Display name"
                             className={`mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidUsername ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
+                            autoComplete='off'
                         />
 
                         <label className="block mt-1 text-sm font-medium text-gray-700">Email</label>
@@ -143,6 +144,7 @@ const Register: React.FC = () => {
                             }}
                             placeholder="Email@lsu.edu"
                             className={`mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidEmail ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
+                            autoComplete='off'
                         />
                         
                         {/*Displays invalid email error if email is invalid */}
@@ -158,6 +160,7 @@ const Register: React.FC = () => {
                             onChange={(e) => {setPassword(e.target.value); setInvalidPass(false)}}
                             placeholder="Create a password"
                             className={`mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidPass ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
+                            autoComplete='off'
                         />
 
                         <label className="block mt-1 text-sm font-medium text-gray-700">Confirm Password</label>
@@ -168,6 +171,7 @@ const Register: React.FC = () => {
                             onChange={(e) => {setRepassword(e.target.value); setInvalidRepass(false)}}
                             placeholder="Re-enter password"
                             className={`mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 ${invalidRepass ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}`}
+                            autoComplete='off'
                         />
 
                         {error && <div role="alert" className="text-sm text-red-600 mb-4">{error}</div>}

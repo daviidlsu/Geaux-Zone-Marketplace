@@ -89,6 +89,7 @@ const Login = () => {
                             }}
                             placeholder="you@lsu.edu"
                             className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            autoComplete='off'
                         />
 
                         {/*Displays invalid email error if email is invalid */}
@@ -105,6 +106,7 @@ const Login = () => {
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Enter your password"
                             className="mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            autoComplete='off'
                         />
 
                         {error && <div role="alert" className="text-sm text-red-600 mb-4">{error}</div>}

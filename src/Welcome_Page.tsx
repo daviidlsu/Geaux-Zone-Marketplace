@@ -1,11 +1,12 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useAuth } from "./auth/auth.tsx";
-import { Search, Filter, MapPin, Heart, X, Menu, Library, House} from "lucide-react";
+import { Search, Filter, MapPin, Heart, X, Library, House} from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from 'react-toastify';
 import { arrayUnion, arrayRemove, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
+import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx"
 
@@ -61,11 +62,6 @@ export default function WelcomePage() {
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
-
-  const menuItems = [
-    { name: 'Home', icon: House, action: () => navigate('/') },
-    { name: 'Your Listings', icon: Library, action: () => navigate('/my-listings') },
-  ];
 
   // Fetch listings from Firestore
   const fetchListings = async (): Promise<Listing[]> => {
@@ -376,8 +372,7 @@ export default function WelcomePage() {
         navigate={navigate}
         toastWarn={toast.warn}
       />
-
-
+      <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 
       {/* Search Bar */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
@@ -391,7 +386,7 @@ export default function WelcomePage() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => {setSearchQuery(e.target.value);setSelectedCategory("All")}}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for items..."
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             /> 
@@ -531,7 +526,7 @@ export default function WelcomePage() {
                 <div className="flex gap-3">
                   {/* Contact Seller Button */}
                   <button onClick={() => {handleContactSeller();}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
-                    Contact Seller
+                    Submit Offer
                   </button>
                   {/* Favorite Button */}
                     <button onClick={() => {handleFavorite(selectedListing.docId);}}
@@ -779,6 +774,7 @@ export default function WelcomePage() {
                   placeholder="email@lsu.edu"
                   value={email}
                   onChange={(e)=> setEmail(e.target.value)}
+                  autoComplete='off'
                   onBlur={() => {
                     if (email && !lsuEmailRegex.test(email.trim())){
                       setInvalidEmail(true)}
@@ -800,6 +796,7 @@ export default function WelcomePage() {
                   placeholder="Enter password"
                   value={password}
                   onChange={(e)=> setPassword(e.target.value)}
+                  autoComplete='off'
                 />
               </div>
               {/* Submit button */}
@@ -821,45 +818,6 @@ export default function WelcomePage() {
           </div>
         </div>
       )}
-
-      {/* Menu Modal */}
-      <>
-        <div className={`fixed inset-0 bg-black/50 z-[99] transition-opacity duration-300 ${showMenu ? 'opacity-100 visible': 'opacity-0 invisible'}`}
-          onClick={()=>setShowMenu(false)}>
-          <div 
-            className={`fixed top-0 left-0 w-64 h-full rounded-r-2xl bg-white shadow-2xl z-[100] transform transition-transform duration-300 ease-in-out ${showMenu ? 'translate-x-0' : '-translate-x-full'}`}
-            onClick={(e)=>e.stopPropagation()}>
-            <div className="p-4 flex flex-col h-full">
-              {/* Header with Close Button */}
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl ml-2 font-bold text-purple-900">Menu</h2>
-                <button 
-                  onClick={()=>setShowMenu(false)} 
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                  aria-label="Close menu">
-                  <X className="w-6 h-6 text-gray-700" />
-                </button>
-              </div>
-              <nav className="flex-grow">
-                {menuItems.map((item) => {
-                  return (
-                    <a
-                      key={item.name}
-                      onClick={() => {setShowMenu(false);item.action()}}
-                      className="flex items-center justify-between p-3 pl-1 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors hover:cursor-pointer"
-                    >
-                      <div className="flex items-center">
-                        <item.icon className="w-5 h-5 mr-3" />
-                        <span className="font-medium">{item.name}</span>
-                      </div>
-                    </a>
-                  );
-                })}
-                </nav>
-              </div>
-            </div>
-          </div>
-        </>
 
       <CustomToastContainer/>
     </div>
