@@ -246,11 +246,15 @@ export default function WelcomePage() {
   }
 
   // Contact seller handler
-  const handleContactSeller = () => {
+  const handleContactSeller = (listing: Listing) => {
     if (currentUser == null) {
       toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
     } else {
-      // Implement contact seller functionality here
+      navigate('/outgoing-offers', {
+        state: {
+          listingToOffer: listing
+        }
+      })
     }
   }
 
@@ -369,9 +373,7 @@ export default function WelcomePage() {
         handleLogout={handleLogout}
         setShowLoginModal={setShowLoginModal}
         setShowMenu={setShowMenu}
-        navigate={navigate}
-        toastWarn={toast.warn}
-      />
+        navigate={navigate}/>
       <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 
       {/* Search Bar */}
@@ -525,8 +527,8 @@ export default function WelcomePage() {
               <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
                   {/* Contact Seller Button */}
-                  <button onClick={() => {handleContactSeller();}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
-                    Submit Offer
+                  <button onClick={() => {handleContactSeller(selectedListing);}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
+                    Contact Seller
                   </button>
                   {/* Favorite Button */}
                     <button onClick={() => {handleFavorite(selectedListing.docId);}}
@@ -818,7 +820,6 @@ export default function WelcomePage() {
           </div>
         </div>
       )}
-
       <CustomToastContainer/>
     </div>
   );

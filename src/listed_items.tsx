@@ -108,7 +108,7 @@ export default function Listings() {
     }, [listings, searchQuery, selectedCategory]);
 
     // Once listings are fetched, render them
-  const renderListings = () => {
+    const renderListings = () => {
     if (loading) {
       return (
       <div className="col-span-full text-center py-10 text-gray-500">
@@ -137,28 +137,46 @@ export default function Listings() {
                 <thead className="bg-gray-50">
                     <tr>
                         <th
-                            scope="col"
-                            className="ml-4 py-3.5 pl-6 pr-3 text-left text-m font-semibold text-gray-900"
+                          scope="col"
+                          className="ml-4 py-3.5 pl-6 pr-3 text-left text-m font-semibold text-gray-900"
                         >
-                            Listing Title
+                          Listing Title
                         </th>
                         <th 
-                            scope="col" 
-                            className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          scope="col" 
+                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
                         >
-                            Price
+                          Price
                         </th>
                         <th 
-                            scope="col" 
-                            className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          scope="col" 
+                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
                         >
-                            Location
+                          Location
                         </th>
                         <th
-                            scope="col"
-                            className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
                         >
-                            Date Listed
+                          Date Listed
+                        </th>
+                        <th
+                          scope="col"
+                          className="pl-3 py-3.5 text-center text-m font-semibold text-gray-900"
+                          >
+                          Offers
+                        </th>
+                        <th
+                          scope="col"
+                          className="pr-3 py-3.5 text-center text-m font-semibold text-gray-900"
+                          >
+                          Highest Offer
+                        </th>
+                        <th
+                          scope="col"
+                          className="relative py-3.5 pr-6 pl-3"
+                          >
+                          <span className="sr-only"></span>
                         </th>
                     </tr>
                 </thead>
@@ -166,7 +184,7 @@ export default function Listings() {
                 {/* TABLE BODY */}
                 <tbody className="divide-y divide-gray-200 bg-white">
                     {filteredListings.map((listing) => (
-                        <tr key={listing.docId} onClick={()=>{handleOpenEditListingModal(listing);setSearchQuery("")}} className="hover:bg-purple-50 transition-colors cursor-pointer">
+                        <tr key={listing.docId} onClick={()=>{setSearchQuery("")}} className="hover:bg-purple-50 transition-colors cursor-pointer">
                             {/* Title Column */}
                             <td className="whitespace-nowrap py-4 pl-6 pr-3 text-m font-medium text-gray-900 truncate max-w-xs">
                                 {listing.title}
@@ -183,14 +201,29 @@ export default function Listings() {
                             <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
                                 {listing.dateListed.toDate().toLocaleDateString('en-US', {month: 'long', day: 'numeric', year:'numeric'})}
                             </td>
+                            {/* Number of Offers Column */}
+                            <td className="whitespace-nowrap text-center text-purple-900 font-bold pl-3 py-4 text-m text-gray-500">
+                              5
+                            </td>
+                            {/* Highest Bid Column */}
+                            <td className="whitespace-nowrap text-center pr-3 py-4 text-m text-gray-500">
+                              $400
+                            </td>
+                            {/* View Listing Button */}
+                            <td className="relative whitespace-nowrap py-4 pr-6 pl-3 text-right text-sm font-medium">
+                              <button
+                                className="text-white px-3 py-1 bg-purple-900 rounded-2xl hover:bg-purple-800 hover:shadow-xl"
+                                onClick={(e)=>{e.stopPropagation();handleOpenEditListingModal(listing)}}>
+                                  Edit
+                              </button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
         </div>
     );
-}
-
+    }
 
     const handleLogout = async () => {
         try {
@@ -289,7 +322,6 @@ export default function Listings() {
               setShowLoginModal={()=>{}}
               setShowMenu={setShowMenu}
               navigate={navigate}
-              toastWarn={toast.warn}
             />
             <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 

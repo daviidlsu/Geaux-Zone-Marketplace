@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Register from './auth/register';
-import Login from './auth/login';
-import Welcome_Page from './Welcome_Page.tsx';
 import Listings from './listed_items.tsx';
+import Login from './auth/login';
+import IncomingMessages from './incoming_messages.tsx';
+import OutgoingOffers from './outgoing_offers.tsx';
+import Register from './auth/register';
+import Welcome_Page from './Welcome_Page.tsx';
 import { AuthProvider } from './auth/auth.tsx';
 import { ProtectedRoute } from './auth/ProtectedRoute.tsx';
 import { PublicRoute } from './auth/PublicRoute.tsx';
@@ -13,29 +15,40 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<Welcome_Page />} />
-
-          <Route path="/register" 
+            <Route path="/" element={<Welcome_Page />} />
+          {/* Guided Public Routes */}
+            <Route path="/register" 
             element={<PublicRoute>
               <Register />
             </PublicRoute>}
-          />
-
-          <Route path="/login" 
+            />
+            <Route path="/login" 
             element={<PublicRoute>
               <Login />
             </PublicRoute>} 
-          />
+            />
 
           {/* Protected Routes */}
-          <Route
+            <Route
             path="/my-listings"
             element={<ProtectedRoute>
               <Listings />
             </ProtectedRoute>}
-          />
+            />
+            <Route
+            path="/outgoing-offers"
+            element={<ProtectedRoute>
+              <OutgoingOffers />
+            </ProtectedRoute>}
+            />
+            <Route
+            path="/incoming-messages"
+            element={<ProtectedRoute>
+              <IncomingMessages />
+            </ProtectedRoute>}
+            />
           {/* Catch-all route for undefined paths */}
-          <Route path="*" element={<Navigate to="/" />} /> {/* Redirect unknown routes to home page */}
+            <Route path="*" element={<Navigate to="/" />} /> {/* Redirect unknown routes to home page */}
         </Routes>
       </BrowserRouter>
     </AuthProvider>
