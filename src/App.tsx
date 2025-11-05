@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Listings from './listed_items.tsx';
 import Login from './auth/login';
-import IncomingMessages from './incoming_messages.tsx';
+import IncomingOffers from './incoming_offers.tsx';
 import OutgoingOffers from './outgoing_offers.tsx';
 import Register from './auth/register';
 import Welcome_Page from './Welcome_Page.tsx';
@@ -42,9 +42,9 @@ function App() {
             </ProtectedRoute>}
             />
             <Route
-            path="/incoming-messages"
+            path="/incoming-offers"
             element={<ProtectedRoute>
-              <IncomingMessages />
+              <IncomingOffers />
             </ProtectedRoute>}
             />
           {/* Catch-all route for undefined paths */}

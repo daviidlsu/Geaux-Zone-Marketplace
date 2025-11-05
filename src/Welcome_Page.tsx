@@ -55,9 +55,12 @@ export default function WelcomePage() {
   const [newLocation, setNewLocation] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
   const [newImage, setNewImage] = useState<string>("");
+  const [offerAmount, setOfferAmount] = useState<number | null>(null);
+  const [offerNote, setOfferNote] = useState<string>("");
   const [password, setPassword] = useState('')
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
   const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [showOfferModal, setShowOfferModal] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
@@ -330,6 +333,13 @@ export default function WelcomePage() {
     setShowCreateListing(false);
   }
 
+  // Close offer modal
+  const handleCloseOfferModal = () => {
+    setOfferAmount(null)
+    setOfferNote("")
+    setShowOfferModal(false)
+  }
+
   // Submit new listing to Firestore
   const handleSubmitListing = async ()  => {
     if (!newTitle || newPrice === null || !newLocation || !newDescription) {
@@ -365,6 +375,11 @@ export default function WelcomePage() {
     handleCloseNewListingModal();
     setLoading(false);
   };
+
+  // Submit new offer
+  const handleSubmitOffer = async () => {
+
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -453,41 +468,39 @@ export default function WelcomePage() {
 
       {/* Listing Detail Modal */}
       {selectedListing && listingOwner!=null &&(
-        <div
-          className="fixed inset-0 bg-[#444]/70 z-50 flex items-center justify-center p-4"
-          onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
-        >
+        <div className="fixed inset-0 bg-[#444]/70 z-50 flex items-center justify-center p-4" onClick={()=>{setSelectedListing(null);setListingOwner(null);handleCloseOfferModal()}}>
+        {/* Listing */}
           <div
             className="bg-white rounded-2xl max-w-5xl w-full h-[80vh] max-h-[90vh] overflow-hidden shadow-2xl flex"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Left Side - Image */}
-            <div className="w-1/2 h-full aspect-video max-h-[800px] bg-white flex items-center justify-center">
+              <div className="w-1/2 h-full aspect-video max-h-[800px] bg-white flex items-center justify-center">
               <img 
                 src={selectedListing.image} 
                 alt={selectedListing.title} 
                 className="w-full h-full object-cover" 
                 loading="lazy"
               />
-            </div>
+              </div>
 
             {/* Right Side - Details */}
-            <div className="w-1/2 flex flex-col">
+              <div className="w-1/2 flex flex-col">
               {/* Header with Close Button */}
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
                   {selectedListing.categoryID}
                 </span>
                 <button
-                  onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
+                  onClick={()=>{setSelectedListing(null);setListingOwner(null);handleCloseOfferModal()}}
                   className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full transition-all"
                 >
                   <X size={30} color="#59168b" />
                 </button>
-              </div>
+                </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-6">
                 {/* Title and Price */}
                 <div className="mb-6">
                   <h3 className="text-3xl font-bold text-gray-900 mb-3">{selectedListing.title}</h3>
@@ -509,7 +522,7 @@ export default function WelcomePage() {
                     disabled>
                   </textarea>
                 </div>
-              </div>
+                </div>
 
               {/* Seller Info */}
                 <div className="bg-gray-100 rounded-xl p-4 m-6 mt-4 mb-2 py-2 h-1/7">
@@ -524,11 +537,11 @@ export default function WelcomePage() {
                 </div>
 
               {/* Action Buttons - Fixed at Bottom */}
-              <div className="px-6 py-4 bg-white">
+                <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
                   {/* Contact Seller Button */}
-                  <button onClick={() => {handleContactSeller(selectedListing);}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
-                    Contact Seller
+                  <button onClick={() => setShowOfferModal(true)} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
+                    Make Offer
                   </button>
                   {/* Favorite Button */}
                     <button onClick={() => {handleFavorite(selectedListing.docId);}}
@@ -538,9 +551,58 @@ export default function WelcomePage() {
                     <Heart className={`w-10 h-10 stroke-2 ${likedItems.includes(selectedListing.docId) ? "fill-red-500 stroke-red-500 hover:fill-white": "fill-none stroke-gray-500 hover:fill-red-500 hover:stroke-red-600 hover:stroke-1" } `} />
                   </button>
                 </div>
-              </div>
+                </div>
             </div>
           </div>
+        {/* New Offer */}
+          {showOfferModal 
+          ? (<div onClick={(e) => e.stopPropagation()} className="fixed z-60 w-96 p-8 py-6 mr-10 bg-white top-1/2 right-0 rounded-2xl transform -translate-y-1/2">
+            <div className="mb-4 text-black text-2xl text-center font-bold">
+              New Offer
+            </div>
+            <form className="">
+            {/* Offer Amount */}
+              <label className="block text-sm font-medium text-gray-700">Offer Amount <span className="text-red-500">*</span></label>
+              <input
+                id="amount"
+                type="string"
+                name="amount"
+                value={offerAmount || ""}
+                onChange={(e) => setOfferAmount(e.target.value ? parseFloat(e.target.value) : null)}
+                placeholder="$0"
+                className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                min="0"
+              />
+            {/* Offer Note */}
+              <label className="mt-2 block text-sm font-medium text-gray-700">Note to seller <span className="text-red-500">*</span></label>
+              <textarea
+                    value={offerNote}
+                    onChange={(e) => setOfferNote(e.target.value)}
+                    placeholder="Describe your item in detail..."
+                    maxLength={100}
+                    rows={3}
+                    className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">{100-offerNote.length} characters left</p>
+            </form>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={()=>handleCloseOfferModal()}
+                className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitOffer}
+                className="flex-1 px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+                disabled={loading}
+              >
+                Submit Offer
+              </button>
+            </div>
+          </div>)
+          : null
+          }
         </div>
       )}
 

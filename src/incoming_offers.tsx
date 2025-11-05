@@ -7,7 +7,7 @@ import Navbar from "./components/navbar"
 import Menu from "./components/menu"
 import CustomToastContainer from "./components/toast"
 
-export default function IncomingMessages() {
+export default function IncomingOffers() {
     const navigate = useNavigate()
     const { logout } = useAuth()
     const [showMenu, setShowMenu] = useState<boolean>(false);

@@ -59,7 +59,6 @@ const Login = () => {
                 setShowLoginModal={()=>{}}
                 setShowMenu={()=>toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}
                 navigate={navigate}
-                toastWarn={toast.warn}
             />
 
             {/* Centered login card */}
@@ -74,7 +73,7 @@ const Login = () => {
                         <p className="text-sm text-gray-500">Sign in with your @lsu.edu account</p>
                     </div>
 
-                    <form onSubmit={handleLogin} noValidate>
+                    <form onSubmit={handleLogin} noValidate className="p-8">
                         <label className="block text-sm font-medium text-gray-700">Email</label>
                         <input
                             id="email"

@@ -1,7 +1,7 @@
 import { toast } from "react-toastify"
 import { useAuth } from "./auth/auth"
 import { useEffect, useState } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 import Navbar from "./components/navbar"
 import Menu from "./components/menu"
@@ -11,12 +11,6 @@ export default function OutgoingOffers() {
     const navigate = useNavigate()
     const { logout } = useAuth()
     const [showMenu, setShowMenu] = useState<boolean>(false);
-
-    const listing = useLocation().state?.listingToOffer
-
-    useEffect(() =>{
-        console.log(listing)
-    },[listing]);
     
     const handleLogout = async () => {
         try {
