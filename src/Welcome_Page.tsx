@@ -5,6 +5,8 @@ import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebase/firebase";
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -17,6 +19,7 @@ interface Listing {
   price: number;
   dateListed: string;
   image: string;
+  images?: string[]; 
   location: string;
   sellerUID: string;
   available: boolean;
@@ -52,7 +55,6 @@ export default function WelcomePage() {
   const [newCategory, setNewCategory] = useState<Category>("");
   const [newLocation, setNewLocation] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
-  const [newImage, setNewImage] = useState<string>("");
   const [password, setPassword] = useState('')
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
@@ -271,6 +273,17 @@ export default function WelcomePage() {
       setShowCreateListing(true);
     }
   };
+  // Function to upload images to Firebase Storage
+  const uploadImagesToStorage = async (images: File[], listingId: string): Promise<string[]> => {
+    const uploadPromises = images.map(async (image, index) => {
+      const imageRef = ref(storage, `listings/${listingId}/${index}_${image.name}`);
+      await uploadBytes(imageRef, image);
+      const downloadURL = await getDownloadURL(imageRef);
+      return downloadURL;
+    });
+  
+  return Promise.all(uploadPromises);
+};
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   const files = e.target.files;
@@ -297,7 +310,6 @@ const handleRemoveImage = (index: number) => {
     setNewCategory("");
     setNewLocation("");
     setNewDescription("");
-    setNewImage("");
     setPreviewImageIndex(0);
     setUploadedImages([]);
     setShowCreateListing(false);
@@ -321,23 +333,47 @@ const handleRemoveImage = (index: number) => {
     alert("Please upload at least one photo.");
     return;
   }
-    try {
+  try {
+    // Show uploading toast
+    toast.info("Uploading images...", {toastId: 'uploading'});
+    
+    // Generate unique listing ID
+    const tempListingId = `listing_${Date.now()}_${auth.currentUser?.uid}`;
+    
+    // Upload images to Firebase Storage
+    const imageUrls = await uploadImagesToStorage(uploadedImages, tempListingId);
+    
+    toast.dismiss('uploading');
+    toast.info("Creating listing...", {toastId: 'creating'});
+    
+
       await addDoc(collection(db, "Inventory"), {
-        Description: newDescription,
-        available: true,
-        categoryID: newCategory,
-        dateListed: new Date(), // Store current date
-        image: newImage || "https://via.placeholder.com/300x200", // Replace with uploaded image URL
-        location: newLocation,      
-        price: newPrice || null,
-        sellerUID: auth.currentUser?.uid || "anonymous",
-        title: newTitle
-      });
-    } catch (e) {
-      console.error("Error adding document: ", e);
-    }
+      Description: newDescription,
+      available: true,
+      categoryID: newCategory,
+      dateListed: new Date(),
+      image: imageUrls[0], // First image as main image
+      images: imageUrls, // All image URLs
+      location: newLocation,      
+      price: newPrice || null,
+      sellerUID: auth.currentUser?.uid || "anonymous",
+      title: newTitle
+    });
+    
+    toast.dismiss('creating');
     handleCloseNewListingModal();
     toast.success("Listing created successfully!");
+    
+    // Refresh listings to show the new one
+    const fetchedListings = await fetchListings();
+    setListings(fetchedListings);
+    
+  } catch (e) {
+    console.error("Error creating listing: ", e);
+    toast.dismiss('uploading');
+    toast.dismiss('creating');
+    toast.error("Failed to create listing. Please try again.");
+  }
   };
 
   return (
