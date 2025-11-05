@@ -3,3 +3,24 @@
 button:hover{
     cursor: pointer;
 }
+.carousel .slide {
+  background: transparent !important;
+}
+
+.carousel.carousel-slider {
+  overflow: visible !important;
+  height: 100% !important;
+}
+
+.carousel .slider-wrapper {
+  height: 100% !important;
+}
+
+.carousel .slider {
+  height: 100% !important;
+}
+
+.carousel .slide img {
+  height: 100% !important;
+  object-fit: cover !important;
+}

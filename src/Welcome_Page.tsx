@@ -7,6 +7,9 @@ import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase/firebase";
+import "react-responsive-carousel/lib/styles/carousel.min.css";
+import { Carousel } from "react-responsive-carousel";
+
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -83,6 +86,7 @@ export default function WelcomePage() {
           price: data.price,
           dateListed: data.dateListed,
           image: data.image,
+          images: data.images || [],
           location: data.location,
           sellerUID: data.sellerUID,
           available: data.available,
@@ -288,7 +292,7 @@ export default function WelcomePage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   const files = e.target.files;
   if (files) {
-    const fileArray = Array.from(files);
+    const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'));
     // Limit to 5 images
     if (uploadedImages.length + fileArray.length > 5) {
       toast.warn("You can only upload up to 5 images.");
@@ -352,8 +356,8 @@ const handleRemoveImage = (index: number) => {
       available: true,
       categoryID: newCategory,
       dateListed: new Date(),
-      image: imageUrls[0], // First image as main image
-      images: imageUrls, // All image URLs
+      image: imageUrls[0], 
+      images: imageUrls, 
       location: newLocation,      
       price: newPrice || null,
       sellerUID: auth.currentUser?.uid || "anonymous",
@@ -479,15 +483,63 @@ const handleRemoveImage = (index: number) => {
             className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Left Side - Image */}
-            <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
-              <img 
-                src={selectedListing.image} 
-                alt={selectedListing.title} 
-                className="w-full h-full object-cover" 
-                loading="lazy"
-              />
+            {/* Left Side - Image Carousel */}
+            <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center relative overflow-hidden">
+              {selectedListing.images && selectedListing.images.length > 0 ? (
+                <Carousel
+                  showArrows={true}
+                  showThumbs={false}
+                  showIndicators={true}
+                  showStatus={false}
+                  infiniteLoop={true}
+                  dynamicHeight={false}
+                  emulateTouch={true}
+                  className="w-full h-full"
+                  renderArrowPrev={(onClickHandler, hasPrev) =>
+                    hasPrev && (
+                      <button
+                        type="button"
+                        onClick={onClickHandler}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-all z-10"
+                      >
+                        <span className="text-2xl">‹</span>
+                      </button>
+                    )
+                  }
+                  renderArrowNext={(onClickHandler, hasNext) =>
+                    hasNext && (
+                      <button
+                        type="button"
+                        onClick={onClickHandler}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-all z-10"
+                      >
+                        <span className="text-2xl">›</span>
+                      </button>
+                    )
+                  }
+                >
+                  {selectedListing.images.map((url: string, index: number) => (
+                    <div key={index} className="h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-yellow-100">
+                      <img
+                        src={url}
+                        alt={`${selectedListing.title} ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
+                </Carousel>
+              ) : (
+                <img
+                  src={selectedListing.image}
+                  alt={selectedListing.title}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              )}
             </div>
+
+
 
             {/* Right Side - Details */}
             <div className="w-1/2 flex flex-col">
