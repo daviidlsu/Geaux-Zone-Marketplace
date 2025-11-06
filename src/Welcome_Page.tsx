@@ -478,7 +478,7 @@ export default function WelcomePage() {
         {/* Listing */}
           <div
             className="bg-white rounded-2xl max-w-5xl w-full h-[80vh] max-h-[90vh] overflow-hidden shadow-2xl flex"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {e.stopPropagation();handleCloseOfferModal()}}
           >
             {/* Left Side - Image */}
               <div className="w-1/2 h-full aspect-video max-h-[800px] bg-white flex items-center justify-center">
@@ -546,7 +546,7 @@ export default function WelcomePage() {
                 <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
                   {/* Contact Seller Button */}
-                  <button onClick={() => setShowOfferModal(true)} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
+                  <button onClick={(e) => {e.stopPropagation();setShowOfferModal(true)}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
                     Make Offer
                   </button>
                   {/* Favorite Button */}
