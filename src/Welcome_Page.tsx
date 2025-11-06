@@ -1,15 +1,15 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useAuth } from "./auth/auth.tsx";
-import { Search, Filter, MapPin, Heart, X, Library, House} from "lucide-react";
+import { Search, Filter, MapPin, Heart, X } from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
-import { toast, ToastContainer, Zoom } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase/firebase";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
-import { arrayUnion, arrayRemove, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx"
@@ -41,7 +41,7 @@ interface sellerInfo {
 export default function WelcomePage() {
   const navigate = useNavigate();
 
-  const { currentUser, currentUserData, isLoading, logout } = useAuth();
+  const { currentUser, currentUserData, logout } = useAuth();
 
   const [email, setEmail] = useState<string>('')
   const [listings, setListings] = useState<Listing[]>([]);
@@ -327,20 +327,7 @@ export default function WelcomePage() {
       console.error("Error signing out:", error);
     }
   }
-  // Register button handler
-  const handleRegister = () => {
-    navigate('/register');
-  }
 
-  // Create listing handler
-  const handleCreateListing = () => {
-    if (auth.currentUser == null) {
-      toast.warn("Please login to create a listing.", {toastId:'login-to-create'});
-      setShowLoginModal(true);
-    } else {
-      setShowCreateListing(true);
-    }
-  }
   // Function to upload images to Firebase Storage
   const uploadImagesToStorage = async (images: File[], listingId: string): Promise<string[]> => {
     const uploadPromises = images.map(async (image, index) => {
@@ -350,8 +337,8 @@ export default function WelcomePage() {
       return downloadURL;
     });
   
-  return Promise.all(uploadPromises);
-}
+    return Promise.all(uploadPromises);
+  }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -537,7 +524,7 @@ export default function WelcomePage() {
       {selectedListing && listingOwner!=null &&(
         <div
           className="fixed inset-0 bg-[#444]/70 z-50 flex items-center justify-center p-4"
-          onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
+          onClick={()=>{handleCloseListing()}}
         >
           <div
             className="bg-white rounded-2xl max-w-5xl w-full h-[80vh] max-h-[90vh] overflow-hidden shadow-2xl flex"
@@ -609,7 +596,7 @@ export default function WelcomePage() {
                   {selectedListing.categoryID}
                 </span>
                 <button
-                  onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
+                  onClick={()=>{handleCloseListing()}}
                   className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full transition-all"
                 >
                   <X size={30} color="#59168b" />
