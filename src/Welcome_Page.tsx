@@ -28,6 +28,15 @@ interface Listing {
   lastModified: Timestamp;
 }
 
+interface Offer {
+  parentId: string
+  listingTitle: string
+  amount: number
+  note: string
+  buyerUID: string
+  timeStamp: Timestamp
+}
+
 interface sellerInfo {
   accountCreation: Timestamp;
   email: string;
@@ -384,7 +393,34 @@ export default function WelcomePage() {
 
   // Submit new offer
   const handleSubmitOffer = async () => {
+    setLoading(true)
+    toast.info("Submitting listing...", {toastId: "submit-pending-info"})
+    try {
 
+      const listingRef = doc(db,"Inventory",selectedListing!.docId);
+      const offersCollection = collection(listingRef, "offers")
+      await addDoc(offersCollection, {
+        parentId: selectedListing?.docId,
+        listingTitle: selectedListing?.title,
+        amount: offerAmount,
+        note: offerNote,
+        buyerUID: currentUserData?.uid,
+        timeStamp: serverTimestamp(),
+      } as Offer)
+      toast.success("Offer submitted successfully!", {toastId: "submit-offer-success"})
+
+      const listingSnapshot = await getDoc(listingRef)
+      const listingData = listingSnapshot.data()
+      if (listingData && listingData.highestOffer < offerAmount!){
+        await updateDoc(listingRef, {highestOffer: offerAmount})
+      }
+
+    } catch (error) {
+      console.log("Error submitting offer:", error)
+      toast.error("Error occured trying to submit offer", {toastId: "submit-offer-error"})
+    }
+    handleCloseOfferModal()
+    setLoading(false)
   }
 
   return (
@@ -573,10 +609,12 @@ export default function WelcomePage() {
                 id="amount"
                 type="string"
                 name="amount"
-                value={offerAmount || ""}
-                onChange={(e) => setOfferAmount(e.target.value ? parseFloat(e.target.value) : null)}
+                value={offerAmount !== null ? `$${offerAmount}`  : ""}
+                onChange={(e) => {
+                  const cleanValue = e.target.value.replace(/[^\d.]/g, '');
+                  setOfferAmount(cleanValue ? parseFloat(cleanValue) : null)}}
                 placeholder="$0"
-                className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="mt-1 w-full px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 min="0"
               />
             {/* Offer Note */}
@@ -587,7 +625,7 @@ export default function WelcomePage() {
                     placeholder="Describe your item in detail..."
                     maxLength={100}
                     rows={3}
-                    className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    className="mt-1 w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                   />
                   <p className="text-sm text-gray-500 mt-1">{100-offerNote.length} characters left</p>
             </form>
@@ -599,7 +637,7 @@ export default function WelcomePage() {
                 Cancel
               </button>
               <button
-                onClick={handleSubmitOffer}
+                onClick={()=>handleSubmitOffer()}
                 className="flex-1 px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
                 disabled={loading}
               >
