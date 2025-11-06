@@ -5,13 +5,10 @@ import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
-import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase/firebase";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
-
-import { toast } from 'react-toastify';
 import { arrayUnion, arrayRemove, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
@@ -172,8 +169,62 @@ export default function WelcomePage() {
     else{
       setListingOwner(null);
     }
-  }, [selectedListing])
+  }, [selectedListing]);
 
+  const handleSelectListing = async (listing: Listing) => {
+    const docRef = doc(db, "Inventory", listing.docId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const updatedListing = {
+        docId: docSnap.id,
+        ...docSnap.data()
+      } as Listing;
+      // If listing has been modified since listings were fetched, update selected listing
+      if (updatedListing.lastModified !== listing.lastModified){
+        setListings(prevListings => prevListings.map(item=>
+          item.docId === listing.docId ? updatedListing : item)
+        )
+        setSelectedListing(updatedListing)
+      } else {
+        setSelectedListing(listing);
+      }
+    } else {
+      toast.error("This listing is no longer available.", {toastId: 'listing-unavailable'});
+      setListings(prevListings => prevListings.filter(item => item.docId !== listing.docId));
+      /* await reloadData(); */
+      setSelectedListing(null);
+    }
+  }
+
+  // Favorite listing handler
+  const handleFavorite = async (listingid: string) => {
+    if (currentUser == null) {
+      toast.warn("Please Login or Register to favorite listings.", {toastId: 'favorite-error'});
+      return;
+    } 
+    if (likedItems.includes(listingid)) {
+      const favoriteQuery = query(
+        collection(db, "Favorites"), 
+        where("userUID", "==", auth.currentUser?.uid), 
+        where("listingID", "==", listingid)
+      );
+      const querySnapshot = await getDocs(favoriteQuery);
+      querySnapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
+      setLikedItems(prev => prev.filter(id => id !== listingid));
+      toast.success("Removed from favorites!", {toastId: 'remove-favorite-success'});
+    }
+    else {
+      await addDoc(collection(db, "Favorites"), {
+        userUID: auth.currentUser?.uid,
+        listingID: listingid,
+        timestamp: serverTimestamp()
+      });
+      setLikedItems(prev => [...prev, listingid]);
+      toast.success("Added to favorites!", {toastId: 'add-favorite-success'});
+    }
+  }
   // Once listings are fetched, render them
   const renderListings = () => {
     if (loading) {
@@ -235,30 +286,6 @@ export default function WelcomePage() {
     setSelectedListing(null);
     setListingOwner(null);
     setUploadedImages([]);
-  // Listing selection handler\
-  const handleSelectListing = async (listing: Listing) => {
-    const docRef = doc(db, "Inventory", listing.docId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const updatedListing = {
-        docId: docSnap.id,
-        ...docSnap.data()
-      } as Listing;
-      // If listing has been modified since listings were fetched, update selected listing
-      if (updatedListing.lastModified !== listing.lastModified){
-        setListings(prevListings => prevListings.map(item=>
-          item.docId === listing.docId ? updatedListing : item)
-        )
-        setSelectedListing(updatedListing)
-      } else {
-        setSelectedListing(listing);
-      }
-    } else {
-      toast.error("This listing is no longer available.", {toastId: 'listing-unavailable'});
-      setListings(prevListings => prevListings.filter(item => item.docId !== listing.docId));
-      /* await reloadData(); */
-      setSelectedListing(null);
-    }
   }
 
   // Contact seller handler
@@ -267,36 +294,6 @@ export default function WelcomePage() {
       toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
     } else {
       // Implement contact seller functionality here
-    }
-  }
-
-  // Favorite listing handler
-  const handleFavorite = async (listingid: string) => {
-    if (currentUser == null) {
-      toast.warn("Please Login or Register to favorite listings.", {toastId: 'favorite-error'});
-      return;
-    } 
-    if (likedItems.includes(listingid)) {
-      const favoriteQuery = query(
-        collection(db, "Favorites"), 
-        where("userUID", "==", auth.currentUser?.uid), 
-        where("listingID", "==", listingid)
-      );
-      const querySnapshot = await getDocs(favoriteQuery);
-      querySnapshot.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
-      });
-      setLikedItems(prev => prev.filter(id => id !== listingid));
-      toast.success("Removed from favorites!", {toastId: 'remove-favorite-success'});
-    }
-    else {
-      await addDoc(collection(db, "Favorites"), {
-        userUID: auth.currentUser?.uid,
-        listingID: listingid,
-        timestamp: serverTimestamp()
-      });
-      setLikedItems(prev => [...prev, listingid]);
-      toast.success("Added to favorites!", {toastId: 'add-favorite-success'});
     }
   }
 
@@ -343,7 +340,7 @@ export default function WelcomePage() {
     } else {
       setShowCreateListing(true);
     }
-  };
+  }
   // Function to upload images to Firebase Storage
   const uploadImagesToStorage = async (images: File[], listingId: string): Promise<string[]> => {
     const uploadPromises = images.map(async (image, index) => {
@@ -354,25 +351,25 @@ export default function WelcomePage() {
     });
   
   return Promise.all(uploadPromises);
-};
+}
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const files = e.target.files;
-  if (files) {
-    const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'));
-    // Limit to 5 images
-    if (uploadedImages.length + fileArray.length > 5) {
+    const files = e.target.files;
+    if (files) {
+      const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'));
+      // Limit to 5 images
+      if (uploadedImages.length + fileArray.length > 5) {
       toast.warn("You can only upload up to 5 images.");
       return;
-    }
+      }
     setUploadedImages([...uploadedImages, ...fileArray]);
+    }
   }
-};
 
-const handleRemoveImage = (index: number) => {
+  const handleRemoveImage = (index: number) => {
   setUploadedImages(uploadedImages.filter((_, i) => i !== index));
   setPreviewImageIndex(0); // Always go back to first image
-};
+  }
 
   // Close create listing modal
   const handleCloseNewListingModal = () => {
@@ -401,10 +398,10 @@ const handleRemoveImage = (index: number) => {
       return;
     }
     if (uploadedImages.length === 0) {
-    alert("Please upload at least one photo.");
-    return;
-  }
-  try {
+      alert("Please upload at least one photo.");
+      return;
+    }
+    try {
     // Show uploading toast
     toast.info("Uploading images...", {toastId: 'uploading'});
     
@@ -439,15 +436,15 @@ const handleRemoveImage = (index: number) => {
     const fetchedListings = await fetchListings();
     setListings(fetchedListings);
     
-  } catch (e) {
+    } catch (e) {
     console.error("Error creating listing: ", e);
     toast.dismiss('uploading');
     toast.dismiss('creating');
     toast.error("Failed to create listing. Please try again.");
-  }
+    }
     handleCloseNewListingModal();
     setLoading(false);
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -780,7 +777,7 @@ const handleRemoveImage = (index: number) => {
                 </div>
               </div>
             </div>
-          </div>
+          
 
           {/* Input Form Container RIGHT SIDE*/}
           <div
@@ -979,7 +976,7 @@ const handleRemoveImage = (index: number) => {
               </button>
             
             {/* Login Form */}
-            <form onSubmit={handleLogin} noValidate>
+            <form onSubmit={(e)=>handleLogin(e)} noValidate>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Email</label>
                 <input 
