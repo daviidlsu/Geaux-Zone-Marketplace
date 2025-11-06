@@ -1,7 +1,8 @@
 import { useState, FormEvent, useEffect } from "react";
-import { Search, Filter, MapPin, Heart, X} from "lucide-react";
+import { useAuth } from "./auth/auth.tsx";
+import { Search, Filter, MapPin, Heart, X, Library, House} from "lucide-react";
 import { auth, db } from "./firebase/firebase";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, ToastContainer, Zoom } from 'react-toastify';
 import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where } from "firebase/firestore";
@@ -10,6 +11,11 @@ import { storage } from "./firebase/firebase";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
 
+import { toast } from 'react-toastify';
+import { arrayUnion, arrayRemove, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
+import Menu from "./components/menu.tsx"
+import Navbar from "./components/navbar.tsx";
+import CustomToastContainer from "./components/toast.tsx"
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -20,12 +26,13 @@ interface Listing {
   categoryID: Category;
   Description: string;
   price: number;
-  dateListed: string;
+  dateListed: Timestamp;
   image: string;
   images?: string[]; 
   location: string;
   sellerUID: string;
   available: boolean;
+  lastModified: Timestamp;
 }
 
 interface sellerInfo {
@@ -34,24 +41,21 @@ interface sellerInfo {
   username: string;
 }
 
-interface userData {
-  uid: string;
-  username: string;
-  accountCreation: Timestamp;
-}
-
 export default function WelcomePage() {
   const navigate = useNavigate();
-  const [currentUserData, setCurrentUserData] = useState<userData | null>(null);
+
+  const { currentUser, currentUserData, isLoading, logout } = useAuth();
+
   const [email, setEmail] = useState<string>('')
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filteredNum, setFilteredNum] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [showLikedOnly, setShowLikedOnly] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [likedItems, setLikedItems] = useState<string[]>([]);
   const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
   const [newTitle, setNewTitle] = useState<string>("");
   const [newPrice, setNewPrice] = useState<number | null>(null);
@@ -60,6 +64,7 @@ export default function WelcomePage() {
   const [newDescription, setNewDescription] = useState<string>("");
   const [password, setPassword] = useState('')
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
+  const [showMenu, setShowMenu] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [previewImageIndex, setPreviewImageIndex] = useState<number>(0);
@@ -74,7 +79,7 @@ export default function WelcomePage() {
       const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
       const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
         const data = doc.data() as Listing;
-        return auth.currentUser?.uid !== data.sellerUID;}
+        return currentUser?.uid !== data.sellerUID;}
       ).map(doc => {
         const data = doc.data() as Listing;
         return {
@@ -99,26 +104,50 @@ export default function WelcomePage() {
       return [];
     }
   }
+
   // Update filtered listings count
   useEffect(() => {
     const filteredListings = listings.filter((listing) => {
       const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
       const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      const isLiked = likedItems.includes(listing.docId); //Collects liked items from user data
+      const matchesLikedFilter = !showLikedOnly || isLiked;
+      return matchesCategory && matchesSearch && matchesLikedFilter;
     });
     setFilteredNum(filteredListings.length);
-  }, [listings, searchQuery, selectedCategory]);
+  }, [listings, searchQuery, selectedCategory, showLikedOnly]);
 
-  // Called upon loading page to fetch listings
-  useEffect(() => {
+  // Loads all listings and liked items
+  const reloadData = async () => {
     const loadListings = async () => {
       setLoading(true);
       const fetchedListings = await fetchListings();
       setListings(fetchedListings);
+
+      if (currentUser) {
+        try {
+          const favoritesQuery = query(collection(db, "Favorites"), where("userUID", "==", currentUser.uid));
+          const favoritesSnapshot = await getDocs(favoritesQuery);
+          const favoriteListingIDs: string[] = [];
+          favoritesSnapshot.forEach((doc) => {
+            const data = doc.data().listingID;
+            favoriteListingIDs.push(data);
+          });
+          setLikedItems(favoriteListingIDs);
+        } catch (error) {
+          console.error("Error fetching favorite listings: ", error);
+        }
+      }
+      else {setLikedItems([]);}
       setLoading(false);
     };
     loadListings();
-  }, [auth.currentUser]);
+  }
+
+  // Called upon loading page to fetch listings
+  useEffect(() => {
+    reloadData();
+  }, [currentUser]);
 
   // Gathers seller info upon selecting a listing
   useEffect(() => {
@@ -159,7 +188,9 @@ export default function WelcomePage() {
     const filteredListings = listings.filter((listing) => {
       const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
       const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      const isLiked = likedItems.includes(listing.docId); //Collects liked items from user data
+      const matchesLikedFilter = !showLikedOnly || isLiked;
+      return matchesCategory && matchesSearch && matchesLikedFilter;
     });
 
     if (filteredNum === 0) {
@@ -169,10 +200,11 @@ export default function WelcomePage() {
         </div>
       );
     }
+
     return filteredListings.map((listing) => (
       <div
         key={listing.docId}
-        onClick={() => handleListing(listing)}
+        onClick={() => handleSelectListing(listing)}
         className="bg-white rounded-xl shadow-sm hover:shadow-xl cursor-pointer border border-gray-200 overflow-hidden group"
       >
         <div className="aspect-square bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
@@ -182,8 +214,9 @@ export default function WelcomePage() {
           <div className="flex items-start justify-between mb-2">
             <h3 className="font-semibold text-gray-900 group-hover:text-purple-900 transition-colors flex-grow truncate">{listing.title}</h3>
             <div className="flex w-1/10 h-1/10 center-items justify-center">
-            <button onClick={(e)=>{e.stopPropagation();handleFavorite()}} className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
-              <Heart className="w-5 h-5" />
+            <button onClick={(e)=>{e.stopPropagation();handleFavorite(listing.docId)}} className={`transition-colors flex-shrink-0
+              ${likedItems.includes(listing.docId) ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}> {/* Red heart border if liked, gray if not, red on hover */}
+              <Heart className={`w-5 h-5 ${likedItems.includes(listing.docId) ? "fill-red-500 hover:stroke-white" : "fill-none"}`}/> {/* Red heart if liked, white on hover. Empty heart if not liked */}
             </button>
             </div>
           </div>
@@ -196,21 +229,41 @@ export default function WelcomePage() {
       </div>
     ));
   }
-  // Listing handler (Sets selected listing))
-  async function handleListing(listing: Listing){
-    setSelectedListing(listing);
-  }
 
   // Closes selected listing
   const handleCloseListing = () => {
     setSelectedListing(null);
     setListingOwner(null);
     setUploadedImages([]);
+  // Listing selection handler\
+  const handleSelectListing = async (listing: Listing) => {
+    const docRef = doc(db, "Inventory", listing.docId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const updatedListing = {
+        docId: docSnap.id,
+        ...docSnap.data()
+      } as Listing;
+      // If listing has been modified since listings were fetched, update selected listing
+      if (updatedListing.lastModified !== listing.lastModified){
+        setListings(prevListings => prevListings.map(item=>
+          item.docId === listing.docId ? updatedListing : item)
+        )
+        setSelectedListing(updatedListing)
+      } else {
+        setSelectedListing(listing);
+      }
+    } else {
+      toast.error("This listing is no longer available.", {toastId: 'listing-unavailable'});
+      setListings(prevListings => prevListings.filter(item => item.docId !== listing.docId));
+      /* await reloadData(); */
+      setSelectedListing(null);
+    }
   }
 
   // Contact seller handler
   const handleContactSeller = () => {
-    if (auth.currentUser == null) {
+    if (currentUser == null) {
       toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
     } else {
       // Implement contact seller functionality here
@@ -218,11 +271,32 @@ export default function WelcomePage() {
   }
 
   // Favorite listing handler
-  const handleFavorite = () => {
-    if (auth.currentUser == null) {
+  const handleFavorite = async (listingid: string) => {
+    if (currentUser == null) {
       toast.warn("Please Login or Register to favorite listings.", {toastId: 'favorite-error'});
-    } else {
-      // Implement favorite functionality here
+      return;
+    } 
+    if (likedItems.includes(listingid)) {
+      const favoriteQuery = query(
+        collection(db, "Favorites"), 
+        where("userUID", "==", auth.currentUser?.uid), 
+        where("listingID", "==", listingid)
+      );
+      const querySnapshot = await getDocs(favoriteQuery);
+      querySnapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
+      setLikedItems(prev => prev.filter(id => id !== listingid));
+      toast.success("Removed from favorites!", {toastId: 'remove-favorite-success'});
+    }
+    else {
+      await addDoc(collection(db, "Favorites"), {
+        userUID: auth.currentUser?.uid,
+        listingID: listingid,
+        timestamp: serverTimestamp()
+      });
+      setLikedItems(prev => [...prev, listingid]);
+      toast.success("Added to favorites!", {toastId: 'add-favorite-success'});
     }
   }
 
@@ -233,30 +307,23 @@ export default function WelcomePage() {
     const {email, password} = Object.fromEntries(formData.entries()) as Record<string,string>;
     // TODO: sanitize user input
     try{
-        setIsLoading(true);
-        const userCred = await signInWithEmailAndPassword(auth, email, password)
-        const User = userCred.user
-        if (User){
-          const docSnap = await getDoc(doc(db, 'Users', User.uid))
-          if (docSnap.exists()){setCurrentUserData(docSnap.data() as userData)}
-          navigate('/');
-          toast.success("Login Successful!", {toastId: 'login-success'});
-          setShowLoginModal(false); // Close modal on successful login
-          setIsLoading(false);
-        }
-        else {toast.error("User not found.", {toastId:'user-not-found'})}
+        setLoading(true);
+        await signInWithEmailAndPassword(auth, email, password)
+        navigate('/');
+        toast.success("Login Successful!", {toastId: 'login-success'});
+        setShowLoginModal(false);
     }catch(error){
-        setIsLoading(false);
         toast.error("Login Failed. Please check your credentials.", {toastId: 'login-failed'});
         console.log(error);
     }
+    setLoading(false);
   }
 
   // Logout handler
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      setCurrentUserData(null);
+      await logout();
+      setLikedItems([]);
       navigate('/');
       toast.success("Logout Successful!", {toastId: 'logout-success'});
     } catch (error) {
@@ -378,42 +445,35 @@ const handleRemoveImage = (index: number) => {
     toast.dismiss('creating');
     toast.error("Failed to create listing. Please try again.");
   }
+    handleCloseNewListingModal();
+    setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
-      <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img className="w-10 h-10 " src="/geauxzone_tiger.png">
-            </img>
-            <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
-          </div>
-          <div className="flex gap-3 font-sans">
-            <button onClick={auth.currentUser ? handleLogout : () => setShowLoginModal(true)} className={`px-4 py-1 rounded-2xl text-purple-900 transition-colors font-semibold
-              ${auth.currentUser 
-                ? 'text-white hover:text-yellow-600'
-                : 'text-white hover:text-yellow-600'}`}> {/*Determines button style based on login state*/}
-              {auth.currentUser ? 'Logout' : 'Login'} {/* Determines button text */}
-            </button>
-            {auth.currentUser == null && (
-              <button onClick={handleRegister} className="px-5 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing">Sign Up</button>
-            )}
-          </div>
-        </div>
-      </nav>
+      <Navbar
+        handleLogout={handleLogout}
+        setShowLoginModal={setShowLoginModal}
+        setShowMenu={setShowMenu}
+        navigate={navigate}
+        toastWarn={toast.warn}
+      />
+      <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 
       {/* Search Bar */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3">
+          <button onClick={auth.currentUser ? ()=>setShowLikedOnly(prev=>!prev) : () => toast.warn("Please login to view liked listings", {toastId:"like-filter"})} className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${showLikedOnly ? "bg-purple-900" : "bg-white"}`}>
+            <Heart className={`w-6 h-6 stroke-2 transition-all duration-200 ${showLikedOnly ? "fill-red-500 stroke-red-500" : "fill-none stroke-purple-900 group-hover:fill-purple-900 group-hover:stroke-purple-900"}`}/>
+          </button>
           <div className="flex-1 relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             {/*Possibly remove the category reset, if user needs to search in specific category*/}
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => {setSearchQuery(e.target.value);setSelectedCategory("All")}}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for items..."
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             /> 
@@ -425,7 +485,7 @@ const handleRemoveImage = (index: number) => {
                 <X color="gray" size={20}></X>
             </button>)}
           </div>
-          <button className="px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2">
+          <button className="px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2">
             <Filter className="w-5 h-5" />
             Filters
           </button>
@@ -434,7 +494,7 @@ const handleRemoveImage = (index: number) => {
 
       {/* Categories */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-6 py-4 pt-2">
           <div className="flex gap-3 overflow-x-auto">
             {categories.map((category) => (
               <button
@@ -464,7 +524,10 @@ const handleRemoveImage = (index: number) => {
       </div>
       
       {/* New Listing Button */}
-      <button onClick={handleCreateListing} className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
+      <button onClick={currentUser == null 
+        ? ()=> {toast.warn("Please login to create a listing.", {toastId:'login-to-create'}); setShowLoginModal(true)}
+        : ()=> setShowCreateListing(true)} 
+        className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
         <span className="text-2xl text-purple-900 font-bold leading-none absolute inset-0  mb-1 flex items-center justify-center transition-all duration-300 group-hover:opacity-0 group-hover:scale-0">
           +
         </span>
@@ -477,10 +540,10 @@ const handleRemoveImage = (index: number) => {
       {selectedListing && listingOwner!=null &&(
         <div
           className="fixed inset-0 bg-[#444]/70 z-50 flex items-center justify-center p-4"
-          onClick={handleCloseListing}
+          onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
         >
           <div
-            className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex"
+            className="bg-white rounded-2xl max-w-5xl w-full h-[80vh] max-h-[90vh] overflow-hidden shadow-2xl flex"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Left Side - Image Carousel */}
@@ -549,7 +612,7 @@ const handleRemoveImage = (index: number) => {
                   {selectedListing.categoryID}
                 </span>
                 <button
-                  onClick={handleCloseListing}
+                  onClick={()=>{setSelectedListing(null);setListingOwner(null)}}
                   className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full transition-all"
                 >
                   <X size={30} color="#59168b" />
@@ -571,37 +634,41 @@ const handleRemoveImage = (index: number) => {
                 </div>
 
                 {/* Description */}
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Description</h4>
-                  <p className="text-gray-700 leading-relaxed">{selectedListing.Description}</p>
+                <div className="mb-6 h-13/30">
+                  <h4 className="text-lg font-semibold text-gray-900 ml-2 mb-3">Description</h4>
+                  <textarea 
+                    className="text-gray-800 rounded-xl p-4 pt-2 pb-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
+                    value={selectedListing.Description || "Enter description..."}
+                    disabled>
+                  </textarea>
                 </div>
+              </div>
 
-                {/* Seller Info */}
-                {listingOwner && (
-                <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Seller Information</h4>
+              {/* Seller Info */}
+                <div className="bg-gray-100 rounded-xl p-4 m-6 mt-4 mb-2 py-2 h-1/7">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{listingOwner.username.charAt(0).toUpperCase()}</div>
+                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(listingOwner.username.charAt(0).toUpperCase())}</div>
                     <div>
                       <p className="font-semibold text-gray-900">{listingOwner.username}</p>
                       <p className="text-sm text-gray-600">Member since {listingOwner.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
                     </div>
                   </div>
-                </div>)}
-              </div>
+                </div>
 
               {/* Action Buttons - Fixed at Bottom */}
-              <div className="px-6 py-4 border-t border-gray-200 bg-white">
+              <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
                   {/* Contact Seller Button */}
                   <button onClick={() => {handleContactSeller();}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
-                    Contact Seller
+                    Submit Offer
                   </button>
                   {/* Favorite Button */}
-                    <button onClick={() => {handleFavorite();}}
-                      className="px-4 py-3 border-2 border-gray-300 rounded-xl hover:border-purple-900 hover:text-purple-900 transition-all"
+                    <button onClick={() => {handleFavorite(selectedListing.docId);}}
+                      className={`px-2 py-2 rounded-xl hover:border-purple-900 hover:text-purple-900 transition-all 
+                        ${likedItems.includes(selectedListing.docId) ? "" : ""}`}
                     >
-                    <Heart className="w-6 h-6" />
+                    <Heart className={`w-10 h-10 stroke-2 ${likedItems.includes(selectedListing.docId) ? "fill-red-500 stroke-red-500 hover:fill-white": "fill-none stroke-gray-500 hover:fill-red-500 hover:stroke-red-600 hover:stroke-1" } `} />
                   </button>
                 </div>
               </div>
@@ -678,7 +745,7 @@ const handleRemoveImage = (index: number) => {
               </div>
 
               {/* Scrollable Content */}
-              <div className="overflow-y-auto p-6 h-4/5">
+              <div className="overflow-y-auto p-6 pt-2 h-4/5">
                 {/* Title and Price */}
                 <div className="mb-4">
                   <h3 className="text-3xl font-bold text-gray-900 mb-2">{newTitle || "Title"}</h3>
@@ -690,10 +757,10 @@ const handleRemoveImage = (index: number) => {
                   <span className="text-lg">{newLocation || "Location"}</span>
                 </div>
                 {/* Description */}
-                <div className="mb-6 h-1/2">
+                <div className="mb-6 h-4/7">
                   <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
                   <textarea 
-                    className="text-gray-800 rounded-xl p-4 pt-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
+                    className="text-gray-800 rounded-xl p-4 py-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
                     value={newDescription || "Enter description..."}
                     disabled>
                   </textarea>
@@ -701,17 +768,14 @@ const handleRemoveImage = (index: number) => {
               </div>
 
               {/* Seller Info */}
-              <div className="bg-gray-100 rounded-xl p-4 m-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    {currentUserData?.username.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">{currentUserData?.username}</p>
-                    <p className="text-sm text-gray-600">
-                      Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}
-                    </p>
+                <div className="bg-gray-100 rounded-xl p-4 m-6 m-0 h-1/5">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{currentUserData?.username}</p>
+                      <p className="text-sm text-gray-600">Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -885,6 +949,7 @@ const handleRemoveImage = (index: number) => {
                 <button
                   onClick={handleSubmitListing}
                   className="flex-1 px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+                  disabled={loading}
                 >
                   Create Listing
                 </button>
@@ -895,7 +960,7 @@ const handleRemoveImage = (index: number) => {
       )}
 
       {/* Login Modal */}
-      {auth.currentUser == null && showLoginModal && (
+      {currentUser == null && showLoginModal && (
         <div id="top"onClick={() => setShowLoginModal(false)} className="fixed inset-0 flex items-center justify-center bg-[#444]/60 z-50">
           
             <div id="box" onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 relative">
@@ -925,6 +990,7 @@ const handleRemoveImage = (index: number) => {
                   placeholder="email@lsu.edu"
                   value={email}
                   onChange={(e)=> setEmail(e.target.value)}
+                  autoComplete='off'
                   onBlur={() => {
                     if (email && !lsuEmailRegex.test(email.trim())){
                       setInvalidEmail(true)}
@@ -946,18 +1012,19 @@ const handleRemoveImage = (index: number) => {
                   placeholder="Enter password"
                   value={password}
                   onChange={(e)=> setPassword(e.target.value)}
+                  autoComplete='off'
                 />
               </div>
               {/* Submit button */}
               <button 
                 className={`w-full px-4 py-3 rounded-lg font-semibold text-white ${
-                  isLoading || !lsuEmailRegex.test(email.trim()) || password.length === 0
+                  loading || !lsuEmailRegex.test(email.trim()) || password.length === 0
                   ? 'bg-purple-900/60 cursor-not-allowed opacity-80'
                   : 'bg-purple-900 hover:bg-purple-800'
                 }`}
                 type="submit"
-                disabled={isLoading || !lsuEmailRegex.test(email.trim()) || password.length === 0}>
-                  {isLoading ? 'Logging in...' : 'Login'} 
+                disabled={loading || !lsuEmailRegex.test(email.trim()) || password.length === 0}>
+                  {loading ? 'Logging in...' : 'Login'} 
               </button> 
               <div className="mt-4 text-center text-sm text-gray-600">
                 Don't have an account?{' '}
@@ -968,16 +1035,7 @@ const handleRemoveImage = (index: number) => {
         </div>
       )}
 
-      {/* Toast Container */}
-      <ToastContainer
-        toastStyle={{ backgroundColor: '#421168ff', color: '#fff', border: '1.5px #421168ff' , borderRadius: '16px'}}
-        position="top-right"
-        autoClose={4000}
-        closeOnClick
-        hideProgressBar={true}
-        transition={Zoom}
-        theme="dark"
-      />
+      <CustomToastContainer/>
     </div>
   );
 }

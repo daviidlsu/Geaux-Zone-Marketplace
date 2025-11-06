@@ -2,7 +2,9 @@ import { FormEvent, useState } from 'react'
 import { auth } from '../firebase/firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useNavigate, Link } from 'react-router-dom'
-import { toast, ToastContainer, Zoom } from 'react-toastify'
+import { toast } from 'react-toastify'
+import Navbar from '../components/navbar'
+import CustomToastContainer from '../components/toast'
 
 const Login = () => {
     const navigate = useNavigate()
@@ -50,20 +52,15 @@ const Login = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col bg-[url('/lsu_fall.jpg')] bg-bottom">
+        <div className="min-h-screen bg-cover flex flex-col bg-[url('/lsu_fall.jpg')] bg-bottom">
             {/* Top navigation like Welcome page */}
-            <header className="bg-purple-900 ">
-                <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <img className="w-10 h-10 " src="/geauxzone_tiger.png">
-                        </img>
-                        <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
-                    </div>
-                    <div>
-                        <Link to="/" className="px-4 py-1 rounded-2xl bg-yellow-400 text-purple-900 font-semibold hover:bg-yellow-300">Home</Link>
-                    </div>
-                </div>
-            </header>
+            <Navbar
+                handleLogout={{} as unknown as () => Promise<void>}
+                setShowLoginModal={()=>{}}
+                setShowMenu={()=>toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}
+                navigate={navigate}
+                toastWarn={toast.warn}
+            />
 
             {/* Centered login card */}
             <main className="flex-1 flex items-center justify-center py-12 px-4 opacity-99">
@@ -92,6 +89,7 @@ const Login = () => {
                             }}
                             placeholder="you@lsu.edu"
                             className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            autoComplete='off'
                         />
 
                         {/*Displays invalid email error if email is invalid */}
@@ -108,6 +106,7 @@ const Login = () => {
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Enter your password"
                             className="mt-1 mb-4 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            autoComplete='off'
                         />
 
                         {error && <div role="alert" className="text-sm text-red-600 mb-4">{error}</div>}
@@ -132,15 +131,7 @@ const Login = () => {
                 </div>
             </main>
 
-            <ToastContainer
-                toastStyle={{ backgroundColor: '#421168ff', color: '#fff', border: '1.5px #421168ff' , borderRadius: '16px'}}
-                position="top-right"
-                autoClose={4000}
-                closeOnClick
-                hideProgressBar={true}
-                transition={Zoom}
-                theme="light"
-            />
+            <CustomToastContainer/>
         </div>
     )
 }
