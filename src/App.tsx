@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Listings from './listed_items.tsx';
 import Login from './auth/login';
 import IncomingOffers from './incoming_offers.tsx';
+import ListingOffers from './listingOffers.tsx';
 import OutgoingOffers from './outgoing_offers.tsx';
 import Register from './auth/register';
 import Welcome_Page from './Welcome_Page.tsx';
@@ -33,6 +34,12 @@ function App() {
             path="/my-listings"
             element={<ProtectedRoute>
               <Listings />
+            </ProtectedRoute>}
+            />
+            <Route
+            path="/my-listings/:listingId/offers"
+            element={<ProtectedRoute> {/* Make sure only owner listings can be seen */}
+              <ListingOffers />
             </ProtectedRoute>}
             />
             <Route

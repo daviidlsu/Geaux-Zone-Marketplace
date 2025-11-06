@@ -4,7 +4,7 @@ import { db } from "./firebase/firebase";
 import { useAuth } from "./auth/auth.tsx";
 import { toast } from 'react-toastify';
 import { Search, Filter, MapPin, X, Library, House, Trash2, TriangleAlert } from "lucide-react";
-import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "firebase/firestore";
+import { collection, getCountFromServer, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx";
@@ -13,7 +13,6 @@ type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "
 
 interface Listing {
   docId: string;
-  id: number;
   title: string;
   categoryID: Category;
   Description: string;
@@ -23,6 +22,8 @@ interface Listing {
   location: string;
   sellerUID: string;
   available: boolean;
+  highestOffer: number;
+  offers: number;
   lastModified: Timestamp;
 }
 
@@ -56,8 +57,8 @@ export default function Listings() {
     const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
     // Fetch listings from Firestore
-      const fetchListings = async (): Promise<Listing[]> => {
-        try{
+    const fetchListings = async (): Promise<Listing[]> => {
+      try{
           const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
           const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
             const data = doc.data() as Listing;
@@ -66,7 +67,6 @@ export default function Listings() {
             const data = doc.data() as Listing;
             return {
               docId: doc.id,
-              id: data.id,
               title: data.title,
               categoryID: data.categoryID,
               Description: data.Description,
@@ -75,16 +75,18 @@ export default function Listings() {
               image: data.image,
               location: data.location,
               sellerUID: data.sellerUID,
+              highestOffer: data.highestOffer,
+              offers: data.offers,
               available: data.available,
             } as Listing;
           });
           return fetchedListings;
-        } catch (error) {
+      } catch (error) {
           toast.error("Failed to fetch listings.", {toastId:"fetch-error"});
           console.error("Error fetching listings: ", error);
           return [];
-        }
       }
+    }
 
     // Called upon loading page to fetch listings
     useEffect(() => {
@@ -184,30 +186,30 @@ export default function Listings() {
                 {/* TABLE BODY */}
                 <tbody className="divide-y divide-gray-200 bg-white">
                     {filteredListings.map((listing) => (
-                        <tr key={listing.docId} onClick={()=>{setSearchQuery("")}} className="hover:bg-purple-50 transition-colors cursor-pointer">
+                        <tr key={listing.docId} onClick={()=>{navigate(`/my-listings/${listing.docId}/offers`);setSearchQuery("")}} className="hover:bg-purple-50 transition-colors cursor-pointer">
                             {/* Title Column */}
                             <td className="whitespace-nowrap py-4 pl-6 pr-3 text-m font-medium text-gray-900 truncate max-w-xs">
-                                {listing.title}
+                              {listing.title}
                             </td>
                             {/* Price Column */}
                             <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
-                                ${listing.price}
+                              ${listing.price}
                             </td>
                             {/* Location Column */}
                             <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
-                                {listing.location}
+                              {listing.location}
                             </td>
                             {/* Date Listed Column */}
                             <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
-                                {listing.dateListed.toDate().toLocaleDateString('en-US', {month: 'long', day: 'numeric', year:'numeric'})}
+                              {listing.dateListed.toDate().toLocaleDateString('en-US', {month: 'long', day: 'numeric', year:'numeric'})}
                             </td>
                             {/* Number of Offers Column */}
                             <td className="whitespace-nowrap text-center text-purple-900 font-bold pl-3 py-4 text-m text-gray-500">
-                              5
+                              {listing.offers}
                             </td>
                             {/* Highest Bid Column */}
                             <td className="whitespace-nowrap text-center pr-3 py-4 text-m text-gray-500">
-                              $400
+                              {listing.highestOffer > 0 ? `$${listing.highestOffer}` : "N/A"}
                             </td>
                             {/* View Listing Button */}
                             <td className="relative whitespace-nowrap py-4 pr-6 pl-3 text-right text-sm font-medium">

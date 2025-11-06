@@ -5,7 +5,7 @@ import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { arrayUnion, arrayRemove, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { arrayUnion, arrayRemove, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx"
@@ -14,7 +14,6 @@ type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "
 
 interface Listing {
   docId: string;
-  id: number;
   title: string;
   categoryID: Category;
   Description: string;
@@ -23,6 +22,8 @@ interface Listing {
   image: string;
   location: string;
   sellerUID: string;
+  highestOffer: number;
+  offers: number;
   available: boolean;
   lastModified: Timestamp;
 }
@@ -77,7 +78,6 @@ export default function WelcomePage() {
         const data = doc.data() as Listing;
         return {
           docId: doc.id,
-          id: data.id,
           title: data.title,
           categoryID: data.categoryID,
           Description: data.Description,
@@ -85,6 +85,8 @@ export default function WelcomePage() {
           dateListed: data.dateListed,
           image: data.image,
           location: data.location,
+          highestOffer: data.highestOffer,
+          offers: data.offers,
           sellerUID: data.sellerUID,
           available: data.available,
         } as Listing;
@@ -356,7 +358,7 @@ export default function WelcomePage() {
     }
     try {
       setLoading(true);
-      await addDoc(collection(db, "Inventory"), {
+      const newDocRef = await addDoc(collection(db, "Inventory"), {
         Description: newDescription,
         available: true,
         categoryID: newCategory,
@@ -364,10 +366,14 @@ export default function WelcomePage() {
         image: newImage || "https://via.placeholder.com/300x200",
         location: newLocation,      
         price: newPrice || null,
+        highestOffer: 0,
+        offers: 0,
         sellerUID: currentUser?.uid || "anonymous",
         title: newTitle,
         lastModified: serverTimestamp()
       });
+      const offersRef = collection(newDocRef, "offers")
+      await setDoc(doc(offersRef, "placeholder"),{})
       toast.success("Listing created successfully!", {toastId:"creation-success"});
     } catch (e) {
       console.error("Error adding document: ", e);
