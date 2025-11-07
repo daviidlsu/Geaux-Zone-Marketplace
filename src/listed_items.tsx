@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { db } from "./firebase/firebase";
 import { useAuth } from "./auth/auth.tsx";
 import { toast } from 'react-toastify';
-import { Search, Filter, MapPin, X, Library, House, Trash2, TriangleAlert } from "lucide-react";
+import { Search, MapPin, X, Trash2, TriangleAlert } from "lucide-react";
 import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
@@ -29,7 +29,7 @@ interface Listing {
 export default function Listings() {
     const navigate = useNavigate();
 
-    const { currentUser, currentUserData, isLoading, logout } = useAuth();
+    const { currentUser, currentUserData, logout } = useAuth();
 
     const [filteredNum, setFilteredNum] = useState<number>(0);
     const [listings, setListings] = useState<Listing[]>([]);
@@ -47,11 +47,13 @@ export default function Listings() {
     const [showSelectedListing, setShowSelectedListing] = useState<boolean>(false);
     const [showMenu, setShowMenu] = useState<boolean>(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+    const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+    const [previewImageIndex, setPreviewImageIndex] = useState<number>(0)
 
-     const menuItems = [
-        { name: 'Home', icon: House, action: () => navigate('/') },
-        { name: 'Your Listings', icon: Library, action: () => navigate('/my-listings') },
-    ];
+   //  const menuItems = [
+     //   { name: 'Home', icon: House, action: () => navigate('/') },
+       // { name: 'Your Listings', icon: Library, action: () => navigate('/my-listings') },
+    //];
 
     const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
@@ -257,6 +259,24 @@ export default function Listings() {
       toast.success("Listing changed successfully!");
     };
 
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'));
+      // Limit to 5 images
+      if (uploadedImages.length + fileArray.length > 5) {
+      toast.warn("You can only upload up to 5 images.");
+      return;
+      }
+    setUploadedImages([...uploadedImages, ...fileArray]);
+    }
+  }
+
+    const handleRemoveImage = (index: number) => {
+    setUploadedImages(uploadedImages.filter((_, i) => i !== index));
+    setPreviewImageIndex(0); // Always go back to first image
+  }
+
     const handleDeleteListing = async (listing:Listing) => {
       console.log(listing)
         // Clean up associated favorite records
@@ -338,13 +358,52 @@ export default function Listings() {
                       <div
                         className="relative bg-white rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden"
                         onClick={(e) => e.stopPropagation()}>
-                        {/* Left Side - Image */}
-                        <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
+                        
+                        {/* Left Side - Image with Carousel */}
+                        <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center relative">
                           <img 
-                            src={newImage || "https://img.freepik.com/free-photo/blurred-abstract-background_58702-1509.jpg?semt=ais_hybrid&w=740&q=80"} 
+                            src={
+                              uploadedImages.length > 0 
+                                ? URL.createObjectURL(uploadedImages[previewImageIndex]) 
+                                : "https://img.freepik.com/free-photo/blurred-abstract-background_58702-1509.jpg?semt=ais_hybrid&w=740&q=80"
+                            } 
                             alt={newTitle} 
                             className="w-full h-full object-cover rounded-tl-2xl rounded-bl-2xl" 
                           />
+                          
+                          {/* Carousel Navigation - Only show if more than 1 image */}
+                          {uploadedImages.length > 1 && (
+                            <>
+                              {/* Previous Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewImageIndex(previewImageIndex === 0 ? uploadedImages.length - 1 : previewImageIndex - 1);
+                                }}
+                                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-all z-10"
+                              >
+                                <span className="text-2xl">‹</span>
+                              </button>
+                              
+                              {/* Next Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewImageIndex(previewImageIndex === uploadedImages.length - 1 ? 0 : previewImageIndex + 1);
+                                }}
+                                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-all z-10"
+                              >
+                                <span className="text-2xl">›</span>
+                              </button>
+                              
+                              {/* Image Counter */}
+                              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm font-medium">
+                                {previewImageIndex + 1} / {uploadedImages.length}
+                              </div>
+                            </>
+                          )}
                         </div>
             
                         {/* Right Side - Listing Info */}
@@ -470,25 +529,67 @@ export default function Listings() {
                               />
                             </div>
             
-                            {/* Image URL */}
+                           {/* Image Upload */}
                             <div>
                               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Image URL (optional)
+                                Upload Photos <span className="text-red-500">*</span>
                               </label>
-                              <input
-                                type="text"
-                                value={newImage}
-                                onChange={(e) => setNewImage(e.target.value)}
-                                placeholder="https://..."
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                              />
-                              <div className="flex gap-1.5 mt-1">
-                              <button className="text-center w-20 px-4 py-1 text-xs text-white font-semibold rounded-lg bg-purple-900 hover:bg-purple-800">
-                                Upload
-                              </button>
-                              <p className="text-sm text-gray-500 mt-0">Upload from your device (coming soon)
-                              </p>
+                              
+                              {/* Upload Button */}
+                              <div className="mb-4">
+                                <label className="cursor-pointer">
+                                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-all">
+                                    <div className="flex flex-col items-center">
+                                      <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                      </svg>
+                                      <p className="text-gray-600 font-medium">Click to upload photos</p>
+                                      <p className="text-gray-400 text-sm mt-1">PNG, JPG up to 5 images</p>
+                                    </div>
+                                  </div>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                  />
+                                </label>
                               </div>
+
+                              {/* Image Preview Grid */}
+                              {uploadedImages.length > 0 && (
+                                <div className="space-y-3">
+                                  <div className="grid grid-cols-3 gap-3">
+                                    {uploadedImages.map((file, index) => (
+                                      <div key={index} className="relative group">
+                                        <img
+                                          src={URL.createObjectURL(file)}
+                                          alt={`Upload ${index + 1}`}
+                                          className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveImage(index)}
+                                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                        >
+                                          ×
+                                        </button>
+                                        {index === 0 && (
+                                          <span className="absolute bottom-1 left-1 bg-purple-900 text-white text-xs px-2 py-1 rounded">
+                                            Cover
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              <p className="text-sm text-gray-500 mt-2">
+                                {uploadedImages.length}/5 images uploaded
+                                {uploadedImages.length > 0 && " • First image will be the cover photo"}
+                              </p>
                             </div>
             
                             {/* Description */}
