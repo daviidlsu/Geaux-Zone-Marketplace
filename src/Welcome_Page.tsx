@@ -5,7 +5,7 @@ import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { arrayUnion, arrayRemove, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { arrayUnion, arrayRemove, increment, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx"
@@ -394,7 +394,7 @@ export default function WelcomePage() {
   // Submit new offer
   const handleSubmitOffer = async () => {
     setLoading(true)
-    toast.info("Submitting listing...", {toastId: "submit-pending-info"})
+    toast.info("Submitting offer...", {toastId: "submit-pending-info"})
     try {
 
       const listingRef = doc(db,"Inventory",selectedListing!.docId);
@@ -414,6 +414,7 @@ export default function WelcomePage() {
       if (listingData && listingData.highestOffer < offerAmount!){
         await updateDoc(listingRef, {highestOffer: offerAmount})
       }
+      await updateDoc(listingRef, {offers:increment(1)})
 
     } catch (error) {
       console.log("Error submitting offer:", error)
