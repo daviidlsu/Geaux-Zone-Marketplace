@@ -170,7 +170,7 @@ export default function OutgoingOffers() {
                                 {/* Action Buttons */}
                                 <div>
                                     <button className="text-sm px-4 py-2 bg-purple-900 text-white font-semibold rounded-full mr-2 hover:bg-purple-700 transition-colors shadow-sm">
-                                        Follow Up
+                                        View chat
                                     </button>
                                     <button onClick={()=>handleDeleteOffer(offer)}className="text-sm px-4 py-2 bg-red-600 text-white font-semibold rounded-full hover:bg-red-700 transition-colors shadow-sm">
                                         Delete

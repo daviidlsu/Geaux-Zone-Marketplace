@@ -453,7 +453,7 @@ export default function WelcomePage() {
             {/*Clear search button if searchQuery is not empty*/}
             {searchQuery!=="" && (
               <button 
-              onClick={()=>{setSearchQuery("");console.log(searchQuery)}} 
+              onClick={()=>{setSearchQuery("")}} 
               className="absolute flex right-3 top-1/2 transform -translate-y-1/2 items-center justify-center">
                 <X color="gray" size={20}></X>
             </button>)}

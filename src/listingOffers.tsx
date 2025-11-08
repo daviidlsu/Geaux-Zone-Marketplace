@@ -163,6 +163,7 @@ export default function ListingOffers(){
                                 <p className="text-sm text-gray-600">Offered by: {offer.buyerDisplayName || "cannot find user"}</p>
                                 {/* Add buttons here to Accept or Reject the offer */}
                                 <div>
+                                    <button className="text-sm px-4 py-2 bg-purple-900 text-white rounded-full mr-2 hover:bg-purple-800">Open Chat</button>
                                     <button className="text-sm px-4 py-2 bg-green-500 text-white rounded-full mr-2 hover:bg-green-600">Accept</button>
                                     <button className="text-sm px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600">Reject</button>
                                 </div>

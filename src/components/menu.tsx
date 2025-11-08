@@ -13,8 +13,8 @@ export default function Menu({ showMenu, setShowMenu}: MenuProps) {
     const menuItems = [
         { name: 'Home', icon: House, action: () => navigate('/') },
         { name: 'Your Listings', icon: Library, action: () => navigate('/my-listings') },
-        { name: 'Incoming Messages', icon: Mail, action: () => navigate('/incoming-messages') },
         { name: 'Outgoing Offers', icon: ShoppingCart, action: () => navigate('/outgoing-offers') },
+        { name: 'Messages', icon: Mail, action: () => navigate('/messages') },
     ];
 
     return (
