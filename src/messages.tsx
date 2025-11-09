@@ -124,7 +124,7 @@ export default function Messages() {
             console.error("Error fetching chats: ",error)
         })
         return() => unsubscribe()
-    }, [currentUser,conversations, selectedConversationId])
+    }, [currentMessages,currentUser,conversations, selectedConversationId])
     
     // Gathers (up to) 50 messages from the selected chat
     useEffect(()=>{
@@ -144,6 +144,25 @@ export default function Messages() {
                     type: data.type,
                 } as Message
             });
+            /* const lastMessage = messages[messages.length-1]
+            if (lastMessage && lastMessage.senderId){
+                setConversations(prevConvos => {
+                    const updatedConvoIndex = prevConvos.findIndex(c => c.id === selectedConversationId);
+                    if (updatedConvoIndex > -1) {
+                        const updatedConvo = { ...prevConvos[updatedConvoIndex] };
+                        updatedConvo.lastMessage = lastMessage.text;
+                        updatedConvo.lastMessageTime = lastMessage.timestamp;
+                        updatedConvo.lastMessageSender = lastMessage.senderId;
+
+                        // Move the updated conversation to the very top (index 0)
+                        const otherConvos = prevConvos.filter((_, index) => index !== updatedConvoIndex);
+                        return [updatedConvo, ...otherConvos];
+                    }
+                return prevConvos;
+                })
+
+            } */
+
             setCurrentMessages(messages);
         }, (error) => {
             console.error("Error fetching chats: ",error)
