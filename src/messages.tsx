@@ -3,7 +3,7 @@ import { toast } from "react-toastify"
 import { useAuth } from "./auth/auth"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { addDoc, collection, CollectionReference, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, QueryDocumentSnapshot, serverTimestamp, Timestamp, updateDoc, where } from "firebase/firestore"
+import { addDoc, collection, CollectionReference, doc, getDoc, getDocs, limit, onSnapshot, or, orderBy, query, QueryDocumentSnapshot, serverTimestamp, Timestamp, updateDoc, where } from "firebase/firestore"
 import { db } from "./firebase/firebase"
 
 import Navbar from "./components/navbar"
@@ -16,8 +16,9 @@ type MessageContent = 'image' | 'text';
 interface MessageToggleProps {
     currentView: OfferMessageType;
     setView: (view: OfferMessageType) => void;
-    /* incomingCount: number;
-    outgoingCount: number; */
+    incomingCount: number;
+    outgoingCount: number;
+    clearChatInfo(): void
 }
 
 interface Chat {
@@ -26,9 +27,12 @@ interface Chat {
     lastMessage: string
     lastMessageSender: string
     lastMessageTime: Timestamp
-    users: string[]
-    usernames: string[]
-    otherUsername: string 
+    recName: string
+    recUID: string
+    senderName: string
+    senderUID: string
+    otherUsername: string
+    type: OfferMessageType
 }
 
 interface Message {
@@ -38,7 +42,7 @@ interface Message {
     type: MessageContent
 }
 
-const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, setView }) => {
+const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, setView, clearChatInfo, incomingCount, outgoingCount }) => {
   const baseClasses = "px-6 py-3 font-medium text-center rounded-lg transition-all duration-300 flex-1 relative z-10";
   const activeClasses = "text-white shadow-xl";
   const inactiveClasses = "text-gray-600 hover:text-purple-900";
@@ -56,17 +60,17 @@ const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, setView }) =
       {/* Incoming Button */}
       <button
         className={`${baseClasses} ${isIncoming ? activeClasses : inactiveClasses}`}
-        onClick={() => setView('INCOMING')}
+        onClick={() => {setView('INCOMING');clearChatInfo()}}
       >
-        Incoming Offers (1){/* ({INCOMING_MESSAGES.length}) */}
+        Incoming Offers ({incomingCount})
       </button>
 
       {/* Outgoing Button */}
       <button
         className={`${baseClasses} ${!isIncoming ? activeClasses : inactiveClasses}`}
-        onClick={() => setView('OUTGOING')}
+        onClick={() => {setView('OUTGOING');clearChatInfo()}}
       >
-        Outgoing Offers (1){/* ({OUTGOING_MESSAGES.length}) */}
+        Outgoing Offers ({outgoingCount})
       </button>
     </div>
   );
@@ -99,27 +103,45 @@ export default function Messages() {
         return collection(db, "Chats") as CollectionReference<Chat>
     },[db])
 
+    const { incomingCount, outgoingCount } = useMemo(() => {
+        const counts = conversations.reduce((acc, convo) => {
+            if (convo.type === 'INCOMING') {
+                acc.incomingCount++;
+            } else if (convo.type === 'OUTGOING') {
+                acc.outgoingCount++;
+            }
+            return acc;
+        }, { incomingCount: 0, outgoingCount: 0 });
+        return counts;
+    }, [conversations]);
+
     // Gathers chats in real time
     useEffect(()=>{
-        const q = query(chatsCollectionRef,where('users',"array-contains", currentUserData!.uid),orderBy('lastMessageTime','desc'))
+        const q = query(chatsCollectionRef,or(
+            where('recUID',"==", currentUser?.uid),
+            where('senderUID',"==", currentUser?.uid)
+        ),
+        orderBy('lastMessageTime','desc'))
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const convos = snapshot.docs.map(doc=>{
                 const data = doc.data();
+                const sender = data.senderUID
                 return {
                     id: doc.id,
                     listingTitle: data.listingTitle,
                     lastMessageSender: data.lastMessageSender,
                     lastMessageTime: data.lastMessageTime,
                     lastMessage: data.lastMessage,
-                    users: data.users,
-                    otherUsername: data.usernames[0] == currentUserData?.username ? data.usernames[1] : data.usernames[0],
+                    recName: data.recName,
+                    recUID: data.recUID,
+                    senderName: data.senderName,
+                    senderUID: sender,
+                    otherUsername: data.senderName==currentUserData?.username ? data.recName : data.senderName,
+                    type: sender == currentUserData?.uid ? 'OUTGOING' : 'INCOMING',
                 } as Chat
             });
             setConversations(convos);
 
-            if (convos.length > 0 && !selectedConversationId) {
-                setSelectedConversationId(convos[0].id);
-            }
         }, (error) => {
             console.error("Error fetching chats: ",error)
         })
@@ -175,6 +197,7 @@ export default function Messages() {
         messagesEndRef.current?.scrollIntoView({behavior: 'smooth'})
     },[currentMessages])
 
+    // Submits new message to firebase
     const sendMessage = async (text: string) => {
         if (text=="" || text==null){
             toast.warn("No message entered",{toastId:"no-message-error"})
@@ -203,6 +226,12 @@ export default function Messages() {
         setLoading(false)
     }
 
+    // Clears selected chat info when toggling 'incoming' and 'outgoing'
+    const clearChatInfo = () => {
+        setSelectedConversationId("")
+        setCurrentMessages([])
+    }
+
     const selectedConversation = conversations.find(c=>c.id === selectedConversationId)
 
     return (
@@ -214,16 +243,16 @@ export default function Messages() {
                 navigate={navigate}/>
             <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
             <div className="mt-2 mb-2">
-                <MessageToggle currentView={view} setView={setView} />
+                <MessageToggle currentView={view} setView={setView} clearChatInfo={clearChatInfo} incomingCount={incomingCount} outgoingCount={outgoingCount}/>
             </div>
             <main className="flex flex-1 h-[calc(100vh-142px)] overflow-hidden">
                 {/* Sidebar: Chat List */}
                     <aside className="w-full sm:w-1/3 max-w-xs h-full border-gray-300 border-t border-r rounded-r-md bg-white flex flex-col">
                         <div className="p-4 border-gray-300 border-b">
-                            <h2 className="text-xl font-semibold text-gray-800">Chats ({conversations.length})</h2>
+                            <h2 className="text-xl font-semibold text-gray-800">Chats ({view == 'INCOMING' ? incomingCount : outgoingCount})</h2>
                         </div>
                         <div className="flex-1 overflow-y-auto">
-                            {conversations.map((convo) => {
+                            {conversations.filter((convo) => convo.type===view).map((convo) => {
                                 const isSelected = convo.id === selectedConversationId
                                 return (
                                     <div
@@ -291,7 +320,7 @@ export default function Messages() {
                                     <div ref={messagesEndRef} />
                                 </div>
                                 
-                                {/* Message Input Placeholder */}
+                                {/* Message Input */}
                                 <div className="p-4 border-t border-gray-300 bg-white shadow-t-lg">
                                     <div className="flex space-x-3">
                                         <input 
@@ -300,6 +329,7 @@ export default function Messages() {
                                             className="flex-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-150"
                                             value = {newMessage}
                                             onChange={(e) => setNewMessage(e.target.value)}
+                                            onKeyDown = {(e) => {if (e.key == 'Enter') {e.preventDefault(); sendMessage(newMessage)}}}
                                             maxLength={150}
                                         />
                                         <button 
