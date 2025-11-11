@@ -35,6 +35,7 @@ interface Offer {
   note: string
   buyerUID: string
   timeStamp: Timestamp
+  status: string
 }
 
 interface sellerInfo {
@@ -46,7 +47,7 @@ interface sellerInfo {
 export default function WelcomePage() {
   const navigate = useNavigate();
 
-  const { currentUser, currentUserData, isLoading, logout } = useAuth();
+  const { currentUser, currentUserData, logout } = useAuth();
 
   const [email, setEmail] = useState<string>('')
   const [listings, setListings] = useState<Listing[]>([]);
@@ -406,6 +407,7 @@ export default function WelcomePage() {
         note: offerNote,
         buyerUID: currentUserData?.uid,
         timeStamp: serverTimestamp(),
+        status: "pending",
       } as Offer)
       toast.success("Offer submitted successfully!", {toastId: "submit-offer-success"})
 

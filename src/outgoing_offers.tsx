@@ -18,6 +18,7 @@ interface Offer {
     note: string
     buyerUID: string
     timeStamp: Timestamp
+    status: string
 }
 
 export default function OutgoingOffers() {
@@ -53,7 +54,8 @@ export default function OutgoingOffers() {
                         amount: data.amount,
                         note: data.note,
                         buyerUID: currentUser?.uid,
-                        timeStamp: data.timeStamp
+                        timeStamp: data.timeStamp,
+                        status: data.status
                     } as Offer
                 })
                 fetchedOffers.sort((a,b)=> a.timeStamp.toMillis() - b.timeStamp.toMillis())
@@ -169,8 +171,17 @@ export default function OutgoingOffers() {
 
                                 {/* Action Buttons */}
                                 <div>
-                                    <button className="text-sm px-4 py-2 bg-purple-900 text-white font-semibold rounded-full mr-2 hover:bg-purple-700 transition-colors shadow-sm">
-                                        View chat
+                                    <button className={`text-sm px-4 py-2 ${offer.status == "pending" ?  "bg-gray-400 text-gray-700" : "bg-purple-900 text-white hover:bg-purple-700"} font-semibold rounded-full mr-2 transition-colors shadow-sm`}
+                                        disabled={offer.status!="accepted" ? true : false}>
+                                        {(() => {
+                                            if (offer.status == "pending") {
+                                                return "Pending" 
+                                            }
+                                            else if (offer.status == "rejected") {
+                                                return "Rejected"
+                                            }
+                                            else {return "View chat"}
+                                        })()}
                                     </button>
                                     <button onClick={()=>handleDeleteOffer(offer)}className="text-sm px-4 py-2 bg-red-600 text-white font-semibold rounded-full hover:bg-red-700 transition-colors shadow-sm">
                                         Delete

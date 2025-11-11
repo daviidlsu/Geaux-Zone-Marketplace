@@ -111,29 +111,29 @@ export default function Listings() {
 
     // Once listings are fetched, render them
     const renderListings = () => {
-    if (loading) {
+      if (loading) {
       return (
       <div className="col-span-full text-center py-10 text-gray-500">
             <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
             Loading listings...
         </div>
       );
-    }
+      }
 
-    const filteredListings = listings.filter((listing) => {
+      const filteredListings = listings.filter((listing) => {
       const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
       const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
-    });
+      });
 
-    if (filteredNum === 0) {
+      if (filteredNum === 0) {
       return (
         <div className="col-span-full text-center py-20">
           <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
         </div>
       );
-    }
-    return (
+      }
+      return (
         <div className="w-full overflow-x-auto rounded-xl shadow-lg">
             <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -224,7 +224,7 @@ export default function Listings() {
                 </tbody>
             </table>
         </div>
-    );
+      );
     }
 
     const handleLogout = async () => {

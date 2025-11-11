@@ -2,16 +2,17 @@ import { useEffect, useMemo, useRef } from "react"
 import { toast } from "react-toastify"
 import { useAuth } from "./auth/auth"
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { replace, useNavigate, useParams } from "react-router-dom"
 import { addDoc, collection, CollectionReference, doc, getDoc, getDocs, limit, onSnapshot, or, orderBy, query, QueryDocumentSnapshot, serverTimestamp, Timestamp, updateDoc, where } from "firebase/firestore"
 import { db } from "./firebase/firebase"
 
 import Navbar from "./components/navbar"
 import Menu from "./components/menu"
 import CustomToastContainer from "./components/toast"
+import { Plus, Ban, Check } from "lucide-react"
 
 type OfferMessageType = 'INCOMING' | 'OUTGOING';
-type MessageContent = 'image' | 'text';
+type MessageContent = 'accept' | 'reject' | 'text';
 
 interface MessageToggleProps {
     currentView: OfferMessageType;
@@ -79,30 +80,34 @@ const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, setView, cle
 export default function Messages() {
     const navigate = useNavigate();
     const { currentUser, currentUserData, logout } = useAuth();
+    const { chatId } = useParams<{ chatId: string }>()
     const [conversations, setConversations] = useState<Chat[]>([]);
     const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState<boolean>(false)
     const [newMessage, setNewMessage] =useState<string>("") 
     const [selectedConversationId, setSelectedConversationId] = useState<string>("");
     const [showMenu, setShowMenu] = useState<boolean>(false);
+    const [showActionMenu, setShowActionMenu] = useState<boolean>(false)
     const [view, setView] = useState<OfferMessageType>('INCOMING');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     
+    // Handles logout 
     const handleLogout = async () => {
-            try {
-                await logout();
-                navigate('/');
-                toast.success("Logout Successful!", {toastId: 'logout-success'});
-            } catch (error) {
-                console.error("Error signing out:", error);
-            }
+        try {
+            await logout();
+            navigate('/');
+            toast.success("Logout Successful!", {toastId: 'logout-success'});
+        } catch (error) {
+            console.error("Error signing out:", error);
         }
+    }
     
-    
+    // Updates chats in real time
     const chatsCollectionRef = useMemo(() => {
         return collection(db, "Chats") as CollectionReference<Chat>
     },[db])
 
+    // Updates chat count based on the type ('incoming' or 'outgoing')
     const { incomingCount, outgoingCount } = useMemo(() => {
         const counts = conversations.reduce((acc, convo) => {
             if (convo.type === 'INCOMING') {
@@ -114,6 +119,19 @@ export default function Messages() {
         }, { incomingCount: 0, outgoingCount: 0 });
         return counts;
     }, [conversations]);
+
+    // Sets chat based on chatId in URL
+    useEffect(()=> {
+        if (chatId && conversations.length >0) {
+            const targetChat = conversations.find(c=>c.id==chatId)
+            if (targetChat) {
+                const chatType = targetChat.senderUID == currentUserData?.uid ? 'OUTGOING' : 'INCOMING'
+                setView(chatType)
+                setSelectedConversationId(chatId)
+                navigate('/messages', {replace:true})
+            }
+        }
+    },[chatId,conversations,navigate])
 
     // Gathers chats in real time
     useEffect(()=>{
@@ -146,7 +164,7 @@ export default function Messages() {
             console.error("Error fetching chats: ",error)
         })
         return() => unsubscribe()
-    }, [currentMessages,currentUser,conversations, selectedConversationId])
+    }, [currentMessages,currentUser,conversations,selectedConversationId])
     
     // Gathers (up to) 50 messages from the selected chat
     useEffect(()=>{
@@ -258,7 +276,7 @@ export default function Messages() {
                                     <div
                                         key={convo.id}
                                         onClick={()=> setSelectedConversationId(convo.id)}
-                                        className={`p-3 border-b transition duration-150 ${
+                                        className={`p-3 border-1 border-gray-300 ${
                                             isSelected ? 'bg-purple-900 border-l-4 border-purple-900' : 'bg-gray-200 hover:cursor-pointer hover:bg-gray-300'
                                         }`}
                                     >
@@ -322,18 +340,46 @@ export default function Messages() {
                                 
                                 {/* Message Input */}
                                 <div className="p-4 border-t border-gray-300 bg-white shadow-t-lg">
-                                    <div className="flex space-x-3">
+                                    <div className="flex space-x-3 items-center">
                                         <input 
                                             type="text" 
                                             placeholder="Type a message..."
-                                            className="flex-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-150"
+                                            className="flex-1 px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-150"
                                             value = {newMessage}
                                             onChange={(e) => setNewMessage(e.target.value)}
                                             onKeyDown = {(e) => {if (e.key == 'Enter') {e.preventDefault(); sendMessage(newMessage)}}}
                                             maxLength={150}
                                         />
+                                        {view=='INCOMING' && (
+                                            <div className="flex items-center relative">
+                                               {/* Action Button */}
+                                               <button 
+                                                   onClick={() => {setShowActionMenu(prev => !prev);console.log("toggle")}}
+                                                   className="p-3 text-white hover:text-white hover:bg-purple-800 bg-purple-900 rounded-xl transition duration-150 flex items-center justify-center"
+                                                   aria-expanded={showActionMenu}
+                                                   title="More Actions"
+                                                >
+                                                   <Plus className="w-5 h-5" />
+                                               </button>
+
+                                               {/* Drop-up Menu */}
+                                               {showActionMenu && (
+                                                   <div className="absolute bottom-full mb-3 right-0 w-40 bg-white rounded-lg shadow-xl border border-gray-200 z-20 overflow-hidden">
+                                                       <button className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-green-100">
+                                                        <Check className="mt-1 mr-2 w-5 h-5 stroke-green-400 stroke-3"/>
+                                                           Accept Offer
+                                                       </button>
+                                                       <button className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-red-100">
+                                                        <Ban className="mt-1 mr-2 w-5 h-5 stroke-red-400 stroke-2.5"/>
+                                                           Decline Offer
+                                                       </button>
+                                                   </div>
+                                               )}
+                                            </div>
+                                        )}
+
                                         <button 
-                                            className={`px-6 py-3 ${loading || newMessage=="" ? "bg-gray-400 cursor-not-allowed"  : "bg-purple-900"} text-white font-semibold rounded-xl transition duration-150`}
+                                            className={`px-6 py-3 ${loading || newMessage=="" ? "bg-gray-400 cursor-not-allowed!"  : "bg-purple-900"} text-white font-semibold rounded-xl transition duration-150`}
                                             disabled={loading || newMessage==""}
                                             onClick = {()=>sendMessage(newMessage)}
                                         >

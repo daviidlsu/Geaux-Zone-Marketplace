@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "./firebase/firebase.ts";
 import { useAuth } from "./auth/auth.tsx";
 import { Timestamp } from "firebase/firestore";
@@ -11,17 +11,60 @@ import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx";
 
 interface Offer {
-    offerId: string
     amount: number
-    note: string
     buyerDisplayName?: string
     buyerUID: string
+    chatId: string
+    listingTitle: string
+    note: string
+    offerId: string
+    parentId: string
+    status: string
     timeStamp: Timestamp
+}
+
+interface CheckStatusProps {
+    status: string
+    handleReject: () => void | Promise<void>
+    handleAccept: () => void | Promise<void>
+    handleChat: () => void | Promise<void>
+}
+
+// CheckStatus component determines offer action buttons based on offerStatus
+const CheckStatus: React.FC<CheckStatusProps> = ({status, handleReject, handleAccept, handleChat}) => {
+    return (
+        (() => {
+            if (status=="pending") {
+                return (
+                    <div>
+                        <span className='px-2 py-1 rounded-full bg-blue-100 mr-2 text-xs text-blue-500'>New</span>
+                        <button onClick={handleChat} className="text-sm px-4 py-2 bg-purple-900 text-white rounded-full mr-2 hover:bg-purple-800">Start Chat</button>
+                        <button onClick={handleAccept} className="text-sm px-4 py-2 bg-green-500 text-white rounded-full mr-2 hover:bg-green-600">Accept</button>
+                        <button onClick={handleReject} className="text-sm px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600">Reject</button>
+                    </div>
+                )
+            } else if (status=="in-progress") {
+                return (
+                    <div>
+                        <span className='rounded-full bg-gray-300 px-2 py-1 mr-2 text-xs text-gray-500'>In-progress</span>
+                        <button onClick={handleChat} className="text-sm px-4 py-2 bg-purple-900 text-white rounded-full hover:bg-purple-800">View Chat</button>
+                    </div>
+                )
+            } else if (status=="accepted") {
+                return (
+                    <div>
+                        <span className="text-xs px-2 py-1 bg-green-300 mr-2 text-green-600 rounded-full">Accepted</span>
+                        <button onClick={handleChat} className="text-sm px-4 py-2 bg-purple-900 text-white rounded-full hover:bg-purple-800">View Chat</button>
+                    </div>
+                )
+            }
+        })()
+    )
 }
 
 export default function ListingOffers(){
     const navigate = useNavigate();
-    const {logout} = useAuth()
+    const {logout, currentUserData} = useAuth()
     const {listingId} = useParams<{ listingId:string}>()
     const [listingTitle, setListingTitle] = useState<string>("")
     const [loading, setLoading] = useState<boolean>(false)
@@ -76,11 +119,15 @@ export default function ListingOffers(){
                 const fetchedOffers: Offer[] = querySnapshot.docs.filter(doc => doc.id !== "placeholder").map(doc => {
                     const data = doc.data()
                     return {
-                        offerId: doc.id,
                         amount: data.amount,
-                        note: data.note,
                         buyerDisplayName: userDataMap.get(data.buyerUID) || "",
-                        buyerUID: data.sellerUID,
+                        buyerUID: data.buyerUID,
+                        chatId: data.chatId,
+                        listingTitle: data.listingTitle,
+                        note: data.note,
+                        offerId: doc.id,
+                        parentId: data.parentId,
+                        status: data.status,
                         timeStamp: data.timeStamp,
                  } as Offer
                 } );
@@ -110,6 +157,79 @@ export default function ListingOffers(){
         }
     }
 
+    // Handles offer reject button 
+    const handleReject = async (offer: Offer) => {
+        setLoading(true)
+        try {
+            const docRef = doc(db,"Inventory",offer.parentId, "offers", offer.offerId)
+            await updateDoc(docRef, {
+                status:"rejected"
+            })
+            setOffers(prevOffers=> {return (prevOffers.filter(o => o.offerId != offer.offerId))})
+            toast.success ("Rejected offer", {toastId: "reject-success"})
+        }
+        catch (err){
+            toast.error ("Error rejecting offer", {toastId: "reject-error"})
+            console.log("Error rejecting offer: ",err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Handles offer accept button
+    // ADD WHAT HAPPENS TO OTHER OFFERS WHEN AN OFFER IS ACCEPTED
+    const handleAccept = async (offer: Offer) => {
+        setLoading(true)
+        try {
+            const docRef = doc(db,"Inventory",offer.parentId, "offers", offer.offerId)
+            await updateDoc(docRef, {
+                status:"accepted"
+            })
+            toast.success ("Accepted offer", {toastId: "accept-success"})
+        }
+        catch (err){
+            toast.error ("Error accepting offer", {toastId: "accept-error"})
+            console.log("Error accepting offer: ",err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Handles start/view chat button
+    const handleChat = async (offer: Offer) => {
+        setLoading(true)
+        try {
+            console.log(offer)
+            if (offer.status=="pending"){
+                const docRef = doc(db,"Inventory",offer.parentId, "offers", offer.offerId)
+                const newChatRef = await addDoc(collection(db,"Chats"),{
+                    lastMessage: "",
+                    lastMessageSender: "",
+                    lastMessageTime: null,
+                    listingTitle: offer.listingTitle,
+                    recName: offer.buyerDisplayName,
+                    recUID: offer.buyerUID,
+                    senderName: currentUserData?.username,
+                    senderUID: currentUserData?.uid
+                })
+                await updateDoc(docRef, {
+                    status:"in-progress",
+                    chatId: newChatRef.id
+                })
+                navigate(`/messages/${newChatRef.id}`) // ADD CHAT ID TO PATH TO OPEN ASSOCIATED CHAT
+            } else {
+                console.log()
+                navigate(`/messages/${offer.chatId}`)
+            }
+        }
+        catch (err){
+            toast.error ("Error accessing chat", {toastId: "chat-error"})
+            console.log("Error accessing chat: ",err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     // If loading, display loading message
     if (loading) {
         return (
@@ -129,13 +249,14 @@ export default function ListingOffers(){
               navigate={navigate}/>
             <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
             <div className="max-w-4xl mx-auto px-4 py-10">
-            <button 
-                onClick={() => navigate(-1)} // Go back to the previous page (Your Listings)
-                className="flex items-center text-purple-900 hover:text-purple-700 mb-6 font-semibold"
-            >
+            {/* Go back button */}
+                <button 
+                    onClick={() => navigate(-1)} // Go back to the previous page (Your Listings)
+                    className="flex items-center text-purple-900 hover:text-purple-700 mb-6 font-semibold"
+                >
                 <ArrowLeft className="w-5 h-5 mr-2" />
-             Back to Your Listings
-            </button>
+                Back to Your Listings
+                </button>
 
             <h1 className="text-3xl font-bold text-gray-900 mb-6">
                 Offers for: <span className="text-purple-900">{listingTitle}</span>
@@ -147,7 +268,7 @@ export default function ListingOffers(){
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {offers.map((offer) => (
+                    {offers.filter((offer)=>offer.status != "rejected" ).map((offer) => (
                         <div key={offer.offerId} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
                             <div className="flex justify-between items-start">
                                 <h2 className="text-2xl font-bold text-purple-900">
@@ -162,11 +283,7 @@ export default function ListingOffers(){
                             <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
                                 <p className="text-sm text-gray-600">Offered by: {offer.buyerDisplayName || "cannot find user"}</p>
                                 {/* Add buttons here to Accept or Reject the offer */}
-                                <div>
-                                    <button className="text-sm px-4 py-2 bg-purple-900 text-white rounded-full mr-2 hover:bg-purple-800">Open Chat</button>
-                                    <button className="text-sm px-4 py-2 bg-green-500 text-white rounded-full mr-2 hover:bg-green-600">Accept</button>
-                                    <button className="text-sm px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600">Reject</button>
-                                </div>
+                                <CheckStatus status={offer.status} handleReject={()=>handleReject(offer)} handleAccept={()=>handleAccept(offer)} handleChat={()=>handleChat(offer)}/>
                             </div>
                         </div>
                     ))}
