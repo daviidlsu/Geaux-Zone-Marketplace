@@ -13,8 +13,78 @@ import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Tim
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx"
+import { motion, AnimatePresence } from "framer-motion";
+
+
+
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
+
+const safeLocations = [
+  {
+    name: "Student Union - Front Entrance",
+    description: "Main floor, well-lit, high traffic area",
+    hours: "6am - 11pm daily",
+    icon: "🏛️",
+    safety: "high"
+  },
+  {
+    name: "Middleton Library - Main Entrance", 
+    description: "Security cameras, busy lobby area",
+    hours: "24/7 access",
+    icon: "📚",
+    safety: "high"
+  },
+  {
+    name: "Tiger Stadium - Gate 1",
+    description: "Public area with security presence",
+    hours: "Daylight hours recommended",
+    icon: "🏈",
+    safety: "high"
+  },
+  {
+    name: "UREC - Main Lobby",
+    description: "High foot traffic, staff present",
+    hours: "6am - 10pm",
+    icon: "💪",
+    safety: "high"
+  },
+  {
+    name: "The 459 - Main Lobby",
+    description: "Student housing lobby",
+    hours: "8am - 8pm",
+    icon: "🏢",
+    safety: "medium"
+  },
+  {
+    name: "Patrick F. Taylor Hall",
+    description: "Engineering building, busy during class hours",
+    hours: "7am - 9pm",
+    icon: "🏫",
+    safety: "medium"
+  },
+  {
+    name: "CEBA",
+    description: "Business building lobby",
+    hours: "7am - 9pm",
+    icon: "💼",
+    safety: "medium"
+  },
+  {
+    name: "Nicholson Gateway",
+    description: "Central campus location",
+    hours: "Daylight hours recommended",
+    icon: "🌳",
+    safety: "medium"
+  },
+  {
+    name: "Off Campus",
+    description: "Choose a safe public location",
+    hours: "Use caution",
+    icon: "📍",
+    safety: "low"
+  }
+];
 
 interface Listing {
   docId: string;
@@ -30,6 +100,7 @@ interface Listing {
   sellerUID: string;
   available: boolean;
   lastModified: Timestamp;
+  condition: string;
 }
 
 interface sellerInfo {
@@ -65,6 +136,19 @@ export default function WelcomePage() {
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [previewImageIndex, setPreviewImageIndex] = useState<number>(0);
+  const [showFilters, setShowFilters] = useState(false);
+  const [newCondition, setNewCondition] = useState<string>("");
+  const [showSafetyTips, setShowSafetyTips] = useState(false);
+
+
+  const [filters, setFilters] = useState({
+  priceRange: [0, 500],
+  sortBy: "Newest",
+  condition: "All",
+  distance: 10,
+  postedDate: "All",
+});
+  
  
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
@@ -73,7 +157,7 @@ export default function WelcomePage() {
   // Fetch listings from Firestore
   const fetchListings = async (): Promise<Listing[]> => {
     try{
-      const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
+      const querySnapshot = await getDocs(collection(db, "Inventory")); 
       const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
         const data = doc.data() as Listing;
         return currentUser?.uid !== data.sellerUID;}
@@ -226,31 +310,64 @@ export default function WelcomePage() {
     }
   }
   // Once listings are fetched, render them
-  const renderListings = () => {
+    const renderListings = () => {
     if (loading) {
       return (
       <div className="col-span-full text-center py-10 text-gray-500">
-            <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
-            Loading listings...
-        </div>
-      );
-    }
+        <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
+        Loading listings...
+      </div>
+    );
+  }
 
-    const filteredListings = listings.filter((listing) => {
+  const filteredListings = listings
+    .filter((listing) => {
       const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
-      const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
-      const isLiked = likedItems.includes(listing.docId); //Collects liked items from user data
+      const matchesSearch =
+        listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
+      const isLiked = likedItems.includes(listing.docId);
       const matchesLikedFilter = !showLikedOnly || isLiked;
-      return matchesCategory && matchesSearch && matchesLikedFilter;
+
+      // New Filters
+      const matchesPrice = listing.price >= filters.priceRange[0] && listing.price <= filters.priceRange[1];
+
+      const matchesCondition = filters.condition === "All" || listing.condition === filters.condition;
+
+      let matchesPostedDate = true;
+      if (filters.postedDate !== "All") {
+        const now = new Date();
+        const posted = listing.dateListed.toDate();
+        if (filters.postedDate === "Today") {
+          matchesPostedDate = posted.toDateString() === now.toDateString();
+        } else if (filters.postedDate === "This Week") {
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay()); 
+          matchesPostedDate = posted >= startOfWeek;
+        } else if (filters.postedDate === "This Month") {
+          matchesPostedDate = posted.getMonth() === now.getMonth() && posted.getFullYear() === now.getFullYear();
+        }
+      }
+
+      // Distance filter placeholder
+      const matchesDistance = true; // Replace with actual distance calculation if available
+
+      return matchesCategory && matchesSearch && matchesLikedFilter && matchesPrice && matchesCondition && matchesPostedDate && matchesDistance;
+    })
+    .sort((a, b) => {
+      if (filters.sortBy === "Newest") return b.dateListed.seconds - a.dateListed.seconds;
+      if (filters.sortBy === "Lowest Price") return a.price - b.price;
+      if (filters.sortBy === "Highest Price") return b.price - a.price;
+      return 0;
     });
 
-    if (filteredNum === 0) {
-      return (
-        <div className="col-span-full text-center py-20">
-          <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
-        </div>
-      );
-    }
+  if (filteredListings.length === 0) {
+    return (
+      <div className="col-span-full text-center py-20">
+        <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
+      </div>
+    );
+  }
 
     return filteredListings.map((listing) => (
       <div
@@ -293,7 +410,7 @@ export default function WelcomePage() {
     if (currentUser == null) {
       toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
     } else {
-      // Implement contact seller functionality here
+      setShowSafetyTips(true);
     }
   }
 
@@ -412,7 +529,8 @@ export default function WelcomePage() {
       location: newLocation,      
       price: newPrice || null,
       sellerUID: auth.currentUser?.uid || "anonymous",
-      title: newTitle
+      title: newTitle,
+      condition: newCondition
     });
     
     toast.dismiss('creating');
@@ -445,55 +563,174 @@ export default function WelcomePage() {
       />
       <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 
-      {/* Search Bar */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3">
-          <button onClick={auth.currentUser ? ()=>setShowLikedOnly(prev=>!prev) : () => toast.warn("Please login to view liked listings", {toastId:"like-filter"})} className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${showLikedOnly ? "bg-purple-900" : "bg-white"}`}>
-            <Heart className={`w-6 h-6 stroke-2 transition-all duration-200 ${showLikedOnly ? "fill-red-500 stroke-red-500" : "fill-none stroke-purple-900 group-hover:fill-purple-900 group-hover:stroke-purple-900"}`}/>
-          </button>
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            {/*Possibly remove the category reset, if user needs to search in specific category*/}
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for items..."
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            /> 
-            {/*Clear search button if searchQuery is not empty*/}
-            {searchQuery!=="" && (
-              <button 
-              onClick={()=>{setSearchQuery("");console.log(searchQuery)}} 
-              className="absolute flex right-3 top-1/2 transform -translate-y-1/2 items-center justify-center">
-                <X color="gray" size={20}></X>
-            </button>)}
-          </div>
-          <button className="px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filters
-          </button>
-        </div>
-      </div>
-
-      {/* Categories */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 pt-2">
-          <div className="flex gap-3 overflow-x-auto">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all ${
-                  selectedCategory === category ? "bg-purple-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+      {/* Search & Filter Section */}
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3 items-center">
+            {/* Liked Listings Toggle */}
+            <button
+              onClick={
+                auth.currentUser
+                  ? () => setShowLikedOnly((prev) => !prev)
+                  : () =>
+                      toast.warn("Please login to view liked listings", {
+                        toastId: "like-filter",
+                      })
+              }
+              className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${
+                showLikedOnly ? "bg-purple-900" : "bg-white"
+              }`}
+            >
+              <Heart
+                className={`w-6 h-6 stroke-2 transition-all duration-200 ${
+                  showLikedOnly
+                    ? "fill-red-500 stroke-red-500"
+                    : "fill-none stroke-purple-900 group-hover:fill-purple-900 group-hover:stroke-purple-900"
                 }`}
-              >
-                {category}
-              </button>
-            ))}
+              />
+            </button>
+
+            {/* Search Input */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for items..."
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              {searchQuery !== "" && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center"
+                >
+                  <X color="gray" size={20} />
+                </button>
+              )}
+            </div>
+
+            {/* Single Filter Toggle Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2"
+            >
+              <Filter className="w-5 h-5" />
+              {showFilters ? "Hide Filters" : "Filters"}
+            </button>
           </div>
         </div>
-      </div>
+
+        {/* Categories */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-6 py-4 pt-2">
+            <div className="flex gap-3 overflow-x-auto">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all ${
+                    selectedCategory === category
+                      ? "bg-purple-900 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Panel */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white p-4 rounded-xl shadow mb-6 overflow-hidden max-w-7xl mx-auto px-6"
+            >
+              <h2 className="text-lg font-semibold mb-3">Filters</h2>
+
+              {/* Price Range */}
+              <label className="block mb-2">
+                Price Range: ${filters.priceRange[0]} - ${filters.priceRange[1]}
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="500"
+                step="10"
+                value={filters.priceRange[1]}
+                onChange={(e) =>
+                  setFilters({ ...filters, priceRange: [0, Number(e.target.value)] })
+                }
+                className="w-full mb-4"
+              />
+
+              {/* Sort */}
+              <label className="block mb-2">Sort by:</label>
+              <select
+                value={filters.sortBy}
+                onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+                className="w-full border rounded p-2 mb-4"
+              >
+                <option>Newest</option>
+                <option>Lowest Price</option>
+                <option>Highest Price</option>
+              </select>
+
+              {/* Condition */}
+              <label className="block mb-2">Condition:</label>
+              <select
+                value={filters.condition}
+                onChange={(e) =>
+                  setFilters({ ...filters, condition: e.target.value })
+                }
+                className="w-full border rounded p-2 mb-4"
+              >
+                <option>All</option>
+                <option>New</option>
+                <option>Like New</option>
+                <option>Good</option>
+                <option>Fair</option>
+              </select>
+
+              {/* Distance */}
+              <label className="block mb-2">
+                Distance from Campus (miles): {filters.distance}
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="100"
+                value={filters.distance}
+                onChange={(e) =>
+                  setFilters({ ...filters, distance: Number(e.target.value) })
+                }
+                className="w-full mb-4"
+              />
+
+              {/* Posted Date */}
+              <label className="block mb-2">Posted Date:</label>
+              <select
+                value={filters.postedDate}
+                onChange={(e) =>
+                  setFilters({ ...filters, postedDate: e.target.value })
+                }
+                className="w-full border rounded p-2"
+              >
+                <option>All</option>
+                <option>Today</option>
+                <option>This Week</option>
+                <option>This Month</option>
+              </select>
+            </motion.div>
+          )}
+        </AnimatePresence>
+              
+
 
       {/* Listings Grid */}
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -612,10 +849,50 @@ export default function WelcomePage() {
                 </div>
 
                 {/* Location */}
-                <div className="flex items-center text-gray-600 mb-6 pb-6 border-b border-gray-200">
-                  <MapPin className="w-5 h-5 mr-2" />
-                  <span className="text-lg">{selectedListing.location}</span>
+               <div className="bg-purple-50 rounded-xl p-4 mb-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-purple-900" />
+                  Pickup Location
+                </h4>
+                
+                <div className="space-y-2">
+                  <p className="font-semibold text-purple-900 text-lg">
+                    {safeLocations.find(loc => loc.name === selectedListing.location)?.icon} {selectedListing.location}
+                  </p>
+                  
+                  {/* Show location details if it's a predefined safe spot */}
+                  {safeLocations.find(loc => loc.name === selectedListing.location) && (
+                    <>
+                      <p className="text-sm text-gray-700">
+                        {safeLocations.find(loc => loc.name === selectedListing.location)?.description}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        ⏰ <strong>Best times:</strong> {safeLocations.find(loc => loc.name === selectedListing.location)?.hours}
+                      </p>
+                      
+                      {/* Safety badge */}
+                      {safeLocations.find(loc => loc.name === selectedListing.location)?.safety === "high" && (
+                        <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                          ✅ Recommended Safe Spot
+                        </span>
+                      )}
+                    </>
+                  )}
+                  
+                  {/* Link to open in Google Maps */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=LSU+${encodeURIComponent(selectedListing.location)}+Baton+Rouge+LA`;
+                      window.open(mapsUrl, '_blank');
+                    }}
+                    className="text-sm text-purple-900 hover:underline flex items-center gap-1 mt-2 font-medium"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Open in Google Maps →
+                  </button>
                 </div>
+              </div>
 
                 {/* Description */}
                 <div className="mb-6 h-13/30">
@@ -627,6 +904,17 @@ export default function WelcomePage() {
                   </textarea>
                 </div>
               </div>
+
+                {/* Category and Condition */}
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
+                  <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
+                    {selectedListing.categoryID}
+                  </span>
+                  <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                    {selectedListing.condition || "Condition not set"}
+                  </span>
+                </div>
+
 
               {/* Seller Info */}
                 <div className="bg-gray-100 rounded-xl p-4 m-6 mt-4 mb-2 py-2 h-1/7">
@@ -718,6 +1006,27 @@ export default function WelcomePage() {
                 </>
               )}
             </div>
+                  {/* Location */}
+                <div className="flex items-center text-gray-700 mb-4 pb-4 border-b border-gray-200">
+                  <MapPin className="w-5 h-5 mr-2" />
+                  <div>
+                    <span className="text-lg">
+                      {newLocation ? (
+                        <>
+                          {safeLocations.find(loc => loc.name === newLocation)?.icon}{' '}
+                          {newLocation}
+                        </>
+                      ) : (
+                        "Select Location"
+                      )}
+                    </span>
+                    {newLocation && safeLocations.find(loc => loc.name === newLocation)?.safety === "high" && (
+                      <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                        Safe Spot ✓
+                      </span>
+                    )}
+                  </div>
+                </div>
 
             {/* Right Side - Listing Info */}
             <div className="w-1/2 flex flex-col">
@@ -739,6 +1048,23 @@ export default function WelcomePage() {
                 <div className="flex items-center text-gray-700 mb-4 pb-4 border-b border-gray-200">
                   <MapPin className="w-5 h-5 mr-2" />
                   <span className="text-lg">{newLocation || "Location"}</span>
+                </div>
+
+              {/* Condition */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Condition <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={newCondition}
+                    onChange={(e) => setNewCondition(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="" disabled>Select a condition</option>
+                    <option value="New">New</option>
+                    <option value="Like New">Like New</option>
+                    <option value="Used">Used</option>
+                  </select>
                 </div>
                 {/* Description */}
                 <div className="mb-6 h-4/7">
@@ -829,17 +1155,50 @@ export default function WelcomePage() {
                 </div>
 
                 {/* Location */}
-                <div>
+               <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Location <span className="text-red-500">*</span>
+                    Pickup Location <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={newLocation}
                     onChange={(e) => setNewLocation(e.target.value)}
-                    placeholder="e.g., Student Union, West Campus"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
+                  >
+                    <option value="" disabled>Select a safe meetup location</option>
+                    <optgroup label="🛡️ Recommended Safe Spots">
+                      {safeLocations.filter(loc => loc.safety === "high").map((loc) => (
+                        <option key={loc.name} value={loc.name}>
+                          {loc.icon} {loc.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="📍 Other Campus Locations">
+                      {safeLocations.filter(loc => loc.safety === "medium").map((loc) => (
+                        <option key={loc.name} value={loc.name}>
+                          {loc.icon} {loc.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="⚠️ Off Campus">
+                      {safeLocations.filter(loc => loc.safety === "low").map((loc) => (
+                        <option key={loc.name} value={loc.name}>
+                          {loc.icon} {loc.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  
+                  {/* Show location details when selected */}
+                  {newLocation && safeLocations.find(loc => loc.name === newLocation) && (
+                    <div className="mt-2 p-3 bg-purple-50 rounded-lg">
+                      <p className="text-sm text-gray-700">
+                        {safeLocations.find(loc => loc.name === newLocation)?.description}
+                      </p>
+                      <p className="text-sm text-purple-900 font-medium mt-1">
+                        ⏰ {safeLocations.find(loc => loc.name === newLocation)?.hours}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Image Upload */}
@@ -1020,6 +1379,90 @@ export default function WelcomePage() {
       )}
 
       <CustomToastContainer/>
+
+    {/* Safety Tips Modal */}
+    {showSafetyTips && (
+      <div 
+        className="fixed inset-0 bg-white bg-opacity-50 z-[70] flex items-center justify-center p-4"
+        onClick={() => setShowSafetyTips(false)}
+      >
+        <div 
+          className="bg-white rounded-2xl max-w-md w-full p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="text-center mb-4">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-3xl">🛡️</span>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">Safety First!</h3>
+            <p className="text-sm text-gray-600 mt-1">Please review these tips before meeting</p>
+          </div>
+
+          <div className="space-y-3 mb-6">
+            <div className="flex gap-3 p-3 bg-green-50 rounded-lg">
+              <span className="text-green-600 text-xl flex-shrink-0">✅</span>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Meet in Public Places</p>
+                <p className="text-xs text-gray-600">Student Union, Library, or busy campus locations</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-3 bg-green-50 rounded-lg">
+              <span className="text-green-600 text-xl flex-shrink-0">✅</span>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Meet During Daylight</p>
+                <p className="text-xs text-gray-600">Avoid late night meetings when possible</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-3 bg-green-50 rounded-lg">
+              <span className="text-green-600 text-xl flex-shrink-0">✅</span>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Bring a Friend</p>
+                <p className="text-xs text-gray-600">Safety in numbers - never go alone</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-3 bg-yellow-50 rounded-lg">
+              <span className="text-yellow-600 text-xl flex-shrink-0">⚠️</span>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Inspect Before Paying</p>
+                <p className="text-xs text-gray-600">Check item condition carefully</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-3 bg-red-50 rounded-lg">
+              <span className="text-red-600 text-xl flex-shrink-0">❌</span>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Never Share Personal Info</p>
+                <p className="text-xs text-gray-600">Don't give out your address or dorm room</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowSafetyTips(false)}
+              className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setShowSafetyTips(false);
+                // TODO: Navigate to messaging or show contact info
+                toast.info("Messaging feature coming soon!");
+              }}
+              className="flex-1 px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+            >
+              I Understand
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
+    
+    
   );
 }

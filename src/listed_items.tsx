@@ -23,6 +23,7 @@ interface Listing {
   location: string;
   sellerUID: string;
   available: boolean;
+  condition: string;
   lastModified: Timestamp;
 }
 
@@ -49,6 +50,7 @@ export default function Listings() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
     const [uploadedImages, setUploadedImages] = useState<File[]>([]);
     const [previewImageIndex, setPreviewImageIndex] = useState<number>(0)
+    const [newCondition, setNewCondition] = useState<string>("");
 
    //  const menuItems = [
      //   { name: 'Home', icon: House, action: () => navigate('/') },
@@ -211,6 +213,7 @@ export default function Listings() {
         setNewLocation(listing.location);
         setNewDescription(listing.Description);
         setNewImage(listing.image);
+        setNewCondition(listing.condition || "");
         setSelectedListing(listing);
         setShowSelectedListing(true);
     }
@@ -249,6 +252,7 @@ export default function Listings() {
           location: newLocation,      
           price: newPrice || null,
           title: newTitle,
+          condition: newCondition,
           lastModified: serverTimestamp()
         });
         setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
@@ -427,6 +431,24 @@ export default function Listings() {
                               <MapPin className="w-5 h-5 mr-2" />
                               <span className="text-lg">{newLocation || "Location"}</span>
                             </div>
+
+                             {/* Condition */}
+                              <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                  Condition <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                  value={newCondition}
+                                  onChange={(e) => setNewCondition(e.target.value)}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                >
+                                  <option value="" disabled>Select a condition</option>
+                                  <option value="New">New</option>
+                                  <option value="Like New">Like New</option>
+                                  <option value="Used">Used</option>
+                                </select>
+                              </div>
+                              
                             {/* Description */}
                             <div className="mb-6 h-1/2">
                               <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
