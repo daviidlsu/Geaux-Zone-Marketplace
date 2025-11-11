@@ -1039,22 +1039,6 @@ export default function WelcomePage() {
                   <span className="text-lg">{newLocation || "Location"}</span>
                 </div>
 
-              {/* Condition */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Condition <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={newCondition}
-                    onChange={(e) => setNewCondition(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  >
-                    <option value="" disabled>Select a condition</option>
-                    <option value="New">New</option>
-                    <option value="Like New">Like New</option>
-                    <option value="Used">Used</option>
-                  </select>
-                </div>
                 {/* Description */}
                 <div className="mb-6 h-4/7">
                   <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
@@ -1188,6 +1172,23 @@ export default function WelcomePage() {
                       </p>
                     </div>
                   )}
+                </div>
+                {/* Condition */ }
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Condition <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={newCondition}
+                    onChange={(e) => setNewCondition(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="" disabled>Select a condition</option>
+                    <option value="New">New</option>
+                    <option value="Like New">Like New</option>
+                    <option value="Used">Used</option>
+                  </select>
                 </div>
 
                 {/* Image Upload */}
