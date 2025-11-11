@@ -23,8 +23,75 @@ interface Listing {
   location: string;
   sellerUID: string;
   available: boolean;
+  condition: string;
   lastModified: Timestamp;
 }
+
+const safeLocations = [
+  {
+    name: "Student Union - Front Entrance",
+    description: "Main floor, well-lit, high traffic area",
+    hours: "6am - 11pm daily",
+    icon: "🏛️",
+    safety: "high"
+  },
+  {
+    name: "Middleton Library - Main Entrance", 
+    description: "Security cameras, busy lobby area",
+    hours: "24/7 access",
+    icon: "📚",
+    safety: "high"
+  },
+  {
+    name: "Tiger Stadium - Gate 1",
+    description: "Public area with security presence",
+    hours: "Daylight hours recommended",
+    icon: "🏈",
+    safety: "high"
+  },
+  {
+    name: "UREC - Main Lobby",
+    description: "High foot traffic, staff present",
+    hours: "6am - 10pm",
+    icon: "💪",
+    safety: "high"
+  },
+  {
+    name: "The 459 - Main Lobby",
+    description: "Student housing lobby",
+    hours: "8am - 8pm",
+    icon: "🏢",
+    safety: "medium"
+  },
+  {
+    name: "Patrick F. Taylor Hall",
+    description: "Engineering building, busy during class hours",
+    hours: "7am - 9pm",
+    icon: "🏫",
+    safety: "medium"
+  },
+  {
+    name: "CEBA",
+    description: "Business building lobby",
+    hours: "7am - 9pm",
+    icon: "💼",
+    safety: "medium"
+  },
+  {
+    name: "Nicholson Gateway",
+    description: "Central campus location",
+    hours: "Daylight hours recommended",
+    icon: "🌳",
+    safety: "medium"
+  },
+  {
+    name: "Off Campus",
+    description: "Choose a safe public location",
+    hours: "Use caution",
+    icon: "📍",
+    safety: "low"
+  }
+];
 
 export default function Listings() {
     const navigate = useNavigate();
@@ -49,6 +116,7 @@ export default function Listings() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
     const [uploadedImages, setUploadedImages] = useState<File[]>([]);
     const [previewImageIndex, setPreviewImageIndex] = useState<number>(0)
+    const [newCondition, setNewCondition] = useState<string>("");
 
    //  const menuItems = [
      //   { name: 'Home', icon: House, action: () => navigate('/') },
@@ -211,6 +279,7 @@ export default function Listings() {
         setNewLocation(listing.location);
         setNewDescription(listing.Description);
         setNewImage(listing.image);
+        setNewCondition(listing.condition || "");
         setSelectedListing(listing);
         setShowSelectedListing(true);
     }
@@ -249,6 +318,7 @@ export default function Listings() {
           location: newLocation,      
           price: newPrice || null,
           title: newTitle,
+          condition: newCondition,
           lastModified: serverTimestamp()
         });
         setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
@@ -427,6 +497,8 @@ export default function Listings() {
                               <MapPin className="w-5 h-5 mr-2" />
                               <span className="text-lg">{newLocation || "Location"}</span>
                             </div>
+
+                              
                             {/* Description */}
                             <div className="mb-6 h-1/2">
                               <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
@@ -515,19 +587,71 @@ export default function Listings() {
                               </div>
                             </div>
             
-                            {/* Location */}
-                            <div>
+                           {/* Location */}
+                          <div>
                               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Location <span className="text-red-500">*</span>
+                                Pickup Location <span className="text-red-500">*</span>
                               </label>
-                              <input
-                                type="text"
+                              <select
                                 value={newLocation}
                                 onChange={(e) => setNewLocation(e.target.value)}
-                                placeholder="e.g., Student Union, West Campus"
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                              />
+                              >
+                                <option value="" disabled>Select a safe meetup location</option>
+                                <optgroup label="🛡️ Recommended Safe Spots">
+                                  {safeLocations.filter(loc => loc.safety === "high").map((loc) => (
+                                    <option key={loc.name} value={loc.name}>
+                                      {loc.icon} {loc.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                                <optgroup label="📍 Other Campus Locations">
+                                  {safeLocations.filter(loc => loc.safety === "medium").map((loc) => (
+                                    <option key={loc.name} value={loc.name}>
+                                      {loc.icon} {loc.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                                <optgroup label="⚠️ Off Campus">
+                                  {safeLocations.filter(loc => loc.safety === "low").map((loc) => (
+                                    <option key={loc.name} value={loc.name}>
+                                      {loc.icon} {loc.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              </select>
+                              
+                              {/* Show location details when selected */}
+                              {newLocation && safeLocations.find(loc => loc.name === newLocation) && (
+                                <div className="mt-2 p-3 bg-purple-50 rounded-lg">
+                                  <p className="text-sm text-gray-700">
+                                    {safeLocations.find(loc => loc.name === newLocation)?.description}
+                                  </p>
+                                  <p className="text-sm text-purple-900 font-medium mt-1">
+                                    ⏰ {safeLocations.find(loc => loc.name === newLocation)?.hours}
+                                  </p>
+                                </div>
+                              )}
                             </div>
+
+                           
+                          {/* Condition */ }
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Condition <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                value={newCondition}
+                                onChange={(e) => setNewCondition(e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              >
+                                <option value="" disabled>Select a condition</option>
+                                <option value="New">New</option>
+                                <option value="Like New">Like New</option>
+                                <option value="Used">Used</option>
+                              </select>
+                            </div>
+                
             
                            {/* Image Upload */}
                             <div>
