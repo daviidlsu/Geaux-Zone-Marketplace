@@ -1008,18 +1008,7 @@ export default function WelcomePage() {
             </div>
                   {/* Location */}
                 <div className="flex items-center text-gray-700 mb-4 pb-4 border-b border-gray-200">
-                  <MapPin className="w-5 h-5 mr-2" />
                   <div>
-                    <span className="text-lg">
-                      {newLocation ? (
-                        <>
-                          {safeLocations.find(loc => loc.name === newLocation)?.icon}{' '}
-                          {newLocation}
-                        </>
-                      ) : (
-                        "Select Location"
-                      )}
-                    </span>
                     {newLocation && safeLocations.find(loc => loc.name === newLocation)?.safety === "high" && (
                       <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                         Safe Spot ✓
