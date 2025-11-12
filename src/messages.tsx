@@ -365,20 +365,13 @@ export default function Messages() {
             
             // 1. Update the message status
             await updateDoc(messageDocRef, {
-                status: action === 'accept' ? 'accepted' : 'rejected',
+                counterStatus: action === 'accept' ? 'accepted' : 'rejected',
             });
 
             // 2. Add a status message to the chat
             const statusText = action === 'accept' 
                 ? `Counter offer accepted! Moving forward with the transaction at the new price.`
                 : `Counter offer declined.`;
-
-            await addDoc(collection(db, "Chats", selectedConversationId, "messages"), {
-                senderId: currentUserData?.uid,
-                text: statusText,
-                timestamp: serverTimestamp(),
-                type: action === 'accept' ? 'accepted' : 'rejected', // Use 'accepted'/'rejected' as message types
-            });
 
             // 3. Update the parent chat last message
             const parentDoc = doc(db,"Chats",selectedConversationId)
@@ -465,96 +458,96 @@ export default function Messages() {
                                             : '...';
 
                                         if (msg.type === 'counter') {
-            const isIncomingOffer = !isCurrentUser;
-            const isPending = msg.counterStatus === 'pending';
+                                            const isIncomingOffer = !isCurrentUser;
+                                            const isPending = msg.counterStatus === 'pending';
 
-            return (
-                <div
-                    key={msg.id}
-                    className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
-                >
-                    <div
-                        // Distinct card style for counter offers
-                        className={`max-w-[80%] sm:max-w-[70%] lg:max-w-[60%] p-4 rounded-2xl shadow-lg border-2 ${
-                            isCurrentUser 
-                                ? 'bg-yellow-50 border-yellow-300 text-gray-800 rounded-br-md' // Outgoing
-                                : 'bg-yellow-100 border-yellow-400 text-gray-800 rounded-tl-md' // Incoming
-                        }`}
-                    >
-                        <div className="flex items-center space-x-2 mb-2">
-                            <Scale className="w-6 h-6 text-yellow-600" />
-                            <h4 className="font-bold text-lg text-yellow-800">
-                                {isCurrentUser ? 'Your Counter Offer' : 'Incoming Counter Offer'}
-                            </h4>
-                        </div>
-                        
-                        <p className="text-sm font-semibold mb-3">
-                            Amount: <span className="text-yellow-700">${msg.counterAmount?.toFixed(2)}</span>
-                        </p>
-                        
-                        {/* Status Indicator */}
-                        <div className={`text-xs font-medium py-1 px-2 rounded-full inline-flex items-center ${
-                            msg.counterStatus === 'accepted' ? 'bg-green-100 text-green-700' :
-                            msg.counterStatus === 'rejected' ? 'bg-red-100 text-red-700' :
-                            'bg-blue-100 text-blue-700'
-                        }`}>
-                            {msg.counterStatus === 'accepted' && <Check className="w-4 h-4 mr-1" />}
-                            {msg.counterStatus === 'rejected' && <Ban className="w-4 h-4 mr-1" />}
-                            {msg.counterStatus === 'pending' && <Clock className="w-4 h-4 mr-1" />}
-                            {msg.counterStatus?.toUpperCase() || 'UNKNOWN'}
-                        </div>
-
-                        {/* Accept/Reject Buttons for INCOMING PENDING Offers */}
-                        {isIncomingOffer && isPending && (
-                            <div className="mt-4 pt-3 border-t border-yellow-300 flex space-x-2">
-                                <button
-                                    onClick={() => handleCounterAction(msg.id, 'accept')}
-                                    disabled={loading}
-                                    className="flex-1 py-2 px-3 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition disabled:bg-gray-400"
-                                >
-                                    <Check className="w-4 h-4 mr-1 inline-block" /> Accept
-                                </button>
-                                <button
-                                    onClick={() => handleCounterAction(msg.id, 'reject')}
-                                    disabled={loading}
-                                    className="flex-1 py-2 px-3 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition disabled:bg-gray-400"
-                                >
-                                    <X className="w-4 h-4 mr-1 inline-block" /> Decline
-                                </button>
-                            </div>
-                        )}
-                        
-                        <span className="block text-xs mt-2 text-right opacity-80 text-gray-600">
-                            {time}
-                        </span>
-                    </div>
-                </div>
-            );
-        }
-
-                                        return (
-                                            <div
-                                                key={index}
-                                                className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
-                                            >
+                                            return (
                                                 <div
-                                                    className={`max-w-[80%] sm:max-w-[70%] lg:max-w-[60%] p-3 rounded-2xl shadow-sm ${
-                                                        isCurrentUser
-                                                            ? 'bg-purple-600 text-white rounded-br-md rounded-tr-xl rounded-bl-xl rounded-tl-xl'
-                                                            : 'bg-gray-200 text-gray-800 rounded-tl-md rounded-br-xl rounded-bl-xl rounded-tr-xl'
-                                                    }`}
+                                                    key={msg.id}
+                                                    className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                                                 >
-                                                {msg.type=='text' && (
-                                                    <div>
-                                                        <p className="text-sm break-words leading-relaxed">{msg.text}</p>
-                                                        <span className={`block text-xs mt-1 text-right opacity-70 ${isCurrentUser ? 'text-purple-200' : 'text-gray-600'}`}>
+                                                    <div
+                                                        // Distinct card style for counter offers
+                                                        className={`max-w-[80%] sm:max-w-[70%] lg:max-w-[60%] p-4 rounded-2xl shadow-lg border-2 ${
+                                                            isCurrentUser 
+                                                                ? 'bg-yellow-50 border-yellow-300 text-gray-800 rounded-br-md' // Outgoing
+                                                                : 'bg-yellow-100 border-yellow-400 text-gray-800 rounded-tl-md' // Incoming
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center space-x-2 mb-2">
+                                                            <Scale className="w-6 h-6 text-yellow-600" />
+                                                            <h4 className="font-bold text-lg text-yellow-800">
+                                                                {isCurrentUser ? 'Your Counter Offer' : 'Incoming Counter Offer'}
+                                                            </h4>
+                                                        </div>
+
+                                                        <p className="text-sm font-semibold mb-3">
+                                                            Amount: <span className="text-yellow-700">${msg.counterAmount?.toFixed(2)}</span>
+                                                        </p>
+
+                                                        {/* Status Indicator */}
+                                                        <div className={`text-xs font-medium py-1 px-2 rounded-full inline-flex items-center ${
+                                                            msg.counterStatus === 'accepted' ? 'bg-green-100 text-green-700' :
+                                                            msg.counterStatus === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                            'bg-blue-100 text-blue-700'
+                                                        }`}>
+                                                            {msg.counterStatus === 'accepted' && <Check className="w-4 h-4 mr-1" />}
+                                                            {msg.counterStatus === 'rejected' && <Ban className="w-4 h-4 mr-1" />}
+                                                            {msg.counterStatus === 'pending' && <Clock className="w-4 h-4 mr-1" />}
+                                                            {msg.counterStatus?.toUpperCase() || 'UNKNOWN'}
+                                                        </div>
+
+                                                        {/* Accept/Reject Buttons for INCOMING PENDING Offers */}
+                                                        {isIncomingOffer && isPending && (
+                                                            <div className="mt-4 pt-3 border-t border-yellow-300 flex space-x-2">
+                                                                <button
+                                                                    onClick={() => handleCounterAction(msg.id, 'accept')}
+                                                                    disabled={loading}
+                                                                    className="flex-1 py-2 px-3 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition disabled:bg-gray-400"
+                                                                >
+                                                                    <Check className="w-4 h-4 mr-1 inline-block" /> Accept
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleCounterAction(msg.id, 'reject')}
+                                                                    disabled={loading}
+                                                                    className="flex-1 py-2 px-3 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition disabled:bg-gray-400"
+                                                                >
+                                                                    <X className="w-4 h-4 mr-1 inline-block" /> Decline
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                        <span className="block text-xs mt-2 text-right opacity-80 text-gray-600">
                                                             {time}
                                                         </span>
                                                     </div>
-                                                )}
                                                 </div>
-                                            </div>
-                                        );
+                                            );
+                                        }
+                                        else {
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                                                >
+                                                    <div
+                                                        className={`max-w-[80%] sm:max-w-[70%] lg:max-w-[60%] p-3 rounded-2xl shadow-sm ${
+                                                            isCurrentUser
+                                                                ? 'bg-purple-600 text-white rounded-br-md rounded-tr-xl rounded-bl-xl rounded-tl-xl'
+                                                                : 'bg-gray-200 text-gray-800 rounded-tl-md rounded-br-xl rounded-bl-xl rounded-tr-xl'
+                                                        }`}
+                                                    >
+                                                    {msg.type=='text' && (
+                                                        <div>
+                                                            <p className="text-sm break-words leading-relaxed">{msg.text}</p>
+                                                            <span className={`block text-xs mt-1 text-right opacity-70 ${isCurrentUser ? 'text-purple-200' : 'text-gray-600'}`}>
+                                                                {time}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
                                     })}
                                     {/* Ref for auto-scrolling to the latest message */}
                                     <div ref={messagesEndRef} />
