@@ -565,7 +565,7 @@ export default function Messages() {
                                             onKeyDown = {(e) => {if (e.key == 'Enter') {e.preventDefault(); sendMessage(newMessage)}}}
                                             maxLength={150}
                                         />
-                                        {view=='INCOMING' && (
+                                        
                                             <div className="flex items-center relative">
                                                {/* Action Button */}
                                                 <button 
@@ -595,7 +595,7 @@ export default function Messages() {
                                                    </div>
                                                )}
                                             </div>
-                                        )}
+                                        
 
                                         <button 
                                             className={`px-6 py-3 ${loading || newMessage=="" ? "bg-gray-400 cursor-not-allowed!"  : "bg-purple-900"} text-white font-semibold rounded-xl transition duration-150`}
