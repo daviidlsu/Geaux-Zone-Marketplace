@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { db } from "./firebase/firebase";
 import { useAuth } from "./auth/auth.tsx";
 import { toast } from 'react-toastify';
-import { Search, Filter, MapPin, X, Library, House, Trash2, TriangleAlert } from "lucide-react";
-import { collection, getCountFromServer, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "firebase/firestore";
+import { Search, MapPin, X, Trash2, TriangleAlert } from "lucide-react";
+import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx";
@@ -30,7 +30,7 @@ interface Listing {
 export default function Listings() {
     const navigate = useNavigate();
 
-    const { currentUser, currentUserData, isLoading, logout } = useAuth();
+    const { currentUser, currentUserData, logout } = useAuth();
 
     const [filteredNum, setFilteredNum] = useState<number>(0);
     const [listings, setListings] = useState<Listing[]>([]);
@@ -48,11 +48,6 @@ export default function Listings() {
     const [showSelectedListing, setShowSelectedListing] = useState<boolean>(false);
     const [showMenu, setShowMenu] = useState<boolean>(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
-
-     const menuItems = [
-        { name: 'Home', icon: House, action: () => navigate('/') },
-        { name: 'Your Listings', icon: Library, action: () => navigate('/my-listings') },
-    ];
 
     const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 

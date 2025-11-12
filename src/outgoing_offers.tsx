@@ -1,5 +1,5 @@
 import { db } from "./firebase/firebase"
-import { FieldValue, writeBatch, increment, Timestamp, collection, orderBy, limit,collectionGroup, deleteDoc, doc, getDoc,getDocs, query, updateDoc, where } from "firebase/firestore"
+import { writeBatch, increment, Timestamp, collection, orderBy, limit,collectionGroup, doc, getDoc,getDocs, query, updateDoc, where } from "firebase/firestore"
 import { toast } from "react-toastify"
 import { useAuth } from "./auth/auth"
 import { useEffect, useState } from "react"

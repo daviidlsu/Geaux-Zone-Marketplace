@@ -2,17 +2,17 @@ import { useEffect, useMemo, useRef } from "react"
 import { toast } from "react-toastify"
 import { useAuth } from "./auth/auth"
 import { useState } from "react"
-import { replace, useNavigate, useParams } from "react-router-dom"
-import { addDoc, collection, CollectionReference, doc, getDoc, getDocs, limit, onSnapshot, or, orderBy, query, QueryDocumentSnapshot, serverTimestamp, Timestamp, updateDoc, where } from "firebase/firestore"
+import { useNavigate, useParams } from "react-router-dom"
+import { addDoc, collection, CollectionReference, doc, limit, onSnapshot, or, orderBy, query, QueryDocumentSnapshot, serverTimestamp, Timestamp, updateDoc, where } from "firebase/firestore"
 import { db } from "./firebase/firebase"
 
 import Navbar from "./components/navbar"
 import Menu from "./components/menu"
 import CustomToastContainer from "./components/toast"
-import { Plus, Ban, Check } from "lucide-react"
+import { Plus, Ban, Check, Flag, Scale, X, Clock } from "lucide-react"
 
 type OfferMessageType = 'INCOMING' | 'OUTGOING';
-type MessageContent = 'accept' | 'reject' | 'text';
+type MessageContent = 'counter' | 'image' | 'text' | 'accepted' | 'rejected';
 
 interface MessageToggleProps {
     currentView: OfferMessageType;
@@ -37,10 +37,13 @@ interface Chat {
 }
 
 interface Message {
+    id: string
     senderId: string
     text: string
     timestamp: Timestamp 
     type: MessageContent
+    counterAmount?: number
+    counterStatus: 'accepted' | 'rejected' | 'pending'
 }
 
 const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, setView, clearChatInfo, incomingCount, outgoingCount }) => {
@@ -77,6 +80,88 @@ const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, setView, cle
   );
 };
 
+interface CounterOfferModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSend: (amount: number) => void;
+    listingTitle: string;
+}
+
+const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ isOpen, onClose, onSend, listingTitle }) => {
+    const [amount, setAmount] = useState<number | null>(null);
+
+    if (!isOpen) return null;
+
+    const handleSend = () => {
+        if (amount==null || amount! <= 0) {
+            toast.error("Please enter a valid amount greater than $0.00.", { toastId: "invalid-counter" });
+            return;
+        }
+        onSend(amount!);
+        setAmount(null);
+    };
+
+    return (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+                <div className="flex justify-between items-center border-b pb-3 mb-4">
+                    <h2 className="text-xl font-bold text-purple-900">Send Counter Offer</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+
+                <p className="text-gray-600 mb-4">
+                    Submitting a counter offer for: <span className="font-semibold">{listingTitle}</span>
+                </p>
+
+                <div className="mb-6">
+                    <label htmlFor="counter-amount" className="block text-sm font-medium text-gray-700 mb-2">
+                        Offer Amount (USD)
+                    </label>
+                    <div className="relative rounded-lg shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 font-bold">$</span>
+                        </div>
+                        <input
+                            type="string"
+                            id="counter-amount"
+                            value={amount !== null ? `${amount}`  : ""}
+                            onChange={(e) => {
+                                const cleanValue = e.target.value.replace(/[^\d.]/g, '');
+                                setAmount(cleanValue ? parseFloat(cleanValue) : null)}}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleSend();
+                                }
+                            }}
+                            placeholder="0"
+                            className="w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-lg"
+                            min="0"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-end space-x-3">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSend}
+                        className="px-4 py-2 text-sm font-semibold text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 transition"
+                        disabled={amount! <= 0 || amount == null}
+                    >
+                        Send Counter
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function Messages() {
     const navigate = useNavigate();
     const { currentUser, currentUserData, logout } = useAuth();
@@ -90,6 +175,7 @@ export default function Messages() {
     const [showActionMenu, setShowActionMenu] = useState<boolean>(false)
     const [view, setView] = useState<OfferMessageType>('INCOMING');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [showCounterModal, setShowCounterModal] = useState<boolean>(false)
     
     // Handles logout 
     const handleLogout = async () => {
@@ -178,31 +264,15 @@ export default function Messages() {
             const messages = snapshot.docs.map((doc: QueryDocumentSnapshot<Message>) =>{
                 const data = doc.data();
                 return {
+                    id: doc.id,
                     senderId: data.senderId,
                     text: data.text,
                     timestamp: data.timestamp,
                     type: data.type,
+                    counterAmount: data.counterAmount,
+                    counterStatus: data.counterStatus
                 } as Message
             });
-            /* const lastMessage = messages[messages.length-1]
-            if (lastMessage && lastMessage.senderId){
-                setConversations(prevConvos => {
-                    const updatedConvoIndex = prevConvos.findIndex(c => c.id === selectedConversationId);
-                    if (updatedConvoIndex > -1) {
-                        const updatedConvo = { ...prevConvos[updatedConvoIndex] };
-                        updatedConvo.lastMessage = lastMessage.text;
-                        updatedConvo.lastMessageTime = lastMessage.timestamp;
-                        updatedConvo.lastMessageSender = lastMessage.senderId;
-
-                        // Move the updated conversation to the very top (index 0)
-                        const otherConvos = prevConvos.filter((_, index) => index !== updatedConvoIndex);
-                        return [updatedConvo, ...otherConvos];
-                    }
-                return prevConvos;
-                })
-
-            } */
-
             setCurrentMessages(messages);
         }, (error) => {
             console.error("Error fetching chats: ",error)
@@ -248,6 +318,86 @@ export default function Messages() {
     const clearChatInfo = () => {
         setSelectedConversationId("")
         setCurrentMessages([])
+    }
+
+    const sendCounterOffer = async (amount: number) => {
+        if (!selectedConversation) return;
+
+        setShowCounterModal(false); // Close modal immediately
+        try {
+            setLoading(true);
+            const formattedAmount = amount.toFixed(2);
+            const text = `Counter offer submitted for $${formattedAmount}.`;
+
+            // 1. Add the counter message to the messages subcollection
+            await addDoc(collection(db, "Chats", selectedConversationId, "messages"), {
+                senderId: currentUserData?.uid,
+                text: text,
+                timestamp: serverTimestamp(),
+                type: "counter",
+                counterAmount: amount,
+                counterStatus: 'pending'
+            });
+
+            // 2. Update the parent chat document
+            const parentDoc = doc(db, "Chats", selectedConversationId);
+            await updateDoc(parentDoc, {
+                lastMessage: text,
+                lastMessageSender: currentUserData?.uid,
+                lastMessageTime: serverTimestamp(),
+            });
+
+            toast.success(`Counter offer for $${formattedAmount} sent!`, { toastId: "counter-success" });
+            setShowCounterModal(false)
+
+        } catch (e) {
+            toast.error("Error sending counter offer.", { toastId: "counter-error" });
+            console.log("Error sending counter offer: ", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCounterAction = async (messageId: string, action: 'accept' | 'reject') => {
+        try {
+            setLoading(true);
+            const messageDocRef = doc(db, "Chats", selectedConversationId, "messages", messageId);
+            
+            // 1. Update the message status
+            await updateDoc(messageDocRef, {
+                status: action === 'accept' ? 'accepted' : 'rejected',
+            });
+
+            // 2. Add a status message to the chat
+            const statusText = action === 'accept' 
+                ? `Counter offer accepted! Moving forward with the transaction at the new price.`
+                : `Counter offer declined.`;
+
+            await addDoc(collection(db, "Chats", selectedConversationId, "messages"), {
+                senderId: currentUserData?.uid,
+                text: statusText,
+                timestamp: serverTimestamp(),
+                type: action === 'accept' ? 'accepted' : 'rejected', // Use 'accepted'/'rejected' as message types
+            });
+
+            // 3. Update the parent chat last message
+            const parentDoc = doc(db,"Chats",selectedConversationId)
+            await updateDoc(parentDoc, {
+                lastMessage: statusText,
+                lastMessageSender: currentUserData?.uid,
+                lastMessageTime: serverTimestamp()
+            })
+
+            toast.success(`Counter offer ${action}ed successfully.`, { toastId: `${action}-success` });
+
+            // set listing status to 'reserved' here
+
+        } catch (e) {
+            toast.error(`Error ${action}ing counter offer.`, { toastId: `${action}-error` });
+            console.error(`Error ${action}ing counter offer: `, e);
+        } finally {
+            setLoading(false);
+        }
     }
 
     const selectedConversation = conversations.find(c=>c.id === selectedConversationId)
@@ -314,6 +464,74 @@ export default function Messages() {
                                             ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
                                             : '...';
 
+                                        if (msg.type === 'counter') {
+            const isIncomingOffer = !isCurrentUser;
+            const isPending = msg.counterStatus === 'pending';
+
+            return (
+                <div
+                    key={msg.id}
+                    className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                >
+                    <div
+                        // Distinct card style for counter offers
+                        className={`max-w-[80%] sm:max-w-[70%] lg:max-w-[60%] p-4 rounded-2xl shadow-lg border-2 ${
+                            isCurrentUser 
+                                ? 'bg-yellow-50 border-yellow-300 text-gray-800 rounded-br-md' // Outgoing
+                                : 'bg-yellow-100 border-yellow-400 text-gray-800 rounded-tl-md' // Incoming
+                        }`}
+                    >
+                        <div className="flex items-center space-x-2 mb-2">
+                            <Scale className="w-6 h-6 text-yellow-600" />
+                            <h4 className="font-bold text-lg text-yellow-800">
+                                {isCurrentUser ? 'Your Counter Offer' : 'Incoming Counter Offer'}
+                            </h4>
+                        </div>
+                        
+                        <p className="text-sm font-semibold mb-3">
+                            Amount: <span className="text-yellow-700">${msg.counterAmount?.toFixed(2)}</span>
+                        </p>
+                        
+                        {/* Status Indicator */}
+                        <div className={`text-xs font-medium py-1 px-2 rounded-full inline-flex items-center ${
+                            msg.counterStatus === 'accepted' ? 'bg-green-100 text-green-700' :
+                            msg.counterStatus === 'rejected' ? 'bg-red-100 text-red-700' :
+                            'bg-blue-100 text-blue-700'
+                        }`}>
+                            {msg.counterStatus === 'accepted' && <Check className="w-4 h-4 mr-1" />}
+                            {msg.counterStatus === 'rejected' && <Ban className="w-4 h-4 mr-1" />}
+                            {msg.counterStatus === 'pending' && <Clock className="w-4 h-4 mr-1" />}
+                            {msg.counterStatus?.toUpperCase() || 'UNKNOWN'}
+                        </div>
+
+                        {/* Accept/Reject Buttons for INCOMING PENDING Offers */}
+                        {isIncomingOffer && isPending && (
+                            <div className="mt-4 pt-3 border-t border-yellow-300 flex space-x-2">
+                                <button
+                                    onClick={() => handleCounterAction(msg.id, 'accept')}
+                                    disabled={loading}
+                                    className="flex-1 py-2 px-3 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition disabled:bg-gray-400"
+                                >
+                                    <Check className="w-4 h-4 mr-1 inline-block" /> Accept
+                                </button>
+                                <button
+                                    onClick={() => handleCounterAction(msg.id, 'reject')}
+                                    disabled={loading}
+                                    className="flex-1 py-2 px-3 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition disabled:bg-gray-400"
+                                >
+                                    <X className="w-4 h-4 mr-1 inline-block" /> Decline
+                                </button>
+                            </div>
+                        )}
+                        
+                        <span className="block text-xs mt-2 text-right opacity-80 text-gray-600">
+                            {time}
+                        </span>
+                    </div>
+                </div>
+            );
+        }
+
                                         return (
                                             <div
                                                 key={index}
@@ -326,10 +544,14 @@ export default function Messages() {
                                                             : 'bg-gray-200 text-gray-800 rounded-tl-md rounded-br-xl rounded-bl-xl rounded-tr-xl'
                                                     }`}
                                                 >
-                                                    <p className="text-sm break-words leading-relaxed">{msg.text}</p>
-                                                    <span className={`block text-xs mt-1 text-right opacity-70 ${isCurrentUser ? 'text-purple-200' : 'text-gray-600'}`}>
-                                                        {time}
-                                                    </span>
+                                                {msg.type=='text' && (
+                                                    <div>
+                                                        <p className="text-sm break-words leading-relaxed">{msg.text}</p>
+                                                        <span className={`block text-xs mt-1 text-right opacity-70 ${isCurrentUser ? 'text-purple-200' : 'text-gray-600'}`}>
+                                                            {time}
+                                                        </span>
+                                                    </div>
+                                                )}
                                                 </div>
                                             </div>
                                         );
@@ -353,25 +575,29 @@ export default function Messages() {
                                         {view=='INCOMING' && (
                                             <div className="flex items-center relative">
                                                {/* Action Button */}
-                                               <button 
-                                                   onClick={() => {setShowActionMenu(prev => !prev);console.log("toggle")}}
-                                                   className="p-3 text-white hover:text-white hover:bg-purple-800 bg-purple-900 rounded-xl transition duration-150 flex items-center justify-center"
-                                                   aria-expanded={showActionMenu}
-                                                   title="More Actions"
-                                                >
-                                                   <Plus className="w-5 h-5" />
-                                               </button>
+                                                <button 
+                                                    onClick={() => {setShowActionMenu(prev => !prev);console.log("toggle")}}
+                                                    className="p-3 text-white hover:text-white hover:bg-purple-800 bg-purple-900 rounded-xl transition duration-150 flex items-center justify-center"
+                                                    aria-expanded={showActionMenu}
+                                                    title="More Actions"
+                                                 >
+                                                    <Plus className="w-5 h-5" />
+                                                </button>
 
                                                {/* Drop-up Menu */}
                                                {showActionMenu && (
                                                    <div className="absolute bottom-full mb-3 right-0 w-40 bg-white rounded-lg shadow-xl border border-gray-200 z-20 overflow-hidden">
-                                                       <button className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-green-100">
-                                                        <Check className="mt-1 mr-2 w-5 h-5 stroke-green-400 stroke-3"/>
-                                                           Accept Offer
+                                                       <button onClick={() => {setShowCounterModal(true); setShowActionMenu(false);}}className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-yellow-100">
+                                                        <Scale className="mt-1 mr-2 w-5 h-5 stroke-yellow-400 stroke-3"/>
+                                                           Send Counter
                                                        </button>
                                                        <button className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-red-100">
+                                                        <Flag className="mt-1 mr-2 w-5 h-5 stroke-red-400 stroke-2.5 fill-red-400"/>
+                                                           Report User
+                                                       </button>
+                                                       <button className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-red-200">
                                                         <Ban className="mt-1 mr-2 w-5 h-5 stroke-red-400 stroke-2.5"/>
-                                                           Decline Offer
+                                                           Close Offer
                                                        </button>
                                                    </div>
                                                )}
@@ -397,6 +623,12 @@ export default function Messages() {
                         )}
                     </section>
             </main>
+            <CounterOfferModal 
+                isOpen={showCounterModal}
+                onClose={() => setShowCounterModal(false)}
+                onSend={sendCounterOffer}
+                listingTitle={selectedConversation?.listingTitle || 'the listing'}
+            />
             <CustomToastContainer/>
         </div>
     )

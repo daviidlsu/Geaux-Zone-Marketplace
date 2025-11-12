@@ -1,11 +1,11 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useAuth } from "./auth/auth.tsx";
-import { Search, Filter, MapPin, Heart, X, Library, House} from "lucide-react";
+import { Search, Filter, MapPin, Heart, X } from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { arrayUnion, arrayRemove, increment, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { increment, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx"
@@ -257,19 +257,6 @@ export default function WelcomePage() {
       setListings(prevListings => prevListings.filter(item => item.docId !== listing.docId));
       /* await reloadData(); */
       setSelectedListing(null);
-    }
-  }
-
-  // Contact seller handler
-  const handleContactSeller = (listing: Listing) => {
-    if (currentUser == null) {
-      toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
-    } else {
-      navigate('/outgoing-offers', {
-        state: {
-          listingToOffer: listing
-        }
-      })
     }
   }
 
@@ -585,7 +572,8 @@ export default function WelcomePage() {
                 <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
                   {/* Contact Seller Button */}
-                  <button onClick={(e) => {e.stopPropagation();setShowOfferModal(true)}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
+                  <button onClick={(e) => {e.stopPropagation();
+                    {selectedListing.available==false ? setShowOfferModal(true) : toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId:'reserved-listing-error'})}}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
                     Make Offer
                   </button>
                   {/* Favorite Button */}

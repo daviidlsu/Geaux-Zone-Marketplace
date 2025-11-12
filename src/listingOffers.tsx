@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import { addDoc, collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "./firebase/firebase.ts";
 import { useAuth } from "./auth/auth.tsx";
 import { Timestamp } from "firebase/firestore";
@@ -38,7 +38,6 @@ const CheckStatus: React.FC<CheckStatusProps> = ({status, handleReject, handleAc
                 return (
                     <div>
                         <span className='px-2 py-1 rounded-full bg-blue-100 mr-2 text-xs text-blue-500'>New</span>
-                        <button onClick={handleChat} className="text-sm px-4 py-2 bg-purple-900 text-white rounded-full mr-2 hover:bg-purple-800">Start Chat</button>
                         <button onClick={handleAccept} className="text-sm px-4 py-2 bg-green-500 text-white rounded-full mr-2 hover:bg-green-600">Accept</button>
                         <button onClick={handleReject} className="text-sm px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600">Reject</button>
                     </div>
@@ -181,10 +180,38 @@ export default function ListingOffers(){
     const handleAccept = async (offer: Offer) => {
         setLoading(true)
         try {
-            const docRef = doc(db,"Inventory",offer.parentId, "offers", offer.offerId)
-            await updateDoc(docRef, {
-                status:"accepted"
+            const newChatRef = doc(db,"Chats")
+            const batch = writeBatch(db)
+
+            // Sets values of new chat 
+            batch.set(newChatRef, {
+                lastMessage: "",
+                lastMessageSender: "",
+                lastMessageTime: null,
+                listingTitle: offer.listingTitle,
+                recName: offer.buyerDisplayName,
+                recUID: offer.buyerUID,
+                senderName: currentUserData?.username,
+                senderUID: currentUserData?.uid
             })
+
+            // Updates offer status and chatId
+            const docRef = doc(db,"Inventory",offer.parentId, "offers", offer.offerId)
+            batch.update(docRef, {
+                    status:"in-progress",
+                    chatId: newChatRef.id
+                }
+            )
+            batch.commit()
+
+            // If commit succeeds, update LOCAL offer status
+            setOffers(prevOffers =>
+                prevOffers.map(o =>
+                    o.offerId === offer.offerId
+                        ? { ...o, status: "in-progress" } // Update the accepted offer's status
+                        : o // Keep other offers as they are
+                )
+            );
             toast.success ("Accepted offer", {toastId: "accept-success"})
         }
         catch (err){
@@ -233,9 +260,31 @@ export default function ListingOffers(){
     // If loading, display loading message
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
-                Loading offers...
+            <div>
+                <Navbar
+                    handleLogout={handleLogout}
+                    setShowLoginModal={()=>{}}
+                    setShowMenu={setShowMenu}
+                    navigate={navigate}/>
+                <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
+                <div className="max-w-4xl mx-auto px-4 py-10">
+                {/* Go back button */}
+                    <button 
+                        onClick={() => navigate(-1)} // Go back to the previous page (Your Listings)
+                        className="flex items-center text-purple-900 hover:text-purple-700 mb-6 font-semibold"
+                    >
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    Back to Your Listings
+                    </button>
+                {/* Listing Title */}
+                    <h1 className="text-3xl font-bold text-gray-900 mb-6">
+                    Offers for: <span className="text-purple-900">{listingTitle}</span>
+                    </h1>
+                {/* Loading message */}
+                        <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
+                        Loading offers...
+                </div>
+                <CustomToastContainer/>
             </div>
         );
     }
@@ -257,40 +306,40 @@ export default function ListingOffers(){
                 <ArrowLeft className="w-5 h-5 mr-2" />
                 Back to Your Listings
                 </button>
-
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">
+            {/* Listing Title */}
+                <h1 className="text-3xl font-bold text-gray-900 mb-6">
                 Offers for: <span className="text-purple-900">{listingTitle}</span>
-            </h1>
-
-            {offers.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-xl shadow-md">
-                    <p className="text-gray-500 text-lg">No offers have been submitted for this listing yet.</p>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {offers.filter((offer)=>offer.status != "rejected" ).map((offer) => (
-                        <div key={offer.offerId} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
-                            <div className="flex justify-between items-start">
-                                <h2 className="text-2xl font-bold text-purple-900">
-                                    ${offer.amount.toFixed(2)}
-                                </h2>
-                                <span className="text-sm text-gray-500">
-                                    {/* Format the timestamp here */}
-                                    {offer.timeStamp?.toDate().toLocaleString('en-US', {hour: 'numeric', minute: 'numeric',month: 'long', day: 'numeric'}) || 'Date N/A'}
-                                </span>
+                </h1>
+            {/* Offers */}
+                {offers.length === 0 ? (
+                    <div className="text-center py-12 bg-white rounded-xl shadow-md">
+                        <p className="text-gray-500 text-lg">No offers have been submitted for this listing yet.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {offers.filter((offer)=>offer.status != "rejected" ).map((offer) => (
+                            <div key={offer.offerId} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
+                                <div className="flex justify-between items-start">
+                                    <h2 className="text-2xl font-bold text-purple-900">
+                                        ${offer.amount.toFixed(2)}
+                                    </h2>
+                                    <span className="text-sm text-gray-500">
+                                        {/* Format the timestamp here */}
+                                        {offer.timeStamp?.toDate().toLocaleString('en-US', {hour: 'numeric', minute: 'numeric',month: 'long', day: 'numeric'}) || 'Date N/A'}
+                                    </span>
+                                </div>
+                                <p className="text-gray-700 mt-2 italic">"{offer.note || 'No message provided.'}"</p>
+                                <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                                    <p className="text-sm text-gray-600">Offered by: {offer.buyerDisplayName || "cannot find user"}</p>
+                                    {/* Add buttons here to Accept or Reject the offer */}
+                                    <CheckStatus status={offer.status} handleReject={()=>handleReject(offer)} handleAccept={()=>handleAccept(offer)} handleChat={()=>handleChat(offer)}/>
+                                </div>
                             </div>
-                            <p className="text-gray-700 mt-2 italic">"{offer.note || 'No message provided.'}"</p>
-                            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-                                <p className="text-sm text-gray-600">Offered by: {offer.buyerDisplayName || "cannot find user"}</p>
-                                {/* Add buttons here to Accept or Reject the offer */}
-                                <CheckStatus status={offer.status} handleReject={()=>handleReject(offer)} handleAccept={()=>handleAccept(offer)} handleChat={()=>handleChat(offer)}/>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                    </div>
+                )}
         </div>
-            <CustomToastContainer/>
+        <CustomToastContainer/>
         </div>
     )
 }
