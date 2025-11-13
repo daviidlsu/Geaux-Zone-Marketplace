@@ -980,8 +980,17 @@ export default function WelcomePage() {
                 <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
                   {/* Contact Seller Button */}
-                  <button onClick={(e) => {e.stopPropagation();
-                    {selectedListing.available==true ? setShowOfferModal(true) : toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId:'reserved-listing-error'})}}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (selectedListing && selectedListing.available === true) {
+                        setShowOfferModal(true);
+                      } else {
+                        toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId: 'reserved-listing-error'});
+                      }
+                    }}
+                    className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all"
+                  >
                     Make Offer
                   </button>
                   {/* Favorite Button */}
