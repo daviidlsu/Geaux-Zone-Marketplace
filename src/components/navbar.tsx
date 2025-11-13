@@ -1,14 +1,14 @@
 import { Menu } from "lucide-react";
 import { useAuth } from "../auth/auth";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 // Define the structure for props this component will accept
 interface NavbarProps {
     handleLogout: () => Promise<void>;
     setShowLoginModal: (show: boolean) => void;
     setShowMenu: (show: boolean) => void;
-    navigate: (path: string) => void; 
-    toastWarn: (message: string, options: { toastId: string }) => void; 
+    navigate: (path: string) => void;  
 }
 
 export default function Navbar({
@@ -16,7 +16,6 @@ export default function Navbar({
     setShowLoginModal,
     setShowMenu,
     navigate,
-    toastWarn
 }: NavbarProps) {
     const { currentUser, currentUserData, isLoading, logout } = useAuth();
     return (
@@ -28,7 +27,7 @@ export default function Navbar({
                         ? () => setShowMenu(true) 
                         : () => {
                             setShowLoginModal(true); 
-                            toastWarn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'});
+                            toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'});
                           }
                     } 
                     className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center"

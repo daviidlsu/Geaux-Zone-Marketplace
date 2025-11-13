@@ -13,7 +13,6 @@ type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "
 
 interface Listing {
   docId: string;
-  id: number;
   title: string;
   categoryID: Category;
   Description: string;
@@ -23,6 +22,8 @@ interface Listing {
   location: string;
   sellerUID: string;
   available: boolean;
+  highestOffer: number;
+  offers: number;
   condition: string;
   lastModified: Timestamp;
 }
@@ -118,16 +119,11 @@ export default function Listings() {
     const [previewImageIndex, setPreviewImageIndex] = useState<number>(0)
     const [newCondition, setNewCondition] = useState<string>("");
 
-   //  const menuItems = [
-     //   { name: 'Home', icon: House, action: () => navigate('/') },
-       // { name: 'Your Listings', icon: Library, action: () => navigate('/my-listings') },
-    //];
-
     const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
     // Fetch listings from Firestore
-      const fetchListings = async (): Promise<Listing[]> => {
-        try{
+    const fetchListings = async (): Promise<Listing[]> => {
+      try{
           const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
           const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
             const data = doc.data() as Listing;
@@ -136,7 +132,6 @@ export default function Listings() {
             const data = doc.data() as Listing;
             return {
               docId: doc.id,
-              id: data.id,
               title: data.title,
               categoryID: data.categoryID,
               Description: data.Description,
@@ -145,16 +140,18 @@ export default function Listings() {
               image: data.image,
               location: data.location,
               sellerUID: data.sellerUID,
+              highestOffer: data.highestOffer,
+              offers: data.offers,
               available: data.available,
             } as Listing;
           });
           return fetchedListings;
-        } catch (error) {
+      } catch (error) {
           toast.error("Failed to fetch listings.", {toastId:"fetch-error"});
           console.error("Error fetching listings: ", error);
           return [];
-        }
       }
+    }
 
     // Called upon loading page to fetch listings
     useEffect(() => {
@@ -178,57 +175,75 @@ export default function Listings() {
     }, [listings, searchQuery, selectedCategory]);
 
     // Once listings are fetched, render them
-  const renderListings = () => {
-    if (loading) {
+    const renderListings = () => {
+      if (loading) {
       return (
       <div className="col-span-full text-center py-10 text-gray-500">
             <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
             Loading listings...
         </div>
       );
-    }
+      }
 
-    const filteredListings = listings.filter((listing) => {
+      const filteredListings = listings.filter((listing) => {
       const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
       const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
-    });
+      });
 
-    if (filteredNum === 0) {
+      if (filteredNum === 0) {
       return (
         <div className="col-span-full text-center py-20">
           <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
         </div>
       );
-    }
-    return (
+      }
+      return (
         <div className="w-full overflow-x-auto rounded-xl shadow-lg">
             <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                     <tr>
                         <th
-                            scope="col"
-                            className="ml-4 py-3.5 pl-6 pr-3 text-left text-m font-semibold text-gray-900"
+                          scope="col"
+                          className="ml-4 py-3.5 pl-6 pr-3 text-left text-m font-semibold text-gray-900"
                         >
-                            Listing Title
+                          Listing Title
                         </th>
                         <th 
-                            scope="col" 
-                            className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          scope="col" 
+                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
                         >
-                            Price
+                          Price
                         </th>
                         <th 
-                            scope="col" 
-                            className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          scope="col" 
+                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
                         >
-                            Location
+                          Location
                         </th>
                         <th
-                            scope="col"
-                            className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
                         >
-                            Date Listed
+                          Date Listed
+                        </th>
+                        <th
+                          scope="col"
+                          className="pl-3 py-3.5 text-center text-m font-semibold text-gray-900"
+                          >
+                          Offers
+                        </th>
+                        <th
+                          scope="col"
+                          className="pr-3 py-3.5 text-center text-m font-semibold text-gray-900"
+                          >
+                          Highest Offer
+                        </th>
+                        <th
+                          scope="col"
+                          className="relative py-3.5 pr-6 pl-3"
+                          >
+                          <span className="sr-only"></span>
                         </th>
                     </tr>
                 </thead>
@@ -236,31 +251,46 @@ export default function Listings() {
                 {/* TABLE BODY */}
                 <tbody className="divide-y divide-gray-200 bg-white">
                     {filteredListings.map((listing) => (
-                        <tr key={listing.docId} onClick={()=>{handleOpenEditListingModal(listing);setSearchQuery("")}} className="hover:bg-purple-50 transition-colors cursor-pointer">
+                        <tr key={listing.docId} onClick={()=>{navigate(`/my-listings/${listing.docId}/offers`);setSearchQuery("")}} className="hover:bg-purple-50 transition-colors cursor-pointer">
                             {/* Title Column */}
                             <td className="whitespace-nowrap py-4 pl-6 pr-3 text-m font-medium text-gray-900 truncate max-w-xs">
-                                {listing.title}
+                              {listing.title}
                             </td>
                             {/* Price Column */}
                             <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
-                                ${listing.price}
+                              ${listing.price}
                             </td>
                             {/* Location Column */}
                             <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
-                                {listing.location}
+                              {listing.location}
                             </td>
                             {/* Date Listed Column */}
                             <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
-                                {listing.dateListed.toDate().toLocaleDateString('en-US', {month: 'long', day: 'numeric', year:'numeric'})}
+                              {listing.dateListed.toDate().toLocaleDateString('en-US', {month: 'long', day: 'numeric', year:'numeric'})}
+                            </td>
+                            {/* Number of Offers Column */}
+                            <td className="whitespace-nowrap text-center text-purple-900 font-bold pl-3 py-4 text-m text-gray-500">
+                              {listing.offers}
+                            </td>
+                            {/* Highest Bid Column */}
+                            <td className="whitespace-nowrap text-center pr-3 py-4 text-m text-gray-500">
+                              {listing.highestOffer > 0 ? `$${listing.highestOffer}` : "N/A"}
+                            </td>
+                            {/* View Listing Button */}
+                            <td className="relative whitespace-nowrap py-4 pr-6 pl-3 text-right text-sm font-medium">
+                              <button
+                                className="text-white px-3 py-1 bg-purple-900 rounded-2xl hover:bg-purple-800 hover:shadow-xl"
+                                onClick={(e)=>{e.stopPropagation();handleOpenEditListingModal(listing)}}>
+                                  Edit
+                              </button>
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
         </div>
-    );
-}
-
+      );
+    }
 
     const handleLogout = async () => {
         try {
@@ -379,7 +409,6 @@ export default function Listings() {
               setShowLoginModal={()=>{}}
               setShowMenu={setShowMenu}
               navigate={navigate}
-              toastWarn={toast.warn}
             />
             <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 

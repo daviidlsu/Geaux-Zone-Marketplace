@@ -5,6 +5,7 @@ import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from 'react-toastify';
+import { increment, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase/firebase";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
@@ -88,7 +89,6 @@ const safeLocations = [
 
 interface Listing {
   docId: string;
-  id: number;
   title: string;
   categoryID: Category;
   Description: string;
@@ -98,9 +98,21 @@ interface Listing {
   images?: string[]; 
   location: string;
   sellerUID: string;
+  highestOffer: number;
+  offers: number;
   available: boolean;
   lastModified: Timestamp;
   condition: string;
+}
+
+interface Offer {
+  parentId: string
+  listingTitle: string
+  amount: number
+  note: string
+  buyerUID: string
+  timeStamp: Timestamp
+  status: string
 }
 
 interface sellerInfo {
@@ -115,25 +127,29 @@ export default function WelcomePage() {
   const { currentUser, currentUserData, logout } = useAuth();
 
   const [email, setEmail] = useState<string>('')
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [filteredNum, setFilteredNum] = useState<number>(0);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [showLikedOnly, setShowLikedOnly] = useState<boolean>(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [likedItems, setLikedItems] = useState<string[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [newTitle, setNewTitle] = useState<string>("");
   const [newPrice, setNewPrice] = useState<number | null>(null);
   const [newCategory, setNewCategory] = useState<Category>("");
   const [newLocation, setNewLocation] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
+  const [newImage, setNewImage] = useState<string>("");
+  const [offerAmount, setOfferAmount] = useState<number | null>(null);
+  const [offerNote, setOfferNote] = useState<string>("");
   const [password, setPassword] = useState('')
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<Category>("All");
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
-  const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [showLikedOnly, setShowLikedOnly] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [showOfferModal, setShowOfferModal] = useState<boolean>(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [previewImageIndex, setPreviewImageIndex] = useState<number>(0);
   const [showFilters, setShowFilters] = useState(false);
@@ -165,7 +181,6 @@ export default function WelcomePage() {
         const data = doc.data() as Listing;
         return {
           docId: doc.id,
-          id: data.id,
           title: data.title,
           categoryID: data.categoryID,
           Description: data.Description,
@@ -174,6 +189,8 @@ export default function WelcomePage() {
           image: data.image,
           images: data.images || [],
           location: data.location,
+          highestOffer: data.highestOffer,
+          offers: data.offers,
           sellerUID: data.sellerUID,
           available: data.available,
         } as Listing;
@@ -487,6 +504,13 @@ export default function WelcomePage() {
     setShowCreateListing(false);
   }
 
+  // Close offer modal
+  const handleCloseOfferModal = () => {
+    setOfferAmount(null)
+    setOfferNote("")
+    setShowOfferModal(false)
+  }
+
   // Submit new listing to Firestore
   const handleSubmitListing = async ()  => {
     if (!newTitle || newPrice === null || !newLocation || !newDescription) {
@@ -506,6 +530,24 @@ export default function WelcomePage() {
       return;
     }
     try {
+      setLoading(true);
+      const newDocRef = await addDoc(collection(db, "Inventory"), {
+        Description: newDescription,
+        available: true,
+        categoryID: newCategory,
+        dateListed: new Date(), // Store current date
+        image: newImage || "https://via.placeholder.com/300x200",
+        location: newLocation,      
+        price: newPrice || null,
+        highestOffer: 0,
+        offers: 0,
+        sellerUID: currentUser?.uid || "anonymous",
+        title: newTitle,
+        lastModified: serverTimestamp()
+      });
+      const offersRef = collection(newDocRef, "offers")
+      await setDoc(doc(offersRef, "placeholder"),{})
+      toast.success("Listing created successfully!", {toastId:"creation-success"});
     // Show uploading toast
     toast.info("Uploading images...", {toastId: 'uploading'});
     
@@ -528,9 +570,12 @@ export default function WelcomePage() {
       images: imageUrls, 
       location: newLocation,      
       price: newPrice || null,
+      highestOffer: 0,
+      offers: 0,
       sellerUID: auth.currentUser?.uid || "anonymous",
       title: newTitle,
-      condition: newCondition
+      condition: newCondition,
+      lastModified: serverTimestamp()
     });
     
     toast.dismiss('creating');
@@ -551,6 +596,40 @@ export default function WelcomePage() {
     setLoading(false);
   }
 
+  // Submit new offer
+  const handleSubmitOffer = async () => {
+    setLoading(true)
+    toast.info("Submitting offer...", {toastId: "submit-pending-info"})
+    try {
+
+      const listingRef = doc(db,"Inventory",selectedListing!.docId);
+      const offersCollection = collection(listingRef, "offers")
+      await addDoc(offersCollection, {
+        parentId: selectedListing?.docId,
+        listingTitle: selectedListing?.title,
+        amount: offerAmount,
+        note: offerNote,
+        buyerUID: currentUserData?.uid,
+        timeStamp: serverTimestamp(),
+        status: "pending",
+      } as Offer)
+      toast.success("Offer submitted successfully!", {toastId: "submit-offer-success"})
+
+      const listingSnapshot = await getDoc(listingRef)
+      const listingData = listingSnapshot.data()
+      if (listingData && listingData.highestOffer < offerAmount!){
+        await updateDoc(listingRef, {highestOffer: offerAmount})
+      }
+      await updateDoc(listingRef, {offers:increment(1)})
+
+    } catch (error) {
+      console.log("Error submitting offer:", error)
+      toast.error("Error occured trying to submit offer", {toastId: "submit-offer-error"})
+    }
+    handleCloseOfferModal()
+    setLoading(false)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
@@ -558,9 +637,7 @@ export default function WelcomePage() {
         handleLogout={handleLogout}
         setShowLoginModal={setShowLoginModal}
         setShowMenu={setShowMenu}
-        navigate={navigate}
-        toastWarn={toast.warn}
-      />
+        navigate={navigate}/>
       <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 
       {/* Search & Filter Section */}
@@ -765,7 +842,7 @@ export default function WelcomePage() {
         >
           <div
             className="bg-white rounded-2xl max-w-5xl w-full h-[80vh] max-h-[90vh] overflow-hidden shadow-2xl flex"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {e.stopPropagation();handleCloseOfferModal()}}
           >
             {/* Left Side - Image Carousel */}
             <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center relative overflow-hidden">
@@ -826,9 +903,9 @@ export default function WelcomePage() {
 
 
             {/* Right Side - Details */}
-            <div className="w-1/2 flex flex-col">
+              <div className="w-1/2 flex flex-col">
               {/* Header with Close Button */}
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
                   {selectedListing.categoryID}
                 </span>
@@ -838,10 +915,10 @@ export default function WelcomePage() {
                 >
                   <X size={30} color="#59168b" />
                 </button>
-              </div>
+                </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-6">
                 {/* Title and Price */}
                 <div className="mb-6">
                   <h3 className="text-3xl font-bold text-gray-900 mb-3">{selectedListing.title}</h3>
@@ -903,7 +980,7 @@ export default function WelcomePage() {
                     disabled>
                   </textarea>
                 </div>
-              </div>
+                </div>
 
                 {/* Category and Condition */}
                 <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
@@ -929,11 +1006,12 @@ export default function WelcomePage() {
                 </div>
 
               {/* Action Buttons - Fixed at Bottom */}
-              <div className="px-6 py-4 bg-white">
+                <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
                   {/* Contact Seller Button */}
-                  <button onClick={() => {handleContactSeller();}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
-                    Submit Offer
+                  <button onClick={(e) => {e.stopPropagation();
+                    {selectedListing.available==false ? setShowOfferModal(true) : toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId:'reserved-listing-error'})}}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
+                    Make Offer
                   </button>
                   {/* Favorite Button */}
                     <button onClick={() => {handleFavorite(selectedListing.docId);}}
@@ -943,9 +1021,60 @@ export default function WelcomePage() {
                     <Heart className={`w-10 h-10 stroke-2 ${likedItems.includes(selectedListing.docId) ? "fill-red-500 stroke-red-500 hover:fill-white": "fill-none stroke-gray-500 hover:fill-red-500 hover:stroke-red-600 hover:stroke-1" } `} />
                   </button>
                 </div>
-              </div>
+                </div>
             </div>
           </div>
+        {/* New Offer */}
+          {showOfferModal 
+          ? (<div onClick={(e) => e.stopPropagation()} className="fixed z-60 w-96 p-8 py-6 mr-10 bg-white top-1/2 right-0 rounded-2xl transform -translate-y-1/2">
+            <div className="mb-4 text-black text-2xl text-center font-bold">
+              New Offer
+            </div>
+            <form className="">
+            {/* Offer Amount */}
+              <label className="block text-sm font-medium text-gray-700">Offer Amount <span className="text-red-500">*</span></label>
+              <input
+                id="amount"
+                type="string"
+                name="amount"
+                value={offerAmount !== null ? `$${offerAmount}`  : ""}
+                onChange={(e) => {
+                  const cleanValue = e.target.value.replace(/[^\d.]/g, '');
+                  setOfferAmount(cleanValue ? parseFloat(cleanValue) : null)}}
+                placeholder="$0"
+                className="mt-1 w-full px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                min="0"
+              />
+            {/* Offer Note */}
+              <label className="mt-2 block text-sm font-medium text-gray-700">Note to seller <span className="text-red-500">*</span></label>
+              <textarea
+                    value={offerNote}
+                    onChange={(e) => setOfferNote(e.target.value)}
+                    placeholder="Describe your item in detail..."
+                    maxLength={100}
+                    rows={3}
+                    className="mt-1 w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">{100-offerNote.length} characters left</p>
+            </form>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={()=>handleCloseOfferModal()}
+                className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={()=>handleSubmitOffer()}
+                className="flex-1 px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+                disabled={loading}
+              >
+                Submit Offer
+              </button>
+            </div>
+          </div>)
+          : null
+          }
         </div>
       )}
 
@@ -1367,7 +1496,6 @@ export default function WelcomePage() {
           </div>
         </div>
       )}
-
       <CustomToastContainer/>
 
     {/* Safety Tips Modal */}

@@ -105,7 +105,6 @@ const Register: React.FC = () => {
                 setShowLoginModal={()=>{}}
                 setShowMenu={()=>toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'})}
                 navigate={navigate}
-                toastWarn={toast.warn}
             />
 
             <main className="flex-1 flex items-center justify-center py-2 px-4">
