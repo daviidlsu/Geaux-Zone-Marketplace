@@ -5,7 +5,7 @@ import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { increment, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { increment, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc, documentId } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase/firebase";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
@@ -572,7 +572,7 @@ export default function WelcomePage() {
 
       const listingRef = doc(db,"Inventory",selectedListing!.docId);
       const offersCollection = collection(listingRef, "offers")
-      await addDoc(offersCollection, {
+      const newRef = await addDoc(offersCollection, {
         parentId: selectedListing?.docId,
         listingTitle: selectedListing?.title,
         amount: offerAmount,
@@ -582,6 +582,9 @@ export default function WelcomePage() {
         status: "pending",
       } as Offer)
       toast.success("Offer submitted successfully!", {toastId: "submit-offer-success"})
+      await updateDoc(newRef, {
+        offerId: newRef.id
+      })
 
       const listingSnapshot = await getDoc(listingRef)
       const listingData = listingSnapshot.data()
@@ -1027,7 +1030,7 @@ export default function WelcomePage() {
               <textarea
                     value={offerNote}
                     onChange={(e) => setOfferNote(e.target.value)}
-                    placeholder="Describe your item in detail..."
+                    placeholder="Add a note for the seller..."
                     maxLength={100}
                     rows={3}
                     className="mt-1 w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"

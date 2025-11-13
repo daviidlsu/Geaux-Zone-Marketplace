@@ -180,7 +180,7 @@ export default function ListingOffers(){
     const handleAccept = async (offer: Offer) => {
         setLoading(true)
         try {
-            const newChatRef = doc(db,"Chats")
+            const newChatRef = doc(collection(db,"Chats"))
             const batch = writeBatch(db)
 
             // Sets values of new chat 

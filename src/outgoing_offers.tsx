@@ -79,11 +79,13 @@ export default function OutgoingOffers() {
         const parentSnapshot = await getDoc(parentRef)
         const collRef = collection(db, "Inventory",offer.parentId,"offers")
         const offerRef = doc(collRef, offer.offerId)
-        const chatRef = doc(db,"Chats",offer.chatId)
         const batch = writeBatch(db)
         try {
             batch.delete(offerRef)
-            batch.delete(chatRef)
+            if (offer.chatId){
+                const chatRef = doc(db,"Chats",offer.chatId)
+                batch.delete(chatRef)
+            }
             batch.update(parentRef, {offers: increment(-1)})
             await batch.commit()
             if (parentSnapshot.data()?.highestOffer == offer.amount) {
@@ -156,7 +158,7 @@ export default function OutgoingOffers() {
 
                                 {/* Action Buttons */}
                                 <div className="pb-2">
-                                    <button className={`text-sm px-4 py-2 ${offer.status == "pending" ?  "bg-gray-400 text-gray-700 cursor-not-allowed!" : "bg-purple-900 text-white hover:bg-purple-700"} font-semibold rounded-full mr-2 transition-colors shadow-sm`}
+                                    <button className={`text-sm px-4 py-2 ${offer.status == "pending" || offer.status=="rejected" ?  "bg-gray-400 text-gray-700 cursor-not-allowed!" : "bg-purple-900 text-white hover:bg-purple-700"} font-semibold rounded-full mr-2 transition-colors shadow-sm`}
                                         onClick={()=>{handleViewChat(offer)}}
                                         disabled={(offer.status=="pending" || offer.status=="rejected") ? true : false}>
                                         {(() => {

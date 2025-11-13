@@ -394,10 +394,11 @@ export default function Listings() {
     // Cleans up all associated chats
     const offersRef=collection(db,"Inventory", listing.docId, "offers")
     const offerSnapshot = await getDocs(offersRef)
-    if (offerSnapshot.empty){
+    if (offerSnapshot.docs.length<=1){
       console.log(`No chat records found for listing:${listing.docId}. Cleanup complete.`);
     } else {
       offerSnapshot.forEach((document) => {
+
         batch.delete(doc(db,"Chats",document.data().chatId))
       })
     }
