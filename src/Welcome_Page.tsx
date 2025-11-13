@@ -10,7 +10,6 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase/firebase";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
-import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx"
@@ -138,7 +137,6 @@ export default function WelcomePage() {
   const [newCategory, setNewCategory] = useState<Category>("");
   const [newLocation, setNewLocation] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
-  const [newImage, setNewImage] = useState<string>("");
   const [offerAmount, setOfferAmount] = useState<number | null>(null);
   const [offerNote, setOfferNote] = useState<string>("");
   const [password, setPassword] = useState('')
@@ -422,15 +420,6 @@ export default function WelcomePage() {
     setUploadedImages([]);
   }
 
-  // Contact seller handler
-  const handleContactSeller = () => {
-    if (currentUser == null) {
-      toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
-    } else {
-      setShowSafetyTips(true);
-    }
-  }
-
   // Login handler
   const handleLogin = async (e:FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -488,8 +477,8 @@ export default function WelcomePage() {
   }
 
   const handleRemoveImage = (index: number) => {
-  setUploadedImages(uploadedImages.filter((_, i) => i !== index));
-  setPreviewImageIndex(0); // Always go back to first image
+    setUploadedImages(uploadedImages.filter((_, i) => i !== index));
+    setPreviewImageIndex(0); // Always go back to first image
   }
 
   // Close create listing modal
@@ -531,69 +520,48 @@ export default function WelcomePage() {
     }
     try {
       setLoading(true);
+      toast.info("Uploading images...", {toastId: 'uploading'});
+
+      const tempListingId = `listing_${Date.now()}_${auth.currentUser?.uid}`;
+      const imageUrls = await uploadImagesToStorage(uploadedImages, tempListingId);
+      
+      toast.info("Creating listing...", {toastId: 'creating'});
+
       const newDocRef = await addDoc(collection(db, "Inventory"), {
         Description: newDescription,
         available: true,
         categoryID: newCategory,
-        dateListed: new Date(), // Store current date
-        image: newImage || "https://via.placeholder.com/300x200",
+        dateListed: new Date(),
+        image: imageUrls[0], 
+        images: imageUrls, 
         location: newLocation,      
         price: newPrice || null,
         highestOffer: 0,
         offers: 0,
-        sellerUID: currentUser?.uid || "anonymous",
+        sellerUID: auth.currentUser?.uid || "anonymous",
         title: newTitle,
+        condition: newCondition,
         lastModified: serverTimestamp()
       });
       const offersRef = collection(newDocRef, "offers")
       await setDoc(doc(offersRef, "placeholder"),{})
-      toast.success("Listing created successfully!", {toastId:"creation-success"});
-    // Show uploading toast
-    toast.info("Uploading images...", {toastId: 'uploading'});
-    
-    // Generate unique listing ID
-    const tempListingId = `listing_${Date.now()}_${auth.currentUser?.uid}`;
-    
-    // Upload images to Firebase Storage
-    const imageUrls = await uploadImagesToStorage(uploadedImages, tempListingId);
-    
-    toast.dismiss('uploading');
-    toast.info("Creating listing...", {toastId: 'creating'});
-    
 
-      await addDoc(collection(db, "Inventory"), {
-      Description: newDescription,
-      available: true,
-      categoryID: newCategory,
-      dateListed: new Date(),
-      image: imageUrls[0], 
-      images: imageUrls, 
-      location: newLocation,      
-      price: newPrice || null,
-      highestOffer: 0,
-      offers: 0,
-      sellerUID: auth.currentUser?.uid || "anonymous",
-      title: newTitle,
-      condition: newCondition,
-      lastModified: serverTimestamp()
-    });
-    
-    toast.dismiss('creating');
-    handleCloseNewListingModal();
-    toast.success("Listing created successfully!");
-    
-    // Refresh listings to show the new one
-    const fetchedListings = await fetchListings();
-    setListings(fetchedListings);
+      toast.success("Listing created successfully!", {toastId:"creation-success"});
+      handleCloseNewListingModal();
+
+      // Refresh listings to show the new one
+      const fetchedListings = await fetchListings();
+      setListings(fetchedListings);
     
     } catch (e) {
-    console.error("Error creating listing: ", e);
-    toast.dismiss('uploading');
-    toast.dismiss('creating');
-    toast.error("Failed to create listing. Please try again.");
+      console.error("Error creating listing: ", e);
+      toast.dismiss('uploading');
+      toast.dismiss('creating');
+      toast.error("Failed to create listing. Please try again.");
+    } finally {
+      handleCloseNewListingModal();
+      setLoading(false);
     }
-    handleCloseNewListingModal();
-    setLoading(false);
   }
 
   // Submit new offer
@@ -966,12 +934,12 @@ export default function WelcomePage() {
                     className="text-sm text-purple-900 hover:underline flex items-center gap-1 mt-2 font-medium"
                   >
                     <MapPin className="w-4 h-4" />
-                    Open in Google Maps →
+                    Open in Google Maps
                   </button>
                 </div>
               </div>
 
-                {/* Description */}
+              {/* Description */}
                 <div className="mb-6 h-13/30">
                   <h4 className="text-lg font-semibold text-gray-900 ml-2 mb-3">Description</h4>
                   <textarea 
@@ -1010,7 +978,7 @@ export default function WelcomePage() {
                 <div className="flex gap-3">
                   {/* Contact Seller Button */}
                   <button onClick={(e) => {e.stopPropagation();
-                    {selectedListing.available==false ? setShowOfferModal(true) : toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId:'reserved-listing-error'})}}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
+                    {selectedListing.available==true ? setShowOfferModal(true) : toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId:'reserved-listing-error'})}}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
                     Make Offer
                   </button>
                   {/* Favorite Button */}
@@ -1040,10 +1008,19 @@ export default function WelcomePage() {
                 value={offerAmount !== null ? `$${offerAmount}`  : ""}
                 onChange={(e) => {
                   const cleanValue = e.target.value.replace(/[^\d.]/g, '');
-                  setOfferAmount(cleanValue ? parseFloat(cleanValue) : null)}}
+                  const numericalValue = cleanValue ? parseFloat(cleanValue) : null;
+                  if (numericalValue !== null && numericalValue >= selectedListing.price) {
+                    setOfferAmount(selectedListing.price); // MAX amount is set to original price. Could make it seller choice
+                    toast.warn("Amount too high. Enter lower number",{toastId:"exceed-max-error"})
+                  } else {
+                    setOfferAmount(numericalValue);
+                  }
+                }
+                }
                 placeholder="$0"
                 className="mt-1 w-full px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 min="0"
+                max={selectedListing.price}
               />
             {/* Offer Note */}
               <label className="mt-2 block text-sm font-medium text-gray-700">Note to seller <span className="text-red-500">*</span></label>

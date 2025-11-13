@@ -19,13 +19,14 @@ interface Listing {
   price: number;
   dateListed: Timestamp;
   image: string;
+  images: string[]
   location: string;
   sellerUID: string;
-  available: boolean;
   highestOffer: number;
   offers: number;
-  condition: string;
+  available: boolean;
   lastModified: Timestamp;
+  condition: string;
 }
 
 const safeLocations = [
@@ -95,110 +96,108 @@ const safeLocations = [
 ];
 
 export default function Listings() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const { currentUser, currentUserData, logout } = useAuth();
+  const { currentUser, currentUserData, logout } = useAuth();
 
-    const [filteredNum, setFilteredNum] = useState<number>(0);
-    const [listings, setListings] = useState<Listing[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [newCategory, setNewCategory] = useState<Category>("");
-    const [newDescription, setNewDescription] = useState<string>("");
-    const [newImage, setNewImage] = useState<string>("");
-    const [newLocation, setNewLocation] = useState<string>("");
-    const [newPrice, setNewPrice] = useState<number | null>(null);
-    const [newTitle, setNewTitle] = useState<string>("");
-    const [reloadTrigger, setReloadTrigger] = useState<number>(0);
-    const [searchQuery, setSearchQuery] = useState<string>("");
-    const [selectedCategory, setSelectedCategory] = useState<Category>("All");
-    const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-    const [showSelectedListing, setShowSelectedListing] = useState<boolean>(false);
-    const [showMenu, setShowMenu] = useState<boolean>(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
-    const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-    const [previewImageIndex, setPreviewImageIndex] = useState<number>(0)
-    const [newCondition, setNewCondition] = useState<string>("");
+  const [filteredNum, setFilteredNum] = useState<number>(0);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [newCategory, setNewCategory] = useState<Category>("");
+  const [newDescription, setNewDescription] = useState<string>("");
+  const [newImage, setNewImage] = useState<string>("");
+  const [newLocation, setNewLocation] = useState<string>("");
+  const [newPrice, setNewPrice] = useState<number | null>(null);
+  const [newTitle, setNewTitle] = useState<string>("");
+  const [reloadTrigger, setReloadTrigger] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<Category>("All");
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [showSelectedListing, setShowSelectedListing] = useState<boolean>(false);
+  const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [previewImageIndex, setPreviewImageIndex] = useState<number>(0)
+  const [newCondition, setNewCondition] = useState<string>("");
 
-    const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
+  const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
-    // Fetch listings from Firestore
-    const fetchListings = async (): Promise<Listing[]> => {
-      try{
-          const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
-          const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
-            const data = doc.data() as Listing;
-            return currentUser?.uid === data.sellerUID;} // Only fetch listings for current user
-          ).map(doc => {
-            const data = doc.data() as Listing;
-            return {
-              docId: doc.id,
-              title: data.title,
-              categoryID: data.categoryID,
-              Description: data.Description,
-              price: data.price,
-              dateListed: data.dateListed,
-              image: data.image,
-              location: data.location,
-              sellerUID: data.sellerUID,
-              highestOffer: data.highestOffer,
-              offers: data.offers,
-              available: data.available,
-            } as Listing;
-          });
-          return fetchedListings;
-      } catch (error) {
-          toast.error("Failed to fetch listings.", {toastId:"fetch-error"});
-          console.error("Error fetching listings: ", error);
-          return [];
-      }
+  // Fetch listings from Firestore
+  const fetchListings = async (): Promise<Listing[]> => {
+    try{
+      const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
+        const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
+        const data = doc.data() as Listing;
+        return currentUser?.uid === data.sellerUID;} // Only fetch listings for current user
+      ).map(doc => {
+        const data = doc.data() as Listing;
+        return {
+          docId: doc.id,
+          title: data.title,
+          categoryID: data.categoryID,
+          Description: data.Description,
+          price: data.price,
+          dateListed: data.dateListed,
+          image: data.image,
+          location: data.location,
+          sellerUID: data.sellerUID,
+          highestOffer: data.highestOffer,
+          offers: data.offers,
+          available: data.available,
+        } as Listing;
+      });
+      return fetchedListings;
+    } catch (error) {
+      toast.error("Failed to fetch listings.", {toastId:"fetch-error"});
+      console.error("Error fetching listings: ", error);
+      return [];
     }
+  }
 
-    // Called upon loading page to fetch listings
-    useEffect(() => {
-        const loadListings = async () => {
-            setLoading(true);
-            const fetchedListings = await fetchListings();
-            setListings(fetchedListings);
-            setLoading(false);
-        };
-        loadListings();
-    }, [currentUser, reloadTrigger]);
+  // Called upon loading page to fetch listings
+  useEffect(() => {
+    const loadListings = async () => {
+        setLoading(true);
+        const fetchedListings = await fetchListings();
+        setListings(fetchedListings);
+        setLoading(false);
+    };
+    loadListings();
+  }, [currentUser, reloadTrigger]);
 
-    // Update filtered listings count
-    useEffect(() => {
-        const filteredListings = listings.filter((listing) => {
-        const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
-        const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
-         });
-        setFilteredNum(filteredListings.length);
-    }, [listings, searchQuery, selectedCategory]);
-
-    // Once listings are fetched, render them
-    const renderListings = () => {
-      if (loading) {
-      return (
-      <div className="col-span-full text-center py-10 text-gray-500">
-            <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
-            Loading listings...
-        </div>
-      );
-      }
-
-      const filteredListings = listings.filter((listing) => {
+  // Update filtered listings count
+  useEffect(() => {
+    const filteredListings = listings.filter((listing) => {
       const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
       const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
-      });
+    });
+    setFilteredNum(filteredListings.length);
+  }, [listings, searchQuery, selectedCategory]);
 
-      if (filteredNum === 0) {
+  // Once listings are fetched, render them
+  const renderListings = () => {
+    if (loading) {
+      return (
+        <div className="col-span-full text-center py-10 text-gray-500">
+          <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
+          Loading listings...
+        </div>
+      );
+    }
+    const filteredListings = listings.filter((listing) => {
+      const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
+      const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+    if (filteredNum === 0) {
       return (
         <div className="col-span-full text-center py-20">
           <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
         </div>
       );
-      }
-      return (
+    }
+    return (
         <div className="w-full overflow-x-auto rounded-xl shadow-lg">
             <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -289,77 +288,78 @@ export default function Listings() {
                 </tbody>
             </table>
         </div>
-      );
-    }
+    );
+  }
 
-    const handleLogout = async () => {
-        try {
-            await logout();
-            navigate('/');
-            toast.success("Logout Successful!", {toastId: 'logout-success'});
-        } catch (error) {
-            console.error("Error signing out:", error);
-        }
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+      toast.success("Logout Successful!", {toastId: 'logout-success'});
+    } catch (error) {
+      console.error("Error signing out:", error);
     }
+  }
 
-    const handleOpenEditListingModal = (listing: Listing) => {
-        setNewTitle(listing.title);
-        setNewPrice(listing.price);
-        setNewCategory(listing.categoryID);
-        setNewLocation(listing.location);
-        setNewDescription(listing.Description);
-        setNewImage(listing.image);
-        setNewCondition(listing.condition || "");
-        setSelectedListing(listing);
-        setShowSelectedListing(true);
+  const handleOpenEditListingModal = (listing: Listing) => {
+    setNewTitle(listing.title);
+    setNewPrice(listing.price);
+    setNewCategory(listing.categoryID);
+    setNewLocation(listing.location);
+    setNewDescription(listing.Description);
+    setNewImage(listing.image);
+    setNewCondition(listing.condition || "");
+    setSelectedListing(listing);
+    setShowSelectedListing(true);
+  }
+
+  const handleCloseEditListingModal = () => {
+    setNewTitle("");
+    setNewPrice(null);
+    setNewCategory("");
+    setNewLocation("");
+    setNewDescription("");
+    setNewImage("");
+    setSelectedListing(null);
+    setShowSelectedListing(false);
+  }
+
+  const handleChangeListing = async (listing:Listing) => {
+    if (!newTitle || newPrice === null || !newLocation || !newDescription) {
+      toast.warn("Please fill in all required fields.", {toastId: 'create-listing-error'});
+      return;
     }
-
-    const handleCloseEditListingModal = () => {
-        setNewTitle("");
-        setNewPrice(null);
-        setNewCategory("");
-        setNewLocation("");
-        setNewDescription("");
-        setNewImage("");
-        setSelectedListing(null);
-        setShowSelectedListing(false);
+    if (newPrice < 1) {
+      toast.warn("Please enter a valid price.", {toastId: 'price-error'});
+      return;
     }
-
-    const handleChangeListing = async (listing:Listing) => {
-        if (!newTitle || newPrice === null || !newLocation || !newDescription) {
-            toast.warn("Please fill in all required fields.", {toastId: 'create-listing-error'});
-            return;
-        }
-      if (newPrice < 1) {
-        toast.warn("Please enter a valid price.", {toastId: 'price-error'});
-        return;
-      }
-      if (newCategory === "") {
-        toast.warn("Please select a category.", {toastId: 'category-error'});
-        return;
-      }
-      try {
-        await updateDoc(doc(db, "Inventory", listing.docId), {
-          Description: newDescription,
-          available: true,
-          categoryID: newCategory,
-          dateListed: new Date(), // Store current date
-          image: newImage || "https://via.placeholder.com/300x200",
-          location: newLocation,      
-          price: newPrice || null,
-          title: newTitle,
-          condition: newCondition,
-          lastModified: serverTimestamp()
-        });
-        setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
-      } catch (e) {
-        console.error("Error adding document: ", e);
-      }
+    if (newCategory === "") {
+      toast.warn("Please select a category.", {toastId: 'category-error'});
+      return;
+    }
+    try {
+      await updateDoc(doc(db, "Inventory", listing.docId), {
+        Description: newDescription,
+        available: true,
+        categoryID: newCategory,
+        dateListed: new Date(), // Store current date
+        image: newImage || "https://via.placeholder.com/300x200",
+        location: newLocation,      
+        price: newPrice || null,
+        title: newTitle,
+        condition: newCondition,
+        lastModified: serverTimestamp()
+      });
+      setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    } finally {
       handleCloseEditListingModal();
       toast.success("Listing changed successfully!");
-    };
+    }
+  };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'));
@@ -368,40 +368,49 @@ export default function Listings() {
       toast.warn("You can only upload up to 5 images.");
       return;
       }
-    setUploadedImages([...uploadedImages, ...fileArray]);
+      setUploadedImages([...uploadedImages, ...fileArray]);
     }
   }
 
-    const handleRemoveImage = (index: number) => {
+  const handleRemoveImage = (index: number) => {
     setUploadedImages(uploadedImages.filter((_, i) => i !== index));
     setPreviewImageIndex(0); // Always go back to first image
   }
 
-    const handleDeleteListing = async (listing:Listing) => {
-      console.log(listing)
-        // Clean up associated favorite records
-        const batch = writeBatch(db);
-        const favoritesRef=collection(db, "Favorites");
-        console.log(favoritesRef)
-        const querySnapshot = await getDocs(query(favoritesRef, where("listingID", "==", listing.docId)));
-        if (querySnapshot.empty) {
-            console.log(`No favorite records found for listing:${listing.docId}. Cleanup complete.`);
-        }
-        else {
-          querySnapshot.forEach((doc) => {
-            batch.delete(doc.ref)
-          }
-        )};
-        await batch.commit()
-
-        // Delete the listing document
-        await deleteDoc(doc(db, "Inventory", listing.docId));
-        setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
-        setShowDeleteConfirm(false);
-        handleCloseEditListingModal();
+  const handleDeleteListing = async (listing:Listing) => {
+    // Clean up associated favorite records
+    const batch = writeBatch(db);
+    const favoritesRef=collection(db, "Favorites");
+    const querySnapshot = await getDocs(query(favoritesRef, where("listingID", "==", listing.docId)));
+    if (querySnapshot.empty) {
+          console.log(`No favorite records found for listing:${listing.docId}. Cleanup complete.`);
     }
+    else {
+        querySnapshot.forEach((doc) => {
+          batch.delete(doc.ref)
+        }
+    )}
+
+    // Cleans up all associated chats
+    const offersRef=collection(db,"Inventory", listing.docId, "offers")
+    const offerSnapshot = await getDocs(offersRef)
+    if (offerSnapshot.empty){
+      console.log(`No chat records found for listing:${listing.docId}. Cleanup complete.`);
+    } else {
+      offerSnapshot.forEach((document) => {
+        batch.delete(doc(db,"Chats",document.data().chatId))
+      })
+    }
+    await batch.commit()
+
+    // Delete the listing document
+    await deleteDoc(doc(db, "Inventory", listing.docId));
+    setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
+    setShowDeleteConfirm(false);
+    handleCloseEditListingModal();
+  }
     
-    return (
+  return (
         <div className="min-h-screen bg-gray-50">
             {/* Header Section */}
             <Navbar
@@ -811,4 +820,4 @@ export default function Listings() {
             <CustomToastContainer/>
         </div>
     );
-  };
+};

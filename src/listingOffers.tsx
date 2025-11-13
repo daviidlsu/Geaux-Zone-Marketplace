@@ -226,7 +226,6 @@ export default function ListingOffers(){
     const handleChat = async (offer: Offer) => {
         setLoading(true)
         try {
-            console.log(offer)
             if (offer.status=="pending"){
                 const docRef = doc(db,"Inventory",offer.parentId, "offers", offer.offerId)
                 const newChatRef = await addDoc(collection(db,"Chats"),{

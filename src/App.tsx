@@ -49,7 +49,7 @@ function App() {
             </ProtectedRoute>}
             />
             <Route
-            path="/messages/" // change to message component
+            path="/messages" // change to message component
             element={<ProtectedRoute>
               <Messages />
             </ProtectedRoute>}

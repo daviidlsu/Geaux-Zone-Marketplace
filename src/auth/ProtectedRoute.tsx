@@ -19,6 +19,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
   if (!currentUser) {
+    console.log("invalid user")
     return <Navigate to="/" replace />;
   }
   //Continue to render children if authenticated

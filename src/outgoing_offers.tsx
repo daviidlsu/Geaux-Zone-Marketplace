@@ -50,6 +50,7 @@ export default function OutgoingOffers() {
                 const fetchedOffers: Offer[] = querySnapshot.docs.map(doc => {
                     const data = doc.data()
                     return {
+                        chatId: data.chatId,
                         parentId: data.parentId,
                         offerId: doc.id,
                         listingTitle: data.listingTitle,
@@ -78,9 +79,11 @@ export default function OutgoingOffers() {
         const parentSnapshot = await getDoc(parentRef)
         const collRef = collection(db, "Inventory",offer.parentId,"offers")
         const offerRef = doc(collRef, offer.offerId)
+        const chatRef = doc(db,"Chats",offer.chatId)
         const batch = writeBatch(db)
         try {
             batch.delete(offerRef)
+            batch.delete(chatRef)
             batch.update(parentRef, {offers: increment(-1)})
             await batch.commit()
             if (parentSnapshot.data()?.highestOffer == offer.amount) {
@@ -115,7 +118,7 @@ export default function OutgoingOffers() {
             return (
                 // State when no offers are available
                 <div className="text-center py-12 bg-gray-50 rounded-xl shadow-inner">
-                    <p className="text-gray-500 text-lg">No offers have been submitted for this listing yet.</p>
+                    <p className="text-gray-500 text-lg">You have not made an offer on any listings.</p>
                 </div>
             )
         } else {
@@ -259,7 +262,8 @@ export default function OutgoingOffers() {
                                 value={searchQuery}
                                 onChange={(e) => {setSearchQuery(e.target.value)}}
                                 placeholder="Search for items..."
-                                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className={`w-full pl-12 pr-4 py-3 border border-gray-300 ${offers.length<1 ? "cursor-not-allowed!" : ""} rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                                disabled={offers.length<1}
                             /> 
                             {searchQuery!=="" && (
                             <button 
