@@ -9,21 +9,21 @@ import { db } from "./firebase/firebase"
 import Navbar from "./components/navbar"
 import Menu from "./components/menu"
 import CustomToastContainer from "./components/toast"
-import { Plus, Ban, Check, Flag, Scale, X, Clock } from "lucide-react"
+import { Plus, Ban, Check, Flag, Scale, X, Clock, ArrowLeft } from "lucide-react"
 
 type OfferMessageType = 'INCOMING' | 'OUTGOING';
-type MessageContent = 'counter' | 'image' | 'text' | 'accepted' | 'rejected';
+type MessageContent = 'counter' | 'image' | 'text';
 
 interface MessageToggleProps {
     currentView: OfferMessageType;
-    setView: (view: OfferMessageType) => void;
     incomingCount: number;
     outgoingCount: number;
-    clearChatInfo(): void
+    toggleView:(view: OfferMessageType) => void
 }
 
 interface Chat {
     id: string
+    listingAmount: number
     listingTitle: string
     lastMessage: string
     lastMessageSender: string
@@ -46,7 +46,7 @@ interface Message {
     counterStatus: 'accepted' | 'rejected' | 'pending'
 }
 
-const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, setView, clearChatInfo, incomingCount, outgoingCount }) => {
+const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, toggleView, incomingCount, outgoingCount }) => {
   const baseClasses = "px-6 py-3 font-medium text-center rounded-lg transition-all duration-300 flex-1 relative z-10";
   const activeClasses = "text-white shadow-xl";
   const inactiveClasses = "text-gray-600 hover:text-purple-900";
@@ -64,7 +64,7 @@ const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, setView, cle
       {/* Incoming Button */}
       <button
         className={`${baseClasses} ${isIncoming ? activeClasses : inactiveClasses}`}
-        onClick={() => {setView('INCOMING');clearChatInfo()}}
+        onClick={() => {toggleView('INCOMING')}}
       >
         Incoming Offers ({incomingCount})
       </button>
@@ -72,7 +72,7 @@ const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, setView, cle
       {/* Outgoing Button */}
       <button
         className={`${baseClasses} ${!isIncoming ? activeClasses : inactiveClasses}`}
-        onClick={() => {setView('OUTGOING');clearChatInfo()}}
+        onClick={() => {toggleView('OUTGOING')}}
       >
         Outgoing Offers ({outgoingCount})
       </button>
@@ -85,9 +85,10 @@ interface CounterOfferModalProps {
     onClose: () => void;
     onSend: (amount: number) => void;
     listingTitle: string;
+    listingAmount: number;
 }
 
-const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ isOpen, onClose, onSend, listingTitle }) => {
+const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ isOpen, onClose, onSend, listingTitle, listingAmount }) => {
     const [amount, setAmount] = useState<number | null>(null);
 
     if (!isOpen) return null;
@@ -101,18 +102,26 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ isOpen, onClose, 
         setAmount(null);
     };
 
+    const handleClose = () => {
+        setAmount(null);
+        onClose()
+    }
+
     return (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
                 <div className="flex justify-between items-center border-b pb-3 mb-4">
                     <h2 className="text-xl font-bold text-purple-900">Send Counter Offer</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+                    <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 transition">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 mb-2">
                     Submitting a counter offer for: <span className="font-semibold">{listingTitle}</span>
+                </p>
+                <p className="text-gray-500 mb-2">
+                    Listed Price: <span className="font-semibold text-purple-900">${listingAmount}</span>
                 </p>
 
                 <div className="mb-6">
@@ -129,7 +138,14 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ isOpen, onClose, 
                             value={amount !== null ? `${amount}`  : ""}
                             onChange={(e) => {
                                 const cleanValue = e.target.value.replace(/[^\d.]/g, '');
-                                setAmount(cleanValue ? parseFloat(cleanValue) : null)}}
+                                const numericalValue = cleanValue ? parseFloat(cleanValue) : null;
+                                if (numericalValue !== null && numericalValue >= listingAmount) {
+                                    setAmount(listingAmount); // MAX amount is set to original price. Could make it seller choice
+                                    toast.warn("Amount too high. Enter lower number",{toastId:"exceed-max-error"})
+                                } else {
+                                    setAmount(numericalValue);
+                                }
+                            }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     handleSend();
@@ -138,13 +154,14 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ isOpen, onClose, 
                             placeholder="0"
                             className="w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-lg"
                             min="0"
+                            max={listingAmount}
                         />
                     </div>
                 </div>
 
                 <div className="flex justify-end space-x-3">
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
                     >
                         Cancel
@@ -206,20 +223,25 @@ export default function Messages() {
         return counts;
     }, [conversations]);
 
-    // Sets chat based on chatId in URL
+    // Sets chat based on chatId in URL or 1st 'Incoming' Chat if no URL chatId(Initial Load)
     useEffect(()=> {
-        if (chatId && conversations.length >0) {
-            const targetChat = conversations.find(c=>c.id==chatId)
-            if (targetChat) {
-                const chatType = targetChat.senderUID == currentUserData?.uid ? 'OUTGOING' : 'INCOMING'
-                setView(chatType)
-                setSelectedConversationId(chatId)
-                navigate('/messages', {replace:true})
+        if (conversations.length >0 && selectedConversationId==="") {
+            if (chatId) {
+                const targetChat = conversations.find(c=>c.id==chatId)
+                if (targetChat) {
+                    const chatType = targetChat.senderUID == currentUserData?.uid ? 'OUTGOING' : 'INCOMING'
+                    setView(chatType)
+                    setSelectedConversationId(chatId)
+                    navigate('/messages', {replace:true})
+                }
+            }
+            else {
+                handleToggleView('INCOMING')
             }
         }
     },[chatId,conversations,navigate])
 
-    // Gathers chats in real time
+    // Updates chats in real time
     useEffect(()=>{
         const q = query(chatsCollectionRef,or(
             where('recUID',"==", currentUser?.uid),
@@ -232,6 +254,7 @@ export default function Messages() {
                 const sender = data.senderUID
                 return {
                     id: doc.id,
+                    listingAmount: data.listingAmount,
                     listingTitle: data.listingTitle,
                     lastMessageSender: data.lastMessageSender,
                     lastMessageTime: data.lastMessageTime,
@@ -250,7 +273,7 @@ export default function Messages() {
             console.error("Error fetching chats: ",error)
         })
         return() => unsubscribe()
-    }, [currentMessages,currentUser,conversations,selectedConversationId])
+    }, [currentMessages,currentUser,chatsCollectionRef])
     
     // Gathers (up to) 50 messages from the selected chat
     useEffect(()=>{
@@ -278,7 +301,7 @@ export default function Messages() {
             console.error("Error fetching chats: ",error)
         })
         return() => unsubscribe()
-    }, [selectedConversationId, db])
+    }, [selectedConversationId, db, currentUserData])
 
     // Scrolls down when a new message appears
     useEffect(()=>{
@@ -314,20 +337,28 @@ export default function Messages() {
         setLoading(false)
     }
 
-    // Clears selected chat info when toggling 'incoming' and 'outgoing'
-    const clearChatInfo = () => {
-        setSelectedConversationId("")
-        setCurrentMessages([])
-    }
+    // Selects 1st chat found under new view
+    const handleToggleView = (newView: OfferMessageType) => {
+        setView(newView);
+        
+        setSelectedConversationId("");
+        setCurrentMessages([]);
 
+        const firstChat = conversations.find(convo => convo.type === newView);
+
+        if (firstChat) {
+            setSelectedConversationId(firstChat.id);
+        }
+    };
+
+    // Submits counter offer to firebase
     const sendCounterOffer = async (amount: number) => {
         if (!selectedConversation) return;
 
         setShowCounterModal(false); // Close modal immediately
         try {
             setLoading(true);
-            const formattedAmount = amount.toFixed(2);
-            const text = `Counter offer submitted for $${formattedAmount}.`;
+            const text = `Counter offer submitted for $${amount}.`;
 
             // 1. Add the counter message to the messages subcollection
             await addDoc(collection(db, "Chats", selectedConversationId, "messages"), {
@@ -347,7 +378,7 @@ export default function Messages() {
                 lastMessageTime: serverTimestamp(),
             });
 
-            toast.success(`Counter offer for $${formattedAmount} sent!`, { toastId: "counter-success" });
+            toast.success(`Counter offer for $${amount} sent!`, { toastId: "counter-success" });
             setShowCounterModal(false)
 
         } catch (e) {
@@ -358,6 +389,7 @@ export default function Messages() {
         }
     };
 
+    // Handles counter action buttons
     const handleCounterAction = async (messageId: string, action: 'accept' | 'reject') => {
         try {
             setLoading(true);
@@ -381,7 +413,7 @@ export default function Messages() {
                 lastMessageTime: serverTimestamp()
             })
 
-            toast.success(`Counter offer ${action}ed successfully.`, { toastId: `${action}-success` });
+            toast.success(`Counter offer ${action}ed.`, { toastId: `${action}-success` });
 
             // set listing status to 'reserved' here
 
@@ -403,9 +435,18 @@ export default function Messages() {
                 setShowMenu={setShowMenu}
                 navigate={navigate}/>
             <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
-            <div className="mt-2 mb-2">
-                <MessageToggle currentView={view} setView={setView} clearChatInfo={clearChatInfo} incomingCount={incomingCount} outgoingCount={outgoingCount}/>
-            </div>
+            {/* Header */}
+                <div className="flex mt-2 mb-2">
+                    {/* Go back button */}
+                        <button 
+                            onClick={() => navigate(-1)} // Go back to the previous page (Listings)
+                            className="flex items-center text-purple-900 hover:text-purple-700 p-4 pr-0 font-semibold"
+                        >
+                        <ArrowLeft className="w-5 h-5 mr-2" />
+                        Back to Listings
+                        </button> 
+                    <MessageToggle currentView={view} toggleView={handleToggleView} incomingCount={incomingCount} outgoingCount={outgoingCount}/>
+                </div>
             <main className="flex flex-1 h-[calc(100vh-142px)] overflow-hidden">
                 {/* Sidebar: Chat List */}
                     <aside className="w-full sm:w-1/3 max-w-xs h-full border-gray-300 border-t border-r rounded-r-md bg-white flex flex-col">
@@ -474,15 +515,18 @@ export default function Messages() {
                                                                 : 'bg-yellow-100 border-yellow-400 text-gray-800 rounded-tl-md' // Incoming
                                                         }`}
                                                     >
-                                                        <div className="flex items-center space-x-2 mb-2">
+                                                        <div className="flex items-center space-x-2">
                                                             <Scale className="w-6 h-6 text-yellow-600" />
                                                             <h4 className="font-bold text-lg text-yellow-800">
                                                                 {isCurrentUser ? 'Your Counter Offer' : 'Incoming Counter Offer'}
                                                             </h4>
                                                         </div>
+                                                        <p className="mb-1 text-gray-500">
+                                                            Listed Price: ${selectedConversation.listingAmount}
+                                                        </p>
 
                                                         <p className="text-sm font-semibold mb-3">
-                                                            Amount: <span className="text-yellow-700">${msg.counterAmount?.toFixed(2)}</span>
+                                                            Amount: <span className="text-yellow-700">${msg.counterAmount}</span>
                                                         </p>
 
                                                         {/* Status Indicator */}
@@ -621,7 +665,7 @@ export default function Messages() {
                 onClose={() => setShowCounterModal(false)}
                 onSend={sendCounterOffer}
                 listingTitle={selectedConversation?.listingTitle || 'the listing'}
-            />
+                listingAmount={selectedConversation?.listingAmount || 0}/>
             <CustomToastContainer/>
         </div>
     )

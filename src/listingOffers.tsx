@@ -233,6 +233,7 @@ export default function ListingOffers(){
                     lastMessage: "",
                     lastMessageSender: "",
                     lastMessageTime: null,
+                    listingAmount: offer.amount,
                     listingTitle: offer.listingTitle,
                     recName: offer.buyerDisplayName,
                     recUID: offer.buyerUID,
@@ -270,7 +271,7 @@ export default function ListingOffers(){
                 <div className="max-w-4xl mx-auto px-4 py-10">
                 {/* Go back button */}
                     <button 
-                        onClick={() => navigate(-1)} // Go back to the previous page (Your Listings)
+                        onClick={() => navigate("/my-listings")} // Go back to the previous page (Your Listings)
                         className="flex items-center text-purple-900 hover:text-purple-700 mb-6 font-semibold"
                     >
                     <ArrowLeft className="w-5 h-5 mr-2" />
@@ -321,7 +322,7 @@ export default function ListingOffers(){
                             <div key={offer.offerId} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
                                 <div className="flex justify-between items-start">
                                     <h2 className="text-2xl font-bold text-purple-900">
-                                        ${offer.amount.toFixed(2)}
+                                        ${offer.amount}
                                     </h2>
                                     <span className="text-sm text-gray-500">
                                         {/* Format the timestamp here */}
@@ -331,7 +332,6 @@ export default function ListingOffers(){
                                 <p className="text-gray-700 mt-2 italic">"{offer.note || 'No message provided.'}"</p>
                                 <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
                                     <p className="text-sm text-gray-600">Offered by: {offer.buyerDisplayName || "cannot find user"}</p>
-                                    {/* Add buttons here to Accept or Reject the offer */}
                                     <CheckStatus status={offer.status} handleReject={()=>handleReject(offer)} handleAccept={()=>handleAccept(offer)} handleChat={()=>handleChat(offer)}/>
                                 </div>
                             </div>

@@ -52,7 +52,7 @@ const Login = () => {
     }
 
     return (
-        <div className="min-h-screen bg-cover flex flex-col bg-[url('/lsu_fall.jpg')] bg-bottom">
+        <div className="min-h-screen bg-cover flex flex-col bg-[url('/lsu-login.jpg')] bg-bottom">
             {/* Top navigation like Welcome page */}
             <Navbar
                 handleLogout={{} as unknown as () => Promise<void>}

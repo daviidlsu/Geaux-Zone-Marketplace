@@ -50,16 +50,12 @@ export default function WelcomePage() {
   const { currentUser, currentUserData, logout } = useAuth();
 
   const [email, setEmail] = useState<string>('')
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [filteredNum, setFilteredNum] = useState<number>(0);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [showLikedOnly, setShowLikedOnly] = useState<boolean>(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [likedItems, setLikedItems] = useState<string[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [newTitle, setNewTitle] = useState<string>("");
   const [newPrice, setNewPrice] = useState<number | null>(null);
   const [newCategory, setNewCategory] = useState<Category>("");
@@ -69,10 +65,14 @@ export default function WelcomePage() {
   const [offerAmount, setOfferAmount] = useState<number | null>(null);
   const [offerNote, setOfferNote] = useState<string>("");
   const [password, setPassword] = useState('')
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<Category>("All");
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
+  const [showLikedOnly, setShowLikedOnly] = useState<boolean>(false);
+  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [showMenu, setShowMenu] = useState<boolean>(false);
   const [showOfferModal, setShowOfferModal] = useState<boolean>(false);
-  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
@@ -426,9 +426,10 @@ export default function WelcomePage() {
       {/* Search Bar */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3">
-          <button onClick={auth.currentUser ? ()=>setShowLikedOnly(prev=>!prev) : () => toast.warn("Please login to view liked listings", {toastId:"like-filter"})} className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${showLikedOnly ? "bg-purple-900" : "bg-white"}`}>
-            <Heart className={`w-6 h-6 stroke-2 transition-all duration-200 ${showLikedOnly ? "fill-red-500 stroke-red-500" : "fill-none stroke-purple-900 group-hover:fill-purple-900 group-hover:stroke-purple-900"}`}/>
-          </button>
+          {/* Liked Items Filter */}
+            <button onClick={auth.currentUser ? ()=>setShowLikedOnly(prev=>!prev) : () => toast.warn("Please login to view liked listings", {toastId:"like-filter"})} className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${showLikedOnly ? "bg-purple-900" : "bg-white"}`}>
+              <Heart className={`w-6 h-6 stroke-2 transition-all duration-200 ${showLikedOnly ? "fill-red-500 stroke-red-500" : "fill-none stroke-purple-900 group-hover:fill-purple-900 group-hover:stroke-purple-900"}`}/>
+            </button>
           <div className="flex-1 relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             {/*Possibly remove the category reset, if user needs to search in specific category*/}
