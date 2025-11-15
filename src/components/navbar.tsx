@@ -44,7 +44,7 @@ export default function Navbar({
                     
                     {/* Auth Buttons (Login/Logout/Signup) */}
                     {location.pathname !="/register" && location.pathname !="/login" && (
-                        <div className="flex gap-2 font-sans">
+                        <div className="absolute flex right-0 gap-2 mr-6 font-sans">
                             <button 
                                 onClick={currentUser ? handleLogout : () => setShowLoginModal(true)} 
                                 className={`px-4 py-1 rounded-2xl transition-colors font-semibold
