@@ -1073,6 +1073,7 @@ export default function WelcomePage() {
           className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center p-4 gap-2"
           onClick={handleCloseNewListingModal}
         >
+          
           {/* Listing Preview Container LEFT SIDE*/}
           <div
             className="relative bg-white rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden"
@@ -1182,7 +1183,14 @@ export default function WelcomePage() {
             {/* Header */}
             <div className="z-50 sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-2xl font-bold text-gray-900">Create New Listing</h2>
+              <button
+                  onClick={()=>{handleCloseNewListingModal()}}
+                  className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full transition-all"
+                >
+                  <X size={30} color="#59168b" />
+                </button>
             </div>
+            
 
             {/* Form Content */}
             <div className="p-6 overflow-y-auto">
