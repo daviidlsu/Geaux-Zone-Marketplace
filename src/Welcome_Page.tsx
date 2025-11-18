@@ -5,7 +5,7 @@ import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { increment, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc, documentId } from "firebase/firestore";
+import { increment, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc} from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase/firebase";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
@@ -1124,16 +1124,7 @@ export default function WelcomePage() {
                 </>
               )}
             </div>
-                  {/* Location */}
-                <div className="flex items-center text-gray-700 mb-4 pb-4 border-b border-gray-200">
-                  <div>
-                    {newLocation && safeLocations.find(loc => loc.name === newLocation)?.safety === "high" && (
-                      <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                        Safe Spot ✓
-                      </span>
-                    )}
-                  </div>
-                </div>
+            
 
             {/* Right Side - Listing Info */}
             <div className="w-1/2 flex flex-col">
