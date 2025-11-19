@@ -799,7 +799,7 @@ export default function WelcomePage() {
       {/* New Listing Button */}
       <button onClick={currentUser == null 
         ? ()=> {toast.warn("Please login to create a listing.", {toastId:'login-to-create'}); setShowLoginModal(true)}
-        : ()=> setShowCreateListing(true)} 
+        : ()=> {setShowCreateListing(true); }} 
         className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
         <span className="text-2xl text-purple-900 font-bold leading-none absolute inset-0  mb-1 flex items-center justify-center transition-all duration-300 group-hover:opacity-0 group-hover:scale-0">
           +
@@ -981,12 +981,13 @@ export default function WelcomePage() {
               {/* Action Buttons - Fixed at Bottom */}
                 <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
-                  {/* Contact Seller Button */}
+                  {/* Submit Offer Button */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       if (selectedListing && selectedListing.available === true) {
-                        setShowOfferModal(true);
+                        setShowOfferModal(true)
+                        setShowSafetyTips(true)
                       } else {
                         toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId: 'reserved-listing-error'});
                       }
@@ -1008,7 +1009,7 @@ export default function WelcomePage() {
           </div>
         {/* New Offer */}
           {showOfferModal 
-          ? (<div onClick={(e) => e.stopPropagation()} className="fixed z-60 w-96 p-8 py-6 mr-10 bg-white top-1/2 right-0 rounded-2xl transform -translate-y-1/2">
+          ? (<div onClick={(e) => {e.stopPropagation();}} className="fixed z-60 w-96 p-8 py-6 mr-10 bg-white top-1/2 right-0 rounded-2xl transform -translate-y-1/2">
             <div className="mb-4 text-black text-2xl text-center font-bold">
               New Offer
             </div>
@@ -1073,7 +1074,7 @@ export default function WelcomePage() {
       {showCreateListing && (
         <div
           className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center p-4 gap-2"
-          onClick={handleCloseNewListingModal}
+          onClick={()=>{handleCloseNewListingModal; }}
         >
           
           {/* Listing Preview Container LEFT SIDE*/}
@@ -1550,7 +1551,7 @@ export default function WelcomePage() {
 
           <div className="flex gap-3">
             <button
-              onClick={() => setShowSafetyTips(false)}
+              onClick={() => {setShowSafetyTips(false);setShowOfferModal(false)}}
               className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
             >
               Cancel
@@ -1558,8 +1559,6 @@ export default function WelcomePage() {
             <button
               onClick={() => {
                 setShowSafetyTips(false);
-                // TODO: Navigate to messaging or show contact info
-                toast.info("Messaging feature coming soon!");
               }}
               className="flex-1 px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
             >
