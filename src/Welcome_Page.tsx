@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useAuth } from "./auth/auth.tsx";
-import { Search, Filter, MapPin, Heart, X } from "lucide-react";
+import { Search, Filter, MapPin, Heart, X, WandSparkles } from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 
 
-type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
+type Category = "All" | "Suggested" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
 const safeLocations = [
   {
@@ -164,7 +164,7 @@ export default function WelcomePage() {
   const [showSafetyTips, setShowSafetyTips] = useState(false);
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
-  const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
+  const categories: Category[] = ["All", "Recommended", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
   // Fetch listings from Firestore
   const fetchListings = async (): Promise<Listing[]> => {
@@ -675,12 +675,22 @@ export default function WelcomePage() {
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all ${
-                    selectedCategory === category
-                      ? "bg-purple-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`flex items-center px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all 
+                    ${category=="Recommended" ? "bg-purple-200 hover:bg-purple-300":"" /*Sets background and hover for AI*/} 
+                    ${selectedCategory === category 
+                      ? category === "Recommended" 
+                        ? "bg-purple-300"
+                        : "bg-purple-900 text-white"
+                      : category === "Recommended"
+                        ? "bg-purple-200 hover:bg-purple-300"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }
+                     `}
                 >
+                  {category=="Recommended" 
+                  ? <WandSparkles className="h-4 w-4 mr-1"/>
+                  : null
+                  }
                   {category}
                 </button>
               ))}
@@ -781,9 +791,7 @@ export default function WelcomePage() {
             </motion.div>
           )}
         </AnimatePresence>
-              
-
-
+      
       {/* Listings Grid */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-6">
@@ -1568,8 +1576,6 @@ export default function WelcomePage() {
         </div>
       </div>
     )}
-    </div>
-    
-    
+    </div>  
   );
 }
