@@ -871,8 +871,6 @@ export default function WelcomePage() {
               )}
             </div>
 
-
-
             {/* Right Side - Details */}
               <div className="w-1/2 flex flex-col">
               {/* Header with Close Button */}
@@ -965,9 +963,9 @@ export default function WelcomePage() {
 
 
               {/* Seller Info */}
-                <div className="bg-gray-100 rounded-xl p-4 m-6 mt-4 mb-2 py-2 h-1/7">
+                <div className="bg-gray-100 rounded-xl p-4 m-6 mt-4 mb-0 py-2">
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
-                  <div className="flex items-center gap-3">
+                  <div className="pb-1 flex items-center gap-3">
                     <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(listingOwner.username.charAt(0).toUpperCase())}</div>
                     <div>
                       <p className="font-semibold text-gray-900">{listingOwner.username}</p>
