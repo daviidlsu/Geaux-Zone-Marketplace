@@ -120,6 +120,14 @@ interface sellerInfo {
   username: string;
 }
 
+const InitialFilters = {
+  priceRange: [0, 500],
+  sortBy: "Newest",
+  condition: "All",
+  distance: 10,
+  postedDate: "All",
+}
+
 export default function WelcomePage() {
   const navigate = useNavigate();
 
@@ -127,6 +135,7 @@ export default function WelcomePage() {
 
   const [email, setEmail] = useState<string>('')
   const [filteredNum, setFilteredNum] = useState<number>(0);
+  const [filters, setFilters] = useState(InitialFilters);
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
   const [likedItems, setLikedItems] = useState<string[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
@@ -153,17 +162,6 @@ export default function WelcomePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [newCondition, setNewCondition] = useState<string>("");
   const [showSafetyTips, setShowSafetyTips] = useState(false);
-
-
-  const [filters, setFilters] = useState({
-  priceRange: [0, 500],
-  sortBy: "Newest",
-  condition: "All",
-  distance: 10,
-  postedDate: "All",
-});
-  
- 
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
   const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
@@ -324,8 +322,9 @@ export default function WelcomePage() {
       toast.success("Added to favorites!", {toastId: 'add-favorite-success'});
     }
   }
+
   // Once listings are fetched, render them
-    const renderListings = () => {
+  const renderListings = () => {
     if (loading) {
       return (
       <div className="col-span-full text-center py-10 text-gray-500">
@@ -376,13 +375,13 @@ export default function WelcomePage() {
       return 0;
     });
 
-  if (filteredListings.length === 0) {
+    if (filteredListings.length === 0) {
     return (
       <div className="col-span-full text-center py-20">
         <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
       </div>
     );
-  }
+    }
 
     return filteredListings.map((listing) => (
       <div
@@ -699,7 +698,12 @@ export default function WelcomePage() {
               transition={{ duration: 0.3 }}
               className="bg-white p-4 rounded-xl shadow mb-6 overflow-hidden max-w-7xl mx-auto px-6"
             >
-              <h2 className="text-lg font-semibold mb-3">Filters</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold mb-3">Filters</h2>
+                <button onClick={()=>setFilters(InitialFilters)} className="text-gray-500 font-semibold bg-gray-300 px-2 rounded-xl hover:shadow-sm hover:text-gray-400">
+                  Clear
+                </button>
+              </div>
 
               {/* Price Range */}
               <label className="block mb-2">
