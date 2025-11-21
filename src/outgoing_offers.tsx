@@ -1,7 +1,7 @@
 import { db } from "./firebase/firebase"
 import { writeBatch, increment, Timestamp, collection, orderBy, limit,collectionGroup, doc, getDoc,getDocs, query, updateDoc, where } from "firebase/firestore"
 import { toast } from "react-toastify"
-import { useAuth } from "./auth/auth"
+import { useAuth } from "./auth/AuthContext"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { X, Search} from 'lucide-react'
@@ -187,6 +187,7 @@ export default function OutgoingOffers() {
             navigate(`/messages/${offer.chatId}`)
         }
         catch (err) {
+            console.error("Error viewing chat:", err)
             toast.error("Error viewing chat", {toastId: "view-chat-error"})
         }
 

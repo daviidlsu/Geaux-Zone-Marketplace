@@ -6,7 +6,7 @@ import ListingOffers from './listingOffers.tsx';
 import OutgoingOffers from './outgoing_offers.tsx';
 import Register from './auth/register';
 import Welcome_Page from './Welcome_Page.tsx';
-import { AuthProvider } from './auth/auth.tsx';
+import { AuthProvider } from './auth/AuthProvider.tsx';
 import { ProtectedRoute } from './auth/ProtectedRoute.tsx';
 import { PublicRoute } from './auth/PublicRoute.tsx';
 

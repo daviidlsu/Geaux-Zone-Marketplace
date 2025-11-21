@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { db } from "./firebase/firebase";
-import { useAuth } from "./auth/auth.tsx";
+import { useAuth } from './auth/AuthContext';
 import { toast } from 'react-toastify';
 import { Search, MapPin, X, Trash2, TriangleAlert } from "lucide-react";
 import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "firebase/firestore";

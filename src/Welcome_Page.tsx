@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from "react";
-import { useAuth } from "./auth/auth.tsx";
+import { useAuth } from "./auth/AuthContext.tsx";
 import { Search, Filter, MapPin, Heart, X, WandSparkles } from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -1082,7 +1082,7 @@ export default function WelcomePage() {
       {showCreateListing && (
         <div
           className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center p-4 gap-2"
-          onClick={()=>{handleCloseNewListingModal; }}
+          onClick={handleCloseNewListingModal}
         >
           
           {/* Listing Preview Container LEFT SIDE*/}
