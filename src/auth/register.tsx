@@ -130,18 +130,26 @@ const Register: React.FC = () => {
             // Sign out user to force verification
             await auth.signOut();
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Full error:', err);
-            console.error('Error code:', err?.code);
+
+            // Try to safely extract a Firebase Auth error code if available
+            let errorCode: string | undefined;
+            if (err && typeof err === 'object' && 'code' in err) {
+                // Narrow to an object with an optional code property
+                errorCode = (err as { code?: unknown }).code as string | undefined;
+            }
+
+            console.error('Error code:', errorCode);
             
-            // Handle specific Firebase Auth errors
-            if (err?.code === 'auth/email-already-in-use') {
+            // Handle Firebase Auth errors
+            if (errorCode === 'auth/email-already-in-use') {
                 toast.error("This email is already registered. Please log in instead.", { toastId: "email-exists-toast" });
                 setInvalidEmail(true);
-            } else if (err?.code === 'auth/invalid-email') {
+            } else if (errorCode === 'auth/invalid-email') {
                 toast.error("Invalid email format", { toastId: "invalid-email-toast" });
                 setInvalidEmail(true);
-            } else if (err?.code === 'auth/weak-password') {
+            } else if (errorCode === 'auth/weak-password') {
                 toast.error("Password is too weak", { toastId: "weak-pass-toast" });
                 setInvalidPass(true);
             } else {
@@ -162,8 +170,8 @@ const Register: React.FC = () => {
                 navigate={navigate}
             />
 
-            <main className="flex-1 flex items-center justify-center py-2 px-4">
-                <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 pt-6 pb-4">
+            <main className="flex-1 flex items-center justify-center py-8 px-4 overflow-y-auto">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 pt-6 pb-6 my-4">
                     <div className="text-center mb-4">
                         <div className="mx-auto w-24 h-24 bg-purple-900 rounded-lg flex items-center justify-center">
                             <img className="w-16 h-16 " src="/geauxzone_tiger.png" alt="GeauxZone Tiger"></img>
@@ -276,7 +284,7 @@ const Register: React.FC = () => {
                             </div>
                         </form>
                     ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-4 animate-fadeIn">
                             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                                 <div className="flex items-start gap-3">
                                     <span className="text-2xl">✅</span>
@@ -287,9 +295,15 @@ const Register: React.FC = () => {
                                         <p className="text-sm text-green-700 mb-2">
                                             A verification email has been sent to <strong>{userEmail}</strong>
                                         </p>
-                                        <p className="text-xs text-gray-600">
-                                            Check your inbox and click the verification link before logging in.
-                                        </p>
+                                        <div className="text-xs text-gray-700 bg-yellow-50 border border-yellow-200 rounded p-2 mt-2">
+                                            <p className="font-semibold mb-1">⚠️ Important:</p>
+                                            <ol className="list-decimal ml-4 space-y-1">
+                                                <li>Click the verification link in your email</li>
+                                                <li>The link will open in your browser</li>
+                                                <li>Wait for "Email verified" message</li>
+                                                <li>Return here and click "Go to Login" below</li>
+                                            </ol>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
