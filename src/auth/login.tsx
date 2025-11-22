@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react'
 import { auth } from '../firebase/firebase'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { useNavigate, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import Navbar from '../components/navbar'
@@ -38,14 +38,27 @@ const Login = () => {
 
         try {
             setSubmitting(true)
-            const user = await signInWithEmailAndPassword(auth, trimmedEmail, trimmedPassword)
-            if (user) {
-                toast.success("Login Successful!", { toastId: toastID })
-                navigate('/')
+
+            // Try signing in
+            const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, trimmedPassword)
+            const user = userCredential.user
+
+            // Block Unverified Emails
+            if (!user.emailVerified) {
+                await signOut(auth)
+
+                toast.warn("Please verify your LSU email before logging in.", { toastId: "verify-login-warn" })
+                toast.info("Check your inbox for the verification link.", { toastId: "verify-login-info" })
+
+                return
             }
-        } catch (err: any) {
+
+            toast.success("Login Successful!", { toastId: toastID })
+            navigate('/')
+        } catch (err: unknown) {
             console.error(err)
-            toast.error(err?.message ?? "Failed to sign in", { toastId: toastID })
+            const message = err instanceof Error ? err.message : String(err) || "Failed to sign in"
+            toast.error(message, { toastId: toastID })
         } finally {
             setSubmitting(false)
         }

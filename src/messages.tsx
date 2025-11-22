@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react"
 import { toast } from "react-toastify"
-import { useAuth } from "./auth/auth"
+import { useAuth } from './auth/AuthContext';
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { addDoc, collection, CollectionReference, doc, limit, onSnapshot, or, orderBy, query, QueryDocumentSnapshot, serverTimestamp, Timestamp, updateDoc, where } from "firebase/firestore"

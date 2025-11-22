@@ -1,5 +1,5 @@
 import { Menu } from "lucide-react";
-import { useAuth } from "../auth/auth";
+import { useAuth } from "../auth/AuthContext";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -17,7 +17,7 @@ export default function Navbar({
     setShowMenu,
     navigate,
 }: NavbarProps) {
-    const { currentUser, currentUserData, isLoading, logout } = useAuth();
+    const { currentUser, currentUserData } = useAuth();
     return (
         <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
             <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">

@@ -1,7 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { addDoc, collection, doc, getDoc, getDocs, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "./firebase/firebase.ts";
-import { useAuth } from "./auth/auth.tsx";
+import { useAuth } from './auth/AuthContext';
 import { Timestamp } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { useNavigate, useParams } from "react-router-dom";
