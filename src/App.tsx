@@ -2,17 +2,18 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-import Login from './auth/login';   // old page (optional)
+import Login from './auth/login';   
+import Register from './auth/register'; 
 import LandingPage from './LandingPage';        // TigerTrade landing page
 import Listings from './listed_items';
+import { AuthProvider } from './auth/AuthProvider.tsx';
+import { ProtectedRoute } from './auth/ProtectedRoute';
+import { PublicRoute } from './auth/PublicRoute';
+import Welcome_Page from './Welcome_Page.tsx';
 import Messages from './messages.tsx';
 import ListingOffers from './listingOffers.tsx';
 import OutgoingOffers from './outgoing_offers.tsx';
-import Register from './auth/register';
-import Welcome_Page from './Welcome_Page.tsx';
-import { AuthProvider } from './auth/AuthProvider.tsx';
-import { ProtectedRoute } from './auth/ProtectedRoute.tsx';
-import { PublicRoute } from './auth/PublicRoute.tsx';
+
 
 function App() {
   return (
@@ -23,7 +24,6 @@ function App() {
           <Route path="/" element={<LandingPage />} />
 
           {/* Old welcome page (kept just in case you still want it) */}
-          <Route path="/welcome-old" element={<Welcome_Page />} />
           <Route path="/listings" element={<Welcome_Page />} />
 
           {/* /welcome also shows the new landing */}
