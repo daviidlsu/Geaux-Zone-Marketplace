@@ -174,7 +174,7 @@ export default function WelcomePage() {
       const querySnapshot = await getDocs(collection(db, "Inventory")); 
       const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
         const data = doc.data() as Listing;
-        return currentUser?.uid !== data.sellerUID;}
+        return currentUser?.uid !== data.sellerUID && data.available}
       ).map(doc => {
         const data = doc.data() as Listing;
         return {
@@ -286,6 +286,7 @@ export default function WelcomePage() {
         setSelectedListing(updatedListing)
       } else {
         setSelectedListing(listing);
+        
       }
     } else {
       toast.error("This listing is no longer available.", {toastId: 'listing-unavailable'});
@@ -1017,7 +1018,6 @@ export default function WelcomePage() {
                       toast.error("Invalid listing ID", {toastId: 'invalid-id'});
                       return;
                     }
-                    
                     if (!selectedListing.available) {
                       toast.warn("This listing is no longer available.", {toastId: 'unavailable-listing'});
                       handleCloseListing();
@@ -1028,9 +1028,8 @@ export default function WelcomePage() {
                       setLoading(true);
                       
                       // Verify document exists and is still available
-                      const listingRef = doc(db, "Listings", selectedListing.docId);
+                      const listingRef = doc(db, "Inventory", selectedListing.docId);
                       const listingSnap = await getDoc(listingRef);
-                      
                       if (!listingSnap.exists()) {
                         toast.error("This listing no longer exists", {toastId: 'listing-not-found'});
                         handleCloseListing();
@@ -1129,7 +1128,7 @@ export default function WelcomePage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (selectedListing && selectedListing.available === true) {
+                      if (selectedListing && selectedListing.available) {
                         setShowOfferModal(true)
                         setShowSafetyTips(true)
                       } else {
