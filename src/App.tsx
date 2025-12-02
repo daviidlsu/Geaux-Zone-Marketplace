@@ -1,23 +1,29 @@
+// src/App.tsx
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
 import Register from './auth/register';
 import Login from './auth/login';
-import Welcome_Page from './Welcome_Page.tsx'; // old welcome page
-import UpdatedWelcomePage from './UpdatedWelcomePage';// new welcome page 
-import Listings from './listed_items.tsx';
-import { AuthProvider } from './auth/auth.tsx';
-import { ProtectedRoute } from './auth/ProtectedRoute.tsx';
-import { PublicRoute } from './auth/PublicRoute.tsx';
+import Welcome_Page from './Welcome_Page';      // old page (optional)
+import LandingPage from './LandingPage';        // TigerTrade landing page
+import Listings from './listed_items';
+import { AuthProvider } from './auth/auth';
+import { ProtectedRoute } from './auth/ProtectedRoute';
+import { PublicRoute } from './auth/PublicRoute';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Make new page the default route */}
-          <Route path="/" element={<UpdatedWelcomePage />} />
+          {/* Home -> new TigerTrade landing */}
+          <Route path="/" element={<LandingPage />} />
 
-          {/*  keep old page at /welcome-old */}
+          {/* Old welcome page (kept just in case you still want it) */}
           <Route path="/welcome-old" element={<Welcome_Page />} />
+
+          {/* /welcome also shows the new landing */}
+          <Route path="/welcome" element={<LandingPage />} />
 
           {/* Public Routes */}
           <Route
@@ -28,7 +34,6 @@ function App() {
               </PublicRoute>
             }
           />
-
           <Route
             path="/login"
             element={
@@ -48,8 +53,8 @@ function App() {
             }
           />
 
-          {/* Catch-all route for undefined paths */}
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* Catch-all: go back home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

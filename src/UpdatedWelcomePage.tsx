@@ -9,7 +9,7 @@ interface Product {
   image?: string;
 }
 
-// Product Card with fade-in + slide-up + stagger
+// selling item with fade-in + slide-up + stagger
 const ProductCard: React.FC<{
   product: Product;
   onAdd: (product: Product) => void;
@@ -40,7 +40,7 @@ const ProductCard: React.FC<{
     <div
       ref={cardRef}
       style={{
-        background: "rgba(70, 29, 124, 0.3)",
+        background: "rgba(70, 29, 124, 0.3)",//change later mayb
         backdropFilter: "blur(10px)",
         border: "1px solid rgba(253, 208, 35, 0.2)",
         padding: "20px",
@@ -56,7 +56,7 @@ const ProductCard: React.FC<{
         e.currentTarget.style.boxShadow = "0 12px 40px rgba(253, 208, 35, 0.2)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0) scale(1)";
+        e.currentTarget.style.transform = "translateY(0) scale(1)";// idek 
         e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)";
       }}
     >
@@ -106,12 +106,12 @@ export default function UpdatedWelcomePage() {
   const [cart, setCart] = useState<Product[]>([]);
 
   const products: Product[] = [
-    { id: 1, name: "Nightwave Hoodie", price: 68, category: "Apparel" },
+    { id: 1, name: "one direction hoodie", price: 68, category: "Apparel" },
     { id: 2, name: "Geaux Cap", price: 28, category: "Accessories" },
-    { id: 3, name: "Gradient Tumbler", price: 22, category: "Drinkware" },
-    { id: 4, name: "Zone Poster", price: 16, category: "Decor" },
-    { id: 5, name: "Grit Tee", price: 34, category: "Apparel" },
-    { id: 6, name: "Glow Pin Set", price: 12, category: "Accessories" },
+    { id: 3, name: "Stanley Tumbler", price: 22, category: "Drinkware" },
+    { id: 4, name: "hello", price: 16, category: "Decor" },
+    { id: 5, name: "hello", price: 34, category: "Apparel" },
+    { id: 6, name: "pens", price: 12, category: "Accessories" },
   ];
 
   const addToCart = (product: Product) => setCart([...cart, product]);
@@ -349,7 +349,7 @@ export default function UpdatedWelcomePage() {
                 e.currentTarget.style.background = "transparent";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
-              onClick={() => alert("Join feature coming soon!")}
+              onClick={() => alert("Join by Logging In!")}
             >
               Join the Drop List
             </button>
