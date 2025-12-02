@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from './auth';
+import { useAuth } from './/AuthContext';
 
 // Define the component props
 interface PublicRouteProps {
@@ -19,6 +19,7 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
     );
   }
   if (currentUser) {
+    console.log("invalid user public")
     return <Navigate to="/" replace />;
   }
   //Continue to render children if not logged in

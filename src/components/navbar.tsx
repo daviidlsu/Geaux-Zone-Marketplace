@@ -1,14 +1,14 @@
 import { Menu } from "lucide-react";
-import { useAuth } from "../auth/auth";
+import { useAuth } from "../auth/AuthContext";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 // Define the structure for props this component will accept
 interface NavbarProps {
     handleLogout: () => Promise<void>;
     setShowLoginModal: (show: boolean) => void;
     setShowMenu: (show: boolean) => void;
-    navigate: (path: string) => void; 
-    toastWarn: (message: string, options: { toastId: string }) => void; 
+    navigate: (path: string) => void;  
 }
 
 export default function Navbar({
@@ -16,9 +16,8 @@ export default function Navbar({
     setShowLoginModal,
     setShowMenu,
     navigate,
-    toastWarn
 }: NavbarProps) {
-    const { currentUser, currentUserData, isLoading, logout } = useAuth();
+    const { currentUser, currentUserData } = useAuth();
     return (
         <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
             <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -28,7 +27,7 @@ export default function Navbar({
                         ? () => setShowMenu(true) 
                         : () => {
                             setShowLoginModal(true); 
-                            toastWarn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'});
+                            toast.warn("Please Login or Register to access the menu.", {toastId: 'menu-login-warning'});
                           }
                     } 
                     className="absolute flex left-0 top-1/2 transform -translate-y-1/2 ml-6 p-2 w-10 h-10 rounded-full hover:bg-[#ffffff20] transition-colors items-center justify-center"
@@ -45,7 +44,7 @@ export default function Navbar({
                     
                     {/* Auth Buttons (Login/Logout/Signup) */}
                     {location.pathname !="/register" && location.pathname !="/login" && (
-                        <div className="flex gap-2 font-sans">
+                        <div className="absolute flex right-0 gap-2 mr-6 font-sans">
                             <button 
                                 onClick={currentUser ? handleLogout : () => setShowLoginModal(true)} 
                                 className={`px-4 py-1 rounded-2xl transition-colors font-semibold

@@ -1,24 +1,94 @@
 import { useState, FormEvent, useEffect } from "react";
-import { useAuth } from "./auth/auth.tsx";
-import { Search, Filter, MapPin, Heart, X } from "lucide-react";
+import { useAuth } from "./auth/AuthContext.tsx";
+import { Search, Filter, MapPin, Heart, X, WandSparkles } from "lucide-react";
 import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from 'react-toastify';
+import { increment, collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, setDoc, updateDoc, query, Timestamp, where, serverTimestamp, deleteDoc} from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase/firebase";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
-import { collection, addDoc, getDoc, getDocs, doc, getDocsFromServer, query, Timestamp, where, serverTimestamp, deleteDoc } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx"
+import { motion, AnimatePresence } from "framer-motion";
 
-type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
+
+
+
+
+type Category = "All" | "Suggested" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
+
+const safeLocations = [
+  {
+    name: "Student Union - Front Entrance",
+    description: "Main floor, well-lit, high traffic area",
+    hours: "6am - 11pm daily",
+    icon: "🏛️",
+    safety: "high"
+  },
+  {
+    name: "Middleton Library - Main Entrance", 
+    description: "Security cameras, busy lobby area",
+    hours: "24/7 access",
+    icon: "📚",
+    safety: "high"
+  },
+  {
+    name: "Tiger Stadium - Gate 1",
+    description: "Public area with security presence",
+    hours: "Daylight hours recommended",
+    icon: "🏈",
+    safety: "high"
+  },
+  {
+    name: "UREC - Main Lobby",
+    description: "High foot traffic, staff present",
+    hours: "6am - 10pm",
+    icon: "💪",
+    safety: "high"
+  },
+  {
+    name: "The 459 - Main Lobby",
+    description: "Student housing lobby",
+    hours: "8am - 8pm",
+    icon: "🏢",
+    safety: "medium"
+  },
+  {
+    name: "Patrick F. Taylor Hall",
+    description: "Engineering building, busy during class hours",
+    hours: "7am - 9pm",
+    icon: "🏫",
+    safety: "medium"
+  },
+  {
+    name: "CEBA",
+    description: "Business building lobby",
+    hours: "7am - 9pm",
+    icon: "💼",
+    safety: "medium"
+  },
+  {
+    name: "Nicholson Gateway",
+    description: "Central campus location",
+    hours: "Daylight hours recommended",
+    icon: "🌳",
+    safety: "medium"
+  },
+  {
+    name: "Off Campus",
+    description: "Choose a safe public location",
+    hours: "Use caution",
+    icon: "📍",
+    safety: "low"
+  }
+];
 
 interface Listing {
   docId: string;
-  id: number;
   title: string;
   categoryID: Category;
   Description: string;
@@ -28,8 +98,22 @@ interface Listing {
   images?: string[]; 
   location: string;
   sellerUID: string;
+  highestOffer: number;
+  offers: number;
   available: boolean;
   lastModified: Timestamp;
+  condition: string;
+  userId: string;
+}
+
+interface Offer {
+  parentId: string
+  listingTitle: string
+  amount: number
+  note: string
+  buyerUID: string
+  timeStamp: Timestamp
+  status: string
 }
 
 interface sellerInfo {
@@ -38,50 +122,63 @@ interface sellerInfo {
   username: string;
 }
 
+const InitialFilters = {
+  priceRange: [0, 500],
+  sortBy: "Newest",
+  condition: "All",
+  distance: 10,
+  postedDate: "All",
+}
+
 export default function WelcomePage() {
   const navigate = useNavigate();
 
   const { currentUser, currentUserData, logout } = useAuth();
 
   const [email, setEmail] = useState<string>('')
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [filteredNum, setFilteredNum] = useState<number>(0);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [showLikedOnly, setShowLikedOnly] = useState<boolean>(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category>("All");
+  const [filters, setFilters] = useState(InitialFilters);
   const [invalidEmail, setInvalidEmail] = useState<boolean>(false);
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [likedItems, setLikedItems] = useState<string[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [listingOwner, setListingOwner] = useState<sellerInfo | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [newTitle, setNewTitle] = useState<string>("");
   const [newPrice, setNewPrice] = useState<number | null>(null);
   const [newCategory, setNewCategory] = useState<Category>("");
   const [newLocation, setNewLocation] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
+  const [offerAmount, setOfferAmount] = useState<number | null>(null);
+  const [offerNote, setOfferNote] = useState<string>("");
   const [password, setPassword] = useState('')
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<Category>("All");
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [showCreateListing, setShowCreateListing] = useState<boolean>(false);
-  const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [showLikedOnly, setShowLikedOnly] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [showOfferModal, setShowOfferModal] = useState<boolean>(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [previewImageIndex, setPreviewImageIndex] = useState<number>(0);
- 
+  const [showFilters, setShowFilters] = useState(false);
+  const [newCondition, setNewCondition] = useState<string>("");
+  const [showSafetyTips, setShowSafetyTips] = useState(false);
 
   const lsuEmailRegex = /^[^@\s]+@lsu\.edu$/i
-  const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
+  const categories: Category[] = ["All", "Recommended", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
   // Fetch listings from Firestore
   const fetchListings = async (): Promise<Listing[]> => {
     try{
-      const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
+      const querySnapshot = await getDocs(collection(db, "Inventory")); 
       const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
         const data = doc.data() as Listing;
-        return currentUser?.uid !== data.sellerUID;}
+        return currentUser?.uid !== data.sellerUID && data.available}
       ).map(doc => {
         const data = doc.data() as Listing;
         return {
           docId: doc.id,
-          id: data.id,
           title: data.title,
           categoryID: data.categoryID,
           Description: data.Description,
@@ -90,6 +187,8 @@ export default function WelcomePage() {
           image: data.image,
           images: data.images || [],
           location: data.location,
+          highestOffer: data.highestOffer,
+          offers: data.offers,
           sellerUID: data.sellerUID,
           available: data.available,
         } as Listing;
@@ -187,6 +286,7 @@ export default function WelcomePage() {
         setSelectedListing(updatedListing)
       } else {
         setSelectedListing(listing);
+        
       }
     } else {
       toast.error("This listing is no longer available.", {toastId: 'listing-unavailable'});
@@ -225,31 +325,65 @@ export default function WelcomePage() {
       toast.success("Added to favorites!", {toastId: 'add-favorite-success'});
     }
   }
+
   // Once listings are fetched, render them
   const renderListings = () => {
     if (loading) {
       return (
       <div className="col-span-full text-center py-10 text-gray-500">
-            <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
-            Loading listings...
-        </div>
-      );
-    }
+        <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
+        Loading listings...
+      </div>
+    );
+  }
 
-    const filteredListings = listings.filter((listing) => {
+  const filteredListings = listings
+    .filter((listing) => {
       const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
-      const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
-      const isLiked = likedItems.includes(listing.docId); //Collects liked items from user data
+      const matchesSearch =
+        listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
+      const isLiked = likedItems.includes(listing.docId);
       const matchesLikedFilter = !showLikedOnly || isLiked;
-      return matchesCategory && matchesSearch && matchesLikedFilter;
+
+      // New Filters
+      const matchesPrice = listing.price >= filters.priceRange[0] && listing.price <= filters.priceRange[1];
+
+      const matchesCondition = filters.condition === "All" || listing.condition === filters.condition;
+
+      let matchesPostedDate = true;
+      if (filters.postedDate !== "All") {
+        const now = new Date();
+        const posted = listing.dateListed.toDate();
+        if (filters.postedDate === "Today") {
+          matchesPostedDate = posted.toDateString() === now.toDateString();
+        } else if (filters.postedDate === "This Week") {
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay()); 
+          matchesPostedDate = posted >= startOfWeek;
+        } else if (filters.postedDate === "This Month") {
+          matchesPostedDate = posted.getMonth() === now.getMonth() && posted.getFullYear() === now.getFullYear();
+        }
+      }
+
+      // Distance filter placeholder
+      const matchesDistance = true; // Replace with actual distance calculation if available
+
+      return matchesCategory && matchesSearch && matchesLikedFilter && matchesPrice && matchesCondition && matchesPostedDate && matchesDistance;
+    })
+    .sort((a, b) => {
+      if (filters.sortBy === "Newest") return b.dateListed.seconds - a.dateListed.seconds;
+      if (filters.sortBy === "Lowest Price") return a.price - b.price;
+      if (filters.sortBy === "Highest Price") return b.price - a.price;
+      return 0;
     });
 
-    if (filteredNum === 0) {
-      return (
-        <div className="col-span-full text-center py-20">
-          <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
-        </div>
-      );
+    if (filteredListings.length === 0) {
+    return (
+      <div className="col-span-full text-center py-20">
+        <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
+      </div>
+    );
     }
 
     return filteredListings.map((listing) => (
@@ -286,15 +420,6 @@ export default function WelcomePage() {
     setSelectedListing(null);
     setListingOwner(null);
     setUploadedImages([]);
-  }
-
-  // Contact seller handler
-  const handleContactSeller = () => {
-    if (currentUser == null) {
-      toast.warn("Please Login or Register to contact seller.", {toastId: 'contact-error'});
-    } else {
-      // Implement contact seller functionality here
-    }
   }
 
   // Login handler
@@ -354,8 +479,8 @@ export default function WelcomePage() {
   }
 
   const handleRemoveImage = (index: number) => {
-  setUploadedImages(uploadedImages.filter((_, i) => i !== index));
-  setPreviewImageIndex(0); // Always go back to first image
+    setUploadedImages(uploadedImages.filter((_, i) => i !== index));
+    setPreviewImageIndex(0); // Always go back to first image
   }
 
   // Close create listing modal
@@ -368,6 +493,13 @@ export default function WelcomePage() {
     setPreviewImageIndex(0);
     setUploadedImages([]);
     setShowCreateListing(false);
+  }
+
+  // Close offer modal
+  const handleCloseOfferModal = () => {
+    setOfferAmount(null)
+    setOfferNote("")
+    setShowOfferModal(false)
   }
 
   // Submit new listing to Firestore
@@ -389,48 +521,86 @@ export default function WelcomePage() {
       return;
     }
     try {
-    // Show uploading toast
-    toast.info("Uploading images...", {toastId: 'uploading'});
-    
-    // Generate unique listing ID
-    const tempListingId = `listing_${Date.now()}_${auth.currentUser?.uid}`;
-    
-    // Upload images to Firebase Storage
-    const imageUrls = await uploadImagesToStorage(uploadedImages, tempListingId);
-    
-    toast.dismiss('uploading');
-    toast.info("Creating listing...", {toastId: 'creating'});
-    
+      setLoading(true);
+      toast.info("Uploading images...", {toastId: 'uploading'});
 
-      await addDoc(collection(db, "Inventory"), {
-      Description: newDescription,
-      available: true,
-      categoryID: newCategory,
-      dateListed: new Date(),
-      image: imageUrls[0], 
-      images: imageUrls, 
-      location: newLocation,      
-      price: newPrice || null,
-      sellerUID: auth.currentUser?.uid || "anonymous",
-      title: newTitle
-    });
-    
-    toast.dismiss('creating');
-    handleCloseNewListingModal();
-    toast.success("Listing created successfully!");
-    
-    // Refresh listings to show the new one
-    const fetchedListings = await fetchListings();
-    setListings(fetchedListings);
+      const tempListingId = `listing_${Date.now()}_${auth.currentUser?.uid}`;
+      const imageUrls = await uploadImagesToStorage(uploadedImages, tempListingId);
+      
+      toast.info("Creating listing...", {toastId: 'creating'});
+
+      const newDocRef = await addDoc(collection(db, "Inventory"), {
+        Description: newDescription,
+        available: true,
+        categoryID: newCategory,
+        dateListed: new Date(),
+        image: imageUrls[0], 
+        images: imageUrls, 
+        location: newLocation,      
+        price: newPrice || null,
+        highestOffer: 0,
+        offers: 0,
+        sellerUID: auth.currentUser?.uid || "anonymous",
+        title: newTitle,
+        condition: newCondition,
+        lastModified: serverTimestamp()
+      });
+      const offersRef = collection(newDocRef, "offers")
+      await setDoc(doc(offersRef, "placeholder"),{})
+
+      toast.success("Listing created successfully!", {toastId:"creation-success"});
+      handleCloseNewListingModal();
+
+      // Refresh listings to show the new one
+      const fetchedListings = await fetchListings();
+      setListings(fetchedListings);
     
     } catch (e) {
-    console.error("Error creating listing: ", e);
-    toast.dismiss('uploading');
-    toast.dismiss('creating');
-    toast.error("Failed to create listing. Please try again.");
+      console.error("Error creating listing: ", e);
+      toast.dismiss('uploading');
+      toast.dismiss('creating');
+      toast.error("Failed to create listing. Please try again.");
+    } finally {
+      handleCloseNewListingModal();
+      setLoading(false);
     }
-    handleCloseNewListingModal();
-    setLoading(false);
+  }
+
+  // Submit new offer
+  const handleSubmitOffer = async () => {
+    setLoading(true)
+    toast.info("Submitting offer...", {toastId: "submit-pending-info"})
+    try {
+
+      const listingRef = doc(db,"Inventory",selectedListing!.docId);
+      const offersCollection = collection(listingRef, "offers")
+      const newRef = await addDoc(offersCollection, {
+        parentId: selectedListing?.docId,
+        listingTitle: selectedListing?.title,
+        amount: offerAmount,
+        note: offerNote,
+        buyerUID: currentUserData?.uid,
+        timeStamp: serverTimestamp(),
+        status: "pending",
+      } as Offer)
+      toast.success("Offer submitted successfully!", {toastId: "submit-offer-success"})
+      await updateDoc(newRef, {
+        offerId: newRef.id
+      })
+
+      const listingSnapshot = await getDoc(listingRef)
+      const listingData = listingSnapshot.data()
+      if (listingData && listingData.highestOffer < offerAmount!){
+        await updateDoc(listingRef, {highestOffer: offerAmount})
+      }
+      await updateDoc(listingRef, {offers:increment(1)})
+
+    } catch (error) {
+      console.log("Error submitting offer:", error)
+      toast.error("Error occured trying to submit offer", {toastId: "submit-offer-error"})
+    }
+    handleCloseOfferModal()
+    setLoading(false)
   }
 
   return (
@@ -440,61 +610,191 @@ export default function WelcomePage() {
         handleLogout={handleLogout}
         setShowLoginModal={setShowLoginModal}
         setShowMenu={setShowMenu}
-        navigate={navigate}
-        toastWarn={toast.warn}
-      />
+        navigate={navigate}/>
       <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 
-      {/* Search Bar */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3">
-          <button onClick={auth.currentUser ? ()=>setShowLikedOnly(prev=>!prev) : () => toast.warn("Please login to view liked listings", {toastId:"like-filter"})} className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${showLikedOnly ? "bg-purple-900" : "bg-white"}`}>
-            <Heart className={`w-6 h-6 stroke-2 transition-all duration-200 ${showLikedOnly ? "fill-red-500 stroke-red-500" : "fill-none stroke-purple-900 group-hover:fill-purple-900 group-hover:stroke-purple-900"}`}/>
-          </button>
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            {/*Possibly remove the category reset, if user needs to search in specific category*/}
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for items..."
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            /> 
-            {/*Clear search button if searchQuery is not empty*/}
-            {searchQuery!=="" && (
-              <button 
-              onClick={()=>{setSearchQuery("");console.log(searchQuery)}} 
-              className="absolute flex right-3 top-1/2 transform -translate-y-1/2 items-center justify-center">
-                <X color="gray" size={20}></X>
-            </button>)}
-          </div>
-          <button className="px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filters
-          </button>
-        </div>
-      </div>
-
-      {/* Categories */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 pt-2">
-          <div className="flex gap-3 overflow-x-auto">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all ${
-                  selectedCategory === category ? "bg-purple-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+      {/* Search & Filter Section */}
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3 items-center">
+            {/* Liked Listings Toggle */}
+            <button
+              onClick={
+                auth.currentUser
+                  ? () => setShowLikedOnly((prev) => !prev)
+                  : () =>
+                      toast.warn("Please login to view liked listings", {
+                        toastId: "like-filter",
+                      })
+              }
+              className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${
+                showLikedOnly ? "bg-purple-900" : "bg-white"
+              }`}
+            >
+              <Heart
+                className={`w-6 h-6 stroke-2 transition-all duration-200 ${
+                  showLikedOnly
+                    ? "fill-red-500 stroke-red-500"
+                    : "fill-none stroke-purple-900 group-hover:fill-purple-900 group-hover:stroke-purple-900"
                 }`}
-              >
-                {category}
-              </button>
-            ))}
+              />
+            </button>
+
+            {/* Search Input */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for items..."
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              {searchQuery !== "" && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center"
+                >
+                  <X color="gray" size={20} />
+                </button>
+              )}
+            </div>
+
+            {/* Single Filter Toggle Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2"
+            >
+              <Filter className="w-5 h-5" />
+              {showFilters ? "Hide Filters" : "Filters"}
+            </button>
           </div>
         </div>
-      </div>
 
+        {/* Categories */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-6 py-4 pt-2">
+            <div className="flex gap-3 overflow-x-auto">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`flex items-center px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all 
+                    ${category=="Recommended" ? "bg-purple-200 hover:bg-purple-300":"" /*Sets background and hover for AI*/} 
+                    ${selectedCategory === category 
+                      ? category === "Recommended" 
+                        ? "bg-purple-300"
+                        : "bg-purple-900 text-white"
+                      : category === "Recommended"
+                        ? "bg-purple-200 hover:bg-purple-300"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }
+                     `}
+                >
+                  {category=="Recommended" 
+                  ? <WandSparkles className="h-4 w-4 mr-1"/>
+                  : null
+                  }
+                  {category}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Panel */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white p-4 rounded-xl shadow mb-6 overflow-hidden max-w-7xl mx-auto px-6"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold mb-3">Filters</h2>
+                <button onClick={()=>setFilters(InitialFilters)} className="text-gray-500 font-semibold bg-gray-300 px-2 rounded-xl hover:shadow-sm hover:text-gray-400">
+                  Clear
+                </button>
+              </div>
+
+              {/* Price Range */}
+              <label className="block mb-2">
+                Price Range: ${filters.priceRange[0]} - ${filters.priceRange[1]}
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="500"
+                step="10"
+                value={filters.priceRange[1]}
+                onChange={(e) =>
+                  setFilters({ ...filters, priceRange: [0, Number(e.target.value)] })
+                }
+                className="w-full mb-4"
+              />
+
+              {/* Sort */}
+              <label className="block mb-2">Sort by:</label>
+              <select
+                value={filters.sortBy}
+                onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+                className="w-full border rounded p-2 mb-4"
+              >
+                <option>Newest</option>
+                <option>Lowest Price</option>
+                <option>Highest Price</option>
+              </select>
+
+              {/* Condition */}
+              <label className="block mb-2">Condition:</label>
+              <select
+                value={filters.condition}
+                onChange={(e) =>
+                  setFilters({ ...filters, condition: e.target.value })
+                }
+                className="w-full border rounded p-2 mb-4"
+              >
+                <option>All</option>
+                <option>New</option>
+                <option>Like New</option>
+                <option>Good</option>
+                <option>Fair</option>
+              </select>
+
+              {/* Distance */}
+              <label className="block mb-2">
+                Distance from Campus (miles): {filters.distance}
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="100"
+                value={filters.distance}
+                onChange={(e) =>
+                  setFilters({ ...filters, distance: Number(e.target.value) })
+                }
+                className="w-full mb-4"
+              />
+
+              {/* Posted Date */}
+              <label className="block mb-2">Posted Date:</label>
+              <select
+                value={filters.postedDate}
+                onChange={(e) =>
+                  setFilters({ ...filters, postedDate: e.target.value })
+                }
+                className="w-full border rounded p-2"
+              >
+                <option>All</option>
+                <option>Today</option>
+                <option>This Week</option>
+                <option>This Month</option>
+              </select>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      
       {/* Listings Grid */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-6">
@@ -510,7 +810,7 @@ export default function WelcomePage() {
       {/* New Listing Button */}
       <button onClick={currentUser == null 
         ? ()=> {toast.warn("Please login to create a listing.", {toastId:'login-to-create'}); setShowLoginModal(true)}
-        : ()=> setShowCreateListing(true)} 
+        : ()=> {setShowCreateListing(true); }} 
         className="fixed bottom-8 right-8 bg-yellow-500 text-white p-2 rounded-full w-12 h-12 hover:w-44 flex items-center shadow-lg transition-all duration-300 ease-in-out group">    
         <span className="text-2xl text-purple-900 font-bold leading-none absolute inset-0  mb-1 flex items-center justify-center transition-all duration-300 group-hover:opacity-0 group-hover:scale-0">
           +
@@ -528,7 +828,7 @@ export default function WelcomePage() {
         >
           <div
             className="bg-white rounded-2xl max-w-5xl w-full h-[80vh] max-h-[90vh] overflow-hidden shadow-2xl flex"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {e.stopPropagation();handleCloseOfferModal()}}
           >
             {/* Left Side - Image Carousel */}
             <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center relative overflow-hidden">
@@ -586,12 +886,10 @@ export default function WelcomePage() {
               )}
             </div>
 
-
-
             {/* Right Side - Details */}
-            <div className="w-1/2 flex flex-col">
+              <div className="w-1/2 flex flex-col">
               {/* Header with Close Button */}
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
                   {selectedListing.categoryID}
                 </span>
@@ -601,10 +899,10 @@ export default function WelcomePage() {
                 >
                   <X size={30} color="#59168b" />
                 </button>
-              </div>
+                </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-6">
                 {/* Title and Price */}
                 <div className="mb-6">
                   <h3 className="text-3xl font-bold text-gray-900 mb-3">{selectedListing.title}</h3>
@@ -612,12 +910,52 @@ export default function WelcomePage() {
                 </div>
 
                 {/* Location */}
-                <div className="flex items-center text-gray-600 mb-6 pb-6 border-b border-gray-200">
-                  <MapPin className="w-5 h-5 mr-2" />
-                  <span className="text-lg">{selectedListing.location}</span>
+               <div className="bg-purple-50 rounded-xl p-4 mb-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-purple-900" />
+                  Pickup Location
+                </h4>
+                
+                <div className="space-y-2">
+                  <p className="font-semibold text-purple-900 text-lg">
+                    {safeLocations.find(loc => loc.name === selectedListing.location)?.icon} {selectedListing.location}
+                  </p>
+                  
+                  {/* Show location details if it's a predefined safe spot */}
+                  {safeLocations.find(loc => loc.name === selectedListing.location) && (
+                    <>
+                      <p className="text-sm text-gray-700">
+                        {safeLocations.find(loc => loc.name === selectedListing.location)?.description}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        ⏰ <strong>Best times:</strong> {safeLocations.find(loc => loc.name === selectedListing.location)?.hours}
+                      </p>
+                      
+                      {/* Safety badge */}
+                      {safeLocations.find(loc => loc.name === selectedListing.location)?.safety === "high" && (
+                        <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                          ✅ Recommended Safe Spot
+                        </span>
+                      )}
+                    </>
+                  )}
+                  
+                  {/* Link to open in Google Maps */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=LSU+${encodeURIComponent(selectedListing.location)}+Baton+Rouge+LA`;
+                      window.open(mapsUrl, '_blank');
+                    }}
+                    className="text-sm text-purple-900 hover:underline flex items-center gap-1 mt-2 font-medium"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Open in Google Maps
+                  </button>
                 </div>
+              </div>
 
-                {/* Description */}
+              {/* Description */}
                 <div className="mb-6 h-13/30">
                   <h4 className="text-lg font-semibold text-gray-900 ml-2 mb-3">Description</h4>
                   <textarea 
@@ -626,12 +964,23 @@ export default function WelcomePage() {
                     disabled>
                   </textarea>
                 </div>
-              </div>
+                </div>
+
+                {/* Category and Condition */}
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
+                  <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
+                    {selectedListing.categoryID}
+                  </span>
+                  <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                    {selectedListing.condition || "Condition not set"}
+                  </span>
+                </div>
+
 
               {/* Seller Info */}
-                <div className="bg-gray-100 rounded-xl p-4 m-6 mt-4 mb-2 py-2 h-1/7">
+                <div className="bg-gray-100 rounded-xl p-4 m-6 mt-4 mb-0 py-2">
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
-                  <div className="flex items-center gap-3">
+                  <div className="pb-1 flex items-center gap-3">
                     <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(listingOwner.username.charAt(0).toUpperCase())}</div>
                     <div>
                       <p className="font-semibold text-gray-900">{listingOwner.username}</p>
@@ -641,11 +990,154 @@ export default function WelcomePage() {
                 </div>
 
               {/* Action Buttons - Fixed at Bottom */}
-              <div className="px-6 py-4 bg-white">
+                <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
-                  {/* Contact Seller Button */}
-                  <button onClick={() => {handleContactSeller();}} className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all">
-                    Submit Offer
+                  {/* Purchase Button */}
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    
+                    if (!currentUser) {
+                      toast.warn("Please login to purchase items.", {toastId: 'login-required'});
+                      setShowLoginModal(true);
+                      return;
+                    }
+                    
+                    if (!selectedListing) {
+                      toast.error("No listing selected", {toastId: 'no-listing'});
+                      return;
+                    }
+                    
+                    // Check if user is trying to buy their own listing
+                    if (selectedListing.sellerUID === currentUser.uid) {
+                      toast.warn("You cannot purchase your own listing!", {toastId: 'own-listing'});
+                      return;
+                    }
+                    
+                    if (!selectedListing.docId) {
+                      toast.error("Invalid listing ID", {toastId: 'invalid-id'});
+                      return;
+                    }
+                    if (!selectedListing.available) {
+                      toast.warn("This listing is no longer available.", {toastId: 'unavailable-listing'});
+                      handleCloseListing();
+                      return;
+                    }
+                    
+                    try {
+                      setLoading(true);
+                      
+                      // Verify document exists and is still available
+                      const listingRef = doc(db, "Inventory", selectedListing.docId);
+                      const listingSnap = await getDoc(listingRef);
+                      if (!listingSnap.exists()) {
+                        toast.error("This listing no longer exists", {toastId: 'listing-not-found'});
+                        handleCloseListing();
+                        return;
+                      }
+                      
+                      const listingData = listingSnap.data();
+                      if (!listingData.available) {
+                        toast.warn("Sorry, this item was just purchased by someone else!", {toastId: 'just-sold'});
+                        handleCloseListing();
+                        return;
+                      }
+                      
+                      // 1. Mark listing as sold
+                      await updateDoc(listingRef, {
+                        available: false,
+                        soldTo: currentUser.uid,
+                        soldAt: serverTimestamp()
+                      });
+                      
+                      // 2. Create or find existing chat with seller
+                      const chatsRef = collection(db, "Chats");
+                      const existingChatQuery = query(
+                        chatsRef,
+                        where("listingTitle", "==", selectedListing.title),
+                        where("senderUID", "==", currentUser.uid),
+                        where("recUID", "==", selectedListing.sellerUID)
+                      );
+                      
+                      const existingChats = await getDocs(existingChatQuery);
+                      let chatId;
+                      
+                      if (!existingChats.empty) {
+                        // Use existing chat
+                        chatId = existingChats.docs[0].id;
+                        
+                        // Add purchase message to existing chat
+                        await addDoc(collection(db, "Chats", chatId, "messages"), {
+                          senderId: currentUser.uid,
+                          text: `Hi! I'd like to purchase "${selectedListing.title}" for $${selectedListing.price}. Let's arrange a pickup!`,
+                          timestamp: serverTimestamp(),
+                          type: "text"
+                        });
+                        
+                        // Update last message
+                        await updateDoc(doc(db, "Chats", chatId), {
+                          lastMessage: `🎉 Purchase request for ${selectedListing.title}`,
+                          lastMessageSender: currentUser.uid,
+                          lastMessageTime: serverTimestamp(),
+                        });
+                        
+                      } else {
+                        // Create new chat
+                        const newChatRef = await addDoc(chatsRef, {
+                          listingTitle: selectedListing.title,
+                          listingAmount: selectedListing.price,
+                          senderUID: currentUser.uid,
+                          senderName: currentUserData?.username || "Buyer",
+                          recUID: selectedListing.sellerUID,
+                          recName: listingOwner.username,
+                          lastMessage: `🎉 Purchase request for ${selectedListing.title}`,
+                          lastMessageSender: currentUser.uid,
+                          lastMessageTime: serverTimestamp(),
+                        });
+                        chatId = newChatRef.id;
+                        
+                        // Add initial purchase message
+                        await addDoc(collection(db, "Chats", chatId, "messages"), {
+                          senderId: currentUser.uid,
+                          text: `Hi! I'd like to purchase "${selectedListing.title}" for $${selectedListing.price}. Let's arrange a pickup!`,
+                          timestamp: serverTimestamp(),
+                          type: "text"
+                        });
+                      }
+                      
+                      toast.success("Purchase initiated! Check your messages to arrange pickup.", { 
+                        toastId: 'purchase-success' 
+                      });
+                      
+                      handleCloseListing();
+                      navigate(`/messages/${chatId}`);
+                      
+                    } catch (error) {
+                      console.error("Purchase error:", error);
+                      toast.error("Failed to complete purchase. Please try again.", { toastId: 'purchase-error' });
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all disabled:opacity-50"
+                  disabled={!selectedListing?.available || selectedListing?.sellerUID === currentUser?.uid}
+                >
+                  {selectedListing?.sellerUID === currentUser?.uid ? "Your Listing" : "Purchase"}
+                </button>
+                  {/* Submit Offer Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (selectedListing && selectedListing.available) {
+                        setShowOfferModal(true)
+                        setShowSafetyTips(true)
+                      } else {
+                        toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId: 'reserved-listing-error'});
+                      }
+                    }}
+                    className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all"
+                  >
+                    Make Offer
                   </button>
                   {/* Favorite Button */}
                     <button onClick={() => {handleFavorite(selectedListing.docId);}}
@@ -655,9 +1147,69 @@ export default function WelcomePage() {
                     <Heart className={`w-10 h-10 stroke-2 ${likedItems.includes(selectedListing.docId) ? "fill-red-500 stroke-red-500 hover:fill-white": "fill-none stroke-gray-500 hover:fill-red-500 hover:stroke-red-600 hover:stroke-1" } `} />
                   </button>
                 </div>
-              </div>
+                </div>
             </div>
           </div>
+        {/* New Offer */}
+          {showOfferModal 
+          ? (<div onClick={(e) => {e.stopPropagation();}} className="fixed z-60 w-96 p-8 py-6 mr-10 bg-white top-1/2 right-0 rounded-2xl transform -translate-y-1/2">
+            <div className="mb-4 text-black text-2xl text-center font-bold">
+              New Offer
+            </div>
+            <form className="">
+            {/* Offer Amount */}
+              <label className="block text-sm font-medium text-gray-700">Offer Amount <span className="text-red-500">*</span></label>
+              <input
+                id="amount"
+                type="string"
+                name="amount"
+                value={offerAmount !== null ? `$${offerAmount}`  : ""}
+                onChange={(e) => {
+                  const cleanValue = e.target.value.replace(/[^\d.]/g, '');
+                  const numericalValue = cleanValue ? parseFloat(cleanValue) : null;
+                  if (numericalValue !== null && numericalValue >= selectedListing.price) {
+                    setOfferAmount(selectedListing.price); // MAX amount is set to original price. Could make it seller choice
+                    toast.warn("Amount too high. Enter lower number",{toastId:"exceed-max-error"})
+                  } else {
+                    setOfferAmount(numericalValue);
+                  }
+                }
+                }
+                placeholder="$0"
+                className="mt-1 w-full px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                min="0"
+                max={selectedListing.price}
+              />
+            {/* Offer Note */}
+              <label className="mt-2 block text-sm font-medium text-gray-700">Note to seller <span className="text-red-500">*</span></label>
+              <textarea
+                    value={offerNote}
+                    onChange={(e) => setOfferNote(e.target.value)}
+                    placeholder="Add a note for the seller..."
+                    maxLength={100}
+                    rows={3}
+                    className="mt-1 w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">{100-offerNote.length} characters left</p>
+            </form>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={()=>handleCloseOfferModal()}
+                className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={()=>handleSubmitOffer()}
+                className="flex-1 px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+                disabled={loading}
+              >
+                Submit Offer
+              </button>
+            </div>
+          </div>)
+          : null
+          }
         </div>
       )}
 
@@ -667,6 +1219,7 @@ export default function WelcomePage() {
           className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center p-4 gap-2"
           onClick={handleCloseNewListingModal}
         >
+          
           {/* Listing Preview Container LEFT SIDE*/}
           <div
             className="relative bg-white rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden"
@@ -718,6 +1271,7 @@ export default function WelcomePage() {
                 </>
               )}
             </div>
+            
 
             {/* Right Side - Listing Info */}
             <div className="w-1/2 flex flex-col">
@@ -740,6 +1294,7 @@ export default function WelcomePage() {
                   <MapPin className="w-5 h-5 mr-2" />
                   <span className="text-lg">{newLocation || "Location"}</span>
                 </div>
+
                 {/* Description */}
                 <div className="mb-6 h-4/7">
                   <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
@@ -774,7 +1329,14 @@ export default function WelcomePage() {
             {/* Header */}
             <div className="z-50 sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-2xl font-bold text-gray-900">Create New Listing</h2>
+              <button
+                  onClick={()=>{handleCloseNewListingModal()}}
+                  className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full transition-all"
+                >
+                  <X size={30} color="#59168b" />
+                </button>
             </div>
+            
 
             {/* Form Content */}
             <div className="p-6 overflow-y-auto">
@@ -829,17 +1391,67 @@ export default function WelcomePage() {
                 </div>
 
                 {/* Location */}
-                <div>
+               <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Location <span className="text-red-500">*</span>
+                    Pickup Location <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={newLocation}
                     onChange={(e) => setNewLocation(e.target.value)}
-                    placeholder="e.g., Student Union, West Campus"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
+                  >
+                    <option value="" disabled>Select a safe meetup location</option>
+                    <optgroup label="🛡️ Recommended Safe Spots">
+                      {safeLocations.filter(loc => loc.safety === "high").map((loc) => (
+                        <option key={loc.name} value={loc.name}>
+                          {loc.icon} {loc.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="📍 Other Campus Locations">
+                      {safeLocations.filter(loc => loc.safety === "medium").map((loc) => (
+                        <option key={loc.name} value={loc.name}>
+                          {loc.icon} {loc.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="⚠️ Off Campus">
+                      {safeLocations.filter(loc => loc.safety === "low").map((loc) => (
+                        <option key={loc.name} value={loc.name}>
+                          {loc.icon} {loc.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  
+                  {/* Show location details when selected */}
+                  {newLocation && safeLocations.find(loc => loc.name === newLocation) && (
+                    <div className="mt-2 p-3 bg-purple-50 rounded-lg">
+                      <p className="text-sm text-gray-700">
+                        {safeLocations.find(loc => loc.name === newLocation)?.description}
+                      </p>
+                      <p className="text-sm text-purple-900 font-medium mt-1">
+                        ⏰ {safeLocations.find(loc => loc.name === newLocation)?.hours}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {/* Condition */ }
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Condition <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={newCondition}
+                    onChange={(e) => setNewCondition(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="" disabled>Select a condition</option>
+                    <option value="New">New</option>
+                    <option value="Like New">Like New</option>
+                    <option value="Used">Used</option>
+                  </select>
                 </div>
 
                 {/* Image Upload */}
@@ -1018,8 +1630,87 @@ export default function WelcomePage() {
           </div>
         </div>
       )}
-
       <CustomToastContainer/>
-    </div>
+
+    {/* Safety Tips Modal */}
+    {showSafetyTips && (
+      <div 
+        className="fixed inset-0 bg-white bg-opacity-50 z-[70] flex items-center justify-center p-4"
+        onClick={() => setShowSafetyTips(false)}
+      >
+        <div 
+          className="bg-white rounded-2xl max-w-md w-full p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="text-center mb-4">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-3xl">🛡️</span>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">Safety First!</h3>
+            <p className="text-sm text-gray-600 mt-1">Please review these tips before meeting</p>
+          </div>
+
+          <div className="space-y-3 mb-6">
+            <div className="flex gap-3 p-3 bg-green-50 rounded-lg">
+              <span className="text-green-600 text-xl flex-shrink-0">✅</span>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Meet in Public Places</p>
+                <p className="text-xs text-gray-600">Student Union, Library, or busy campus locations</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-3 bg-green-50 rounded-lg">
+              <span className="text-green-600 text-xl flex-shrink-0">✅</span>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Meet During Daylight</p>
+                <p className="text-xs text-gray-600">Avoid late night meetings when possible</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-3 bg-green-50 rounded-lg">
+              <span className="text-green-600 text-xl flex-shrink-0">✅</span>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Bring a Friend</p>
+                <p className="text-xs text-gray-600">Safety in numbers - never go alone</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-3 bg-yellow-50 rounded-lg">
+              <span className="text-yellow-600 text-xl flex-shrink-0">⚠️</span>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Inspect Before Paying</p>
+                <p className="text-xs text-gray-600">Check item condition carefully</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-3 bg-red-50 rounded-lg">
+              <span className="text-red-600 text-xl flex-shrink-0">❌</span>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Never Share Personal Info</p>
+                <p className="text-xs text-gray-600">Don't give out your address or dorm room</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => {setShowSafetyTips(false);setShowOfferModal(false)}}
+              className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setShowSafetyTips(false);
+              }}
+              className="flex-1 px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+            >
+              I Understand
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </div>  
   );
 }

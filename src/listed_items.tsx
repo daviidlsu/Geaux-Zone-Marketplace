@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { db } from "./firebase/firebase";
-import { useAuth } from "./auth/auth.tsx";
+import { useAuth } from './auth/AuthContext';
 import { toast } from 'react-toastify';
 import { Search, MapPin, X, Trash2, TriangleAlert } from "lucide-react";
 import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "firebase/firestore";
@@ -13,119 +13,183 @@ type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "
 
 interface Listing {
   docId: string;
-  id: number;
   title: string;
   categoryID: Category;
   Description: string;
   price: number;
   dateListed: Timestamp;
   image: string;
+  images: string[]
   location: string;
   sellerUID: string;
+  highestOffer: number;
+  offers: number;
   available: boolean;
   lastModified: Timestamp;
+  condition: string;
 }
 
+const safeLocations = [
+  {
+    name: "Student Union - Front Entrance",
+    description: "Main floor, well-lit, high traffic area",
+    hours: "6am - 11pm daily",
+    icon: "🏛️",
+    safety: "high"
+  },
+  {
+    name: "Middleton Library - Main Entrance", 
+    description: "Security cameras, busy lobby area",
+    hours: "24/7 access",
+    icon: "📚",
+    safety: "high"
+  },
+  {
+    name: "Tiger Stadium - Gate 1",
+    description: "Public area with security presence",
+    hours: "Daylight hours recommended",
+    icon: "🏈",
+    safety: "high"
+  },
+  {
+    name: "UREC - Main Lobby",
+    description: "High foot traffic, staff present",
+    hours: "6am - 10pm",
+    icon: "💪",
+    safety: "high"
+  },
+  {
+    name: "The 459 - Main Lobby",
+    description: "Student housing lobby",
+    hours: "8am - 8pm",
+    icon: "🏢",
+    safety: "medium"
+  },
+  {
+    name: "Patrick F. Taylor Hall",
+    description: "Engineering building, busy during class hours",
+    hours: "7am - 9pm",
+    icon: "🏫",
+    safety: "medium"
+  },
+  {
+    name: "CEBA",
+    description: "Business building lobby",
+    hours: "7am - 9pm",
+    icon: "💼",
+    safety: "medium"
+  },
+  {
+    name: "Nicholson Gateway",
+    description: "Central campus location",
+    hours: "Daylight hours recommended",
+    icon: "🌳",
+    safety: "medium"
+  },
+  {
+    name: "Off Campus",
+    description: "Choose a safe public location",
+    hours: "Use caution",
+    icon: "📍",
+    safety: "low"
+  }
+];
+
 export default function Listings() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const { currentUser, currentUserData, logout } = useAuth();
+  const { currentUser, currentUserData, logout } = useAuth();
 
-    const [filteredNum, setFilteredNum] = useState<number>(0);
-    const [listings, setListings] = useState<Listing[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [newCategory, setNewCategory] = useState<Category>("");
-    const [newDescription, setNewDescription] = useState<string>("");
-    const [newImage, setNewImage] = useState<string>("");
-    const [newLocation, setNewLocation] = useState<string>("");
-    const [newPrice, setNewPrice] = useState<number | null>(null);
-    const [newTitle, setNewTitle] = useState<string>("");
-    const [reloadTrigger, setReloadTrigger] = useState<number>(0);
-    const [searchQuery, setSearchQuery] = useState<string>("");
-    const [selectedCategory, setSelectedCategory] = useState<Category>("All");
-    const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-    const [showSelectedListing, setShowSelectedListing] = useState<boolean>(false);
-    const [showMenu, setShowMenu] = useState<boolean>(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
-    const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-    const [previewImageIndex, setPreviewImageIndex] = useState<number>(0)
+  const [filteredNum, setFilteredNum] = useState<number>(0);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [newCategory, setNewCategory] = useState<Category>("");
+  const [newDescription, setNewDescription] = useState<string>("");
+  const [newImage, setNewImage] = useState<string>("");
+  const [newLocation, setNewLocation] = useState<string>("");
+  const [newPrice, setNewPrice] = useState<number | null>(null);
+  const [newTitle, setNewTitle] = useState<string>("");
+  const [reloadTrigger, setReloadTrigger] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<Category>("All");
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [showSelectedListing, setShowSelectedListing] = useState<boolean>(false);
+  const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [previewImageIndex, setPreviewImageIndex] = useState<number>(0)
+  const [newCondition, setNewCondition] = useState<string>("");
 
-   //  const menuItems = [
-     //   { name: 'Home', icon: House, action: () => navigate('/') },
-       // { name: 'Your Listings', icon: Library, action: () => navigate('/my-listings') },
-    //];
+  const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
 
-    const categories: Category[] = ["All", "Tickets", "Textbooks", "Clothing", "Electronics", "Other"];
-
-    // Fetch listings from Firestore
-      const fetchListings = async (): Promise<Listing[]> => {
-        try{
-          const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
-          const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
-            const data = doc.data() as Listing;
-            return currentUser?.uid === data.sellerUID;} // Only fetch listings for current user
-          ).map(doc => {
-            const data = doc.data() as Listing;
-            return {
-              docId: doc.id,
-              id: data.id,
-              title: data.title,
-              categoryID: data.categoryID,
-              Description: data.Description,
-              price: data.price,
-              dateListed: data.dateListed,
-              image: data.image,
-              location: data.location,
-              sellerUID: data.sellerUID,
-              available: data.available,
-            } as Listing;
-          });
-          return fetchedListings;
-        } catch (error) {
-          toast.error("Failed to fetch listings.", {toastId:"fetch-error"});
-          console.error("Error fetching listings: ", error);
-          return [];
-        }
-      }
-
-    // Called upon loading page to fetch listings
-    useEffect(() => {
-        const loadListings = async () => {
-            setLoading(true);
-            const fetchedListings = await fetchListings();
-            setListings(fetchedListings);
-            setLoading(false);
-        };
-        loadListings();
-    }, [currentUser, reloadTrigger]);
-
-    // Update filtered listings count
-    useEffect(() => {
-        const filteredListings = listings.filter((listing) => {
-        const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
-        const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
-         });
-        setFilteredNum(filteredListings.length);
-    }, [listings, searchQuery, selectedCategory]);
-
-    // Once listings are fetched, render them
-  const renderListings = () => {
-    if (loading) {
-      return (
-      <div className="col-span-full text-center py-10 text-gray-500">
-            <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
-            Loading listings...
-        </div>
-      );
+  // Fetch listings from Firestore
+  const fetchListings = async (): Promise<Listing[]> => {
+    try{
+      const querySnapshot = await getDocs(collection(db, "Inventory")); // Might need to adjust for available items
+        const fetchedListings: Listing[] = querySnapshot.docs.filter(doc => {
+        const data = doc.data() as Listing;
+        return currentUser?.uid === data.sellerUID;} // Only fetch listings for current user
+      ).map(doc => {
+        const data = doc.data() as Listing;
+        return {
+          docId: doc.id,
+          title: data.title,
+          categoryID: data.categoryID,
+          Description: data.Description,
+          price: data.price,
+          dateListed: data.dateListed,
+          image: data.image,
+          location: data.location,
+          sellerUID: data.sellerUID,
+          highestOffer: data.highestOffer,
+          offers: data.offers,
+          available: data.available,
+        } as Listing;
+      });
+      return fetchedListings;
+    } catch (error) {
+      toast.error("Failed to fetch listings.", {toastId:"fetch-error"});
+      console.error("Error fetching listings: ", error);
+      return [];
     }
+  }
 
+  // Called upon loading page to fetch listings
+  useEffect(() => {
+    const loadListings = async () => {
+        setLoading(true);
+        const fetchedListings = await fetchListings();
+        setListings(fetchedListings);
+        setLoading(false);
+    };
+    loadListings();
+  }, [currentUser, reloadTrigger]);
+
+  // Update filtered listings count
+  useEffect(() => {
     const filteredListings = listings.filter((listing) => {
       const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
       const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
+    setFilteredNum(filteredListings.length);
+  }, [listings, searchQuery, selectedCategory]);
 
+  // Once listings are fetched, render them
+  const renderListings = () => {
+    if (loading) {
+      return (
+        <div className="col-span-full text-center py-10 text-gray-500">
+          <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
+          Loading listings...
+        </div>
+      );
+    }
+    const filteredListings = listings.filter((listing) => {
+      const matchesCategory = selectedCategory === "All" || listing.categoryID === selectedCategory;
+      const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || listing.Description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
     if (filteredNum === 0) {
       return (
         <div className="col-span-full text-center py-20">
@@ -139,28 +203,46 @@ export default function Listings() {
                 <thead className="bg-gray-50">
                     <tr>
                         <th
-                            scope="col"
-                            className="ml-4 py-3.5 pl-6 pr-3 text-left text-m font-semibold text-gray-900"
+                          scope="col"
+                          className="ml-4 py-3.5 pl-6 pr-3 text-left text-m font-semibold text-gray-900"
                         >
-                            Listing Title
+                          Listing Title
                         </th>
                         <th 
-                            scope="col" 
-                            className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          scope="col" 
+                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
                         >
-                            Price
+                          Price
                         </th>
                         <th 
-                            scope="col" 
-                            className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          scope="col" 
+                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
                         >
-                            Location
+                          Location
                         </th>
                         <th
-                            scope="col"
-                            className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
                         >
-                            Date Listed
+                          Date Listed
+                        </th>
+                        <th
+                          scope="col"
+                          className="pl-3 py-3.5 text-center text-m font-semibold text-gray-900"
+                          >
+                          Offers
+                        </th>
+                        <th
+                          scope="col"
+                          className="pr-3 py-3.5 text-center text-m font-semibold text-gray-900"
+                          >
+                          Highest Offer
+                        </th>
+                        <th
+                          scope="col"
+                          className="relative py-3.5 pr-6 pl-3"
+                          >
+                          <span className="sr-only"></span>
                         </th>
                     </tr>
                 </thead>
@@ -168,22 +250,38 @@ export default function Listings() {
                 {/* TABLE BODY */}
                 <tbody className="divide-y divide-gray-200 bg-white">
                     {filteredListings.map((listing) => (
-                        <tr key={listing.docId} onClick={()=>{handleOpenEditListingModal(listing);setSearchQuery("")}} className="hover:bg-purple-50 transition-colors cursor-pointer">
+                        <tr key={listing.docId} onClick={()=>{navigate(`/my-listings/${listing.docId}/offers`);setSearchQuery("")}} className="hover:bg-purple-50 transition-colors cursor-pointer">
                             {/* Title Column */}
                             <td className="whitespace-nowrap py-4 pl-6 pr-3 text-m font-medium text-gray-900 truncate max-w-xs">
-                                {listing.title}
+                              {listing.title}
                             </td>
                             {/* Price Column */}
                             <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
-                                ${listing.price}
+                              ${listing.price}
                             </td>
                             {/* Location Column */}
                             <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
-                                {listing.location}
+                              {listing.location}
                             </td>
                             {/* Date Listed Column */}
                             <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
-                                {listing.dateListed.toDate().toLocaleDateString('en-US', {month: 'long', day: 'numeric', year:'numeric'})}
+                              {listing.dateListed.toDate().toLocaleDateString('en-US', {month: 'long', day: 'numeric', year:'numeric'})}
+                            </td>
+                            {/* Number of Offers Column */}
+                            <td className="whitespace-nowrap text-center text-purple-900 font-bold pl-3 py-4 text-m text-gray-500">
+                              {listing.offers}
+                            </td>
+                            {/* Highest Bid Column */}
+                            <td className="whitespace-nowrap text-center pr-3 py-4 text-m text-gray-500">
+                              {listing.highestOffer > 0 ? `$${listing.highestOffer}` : "N/A"}
+                            </td>
+                            {/* View Listing Button */}
+                            <td className="relative whitespace-nowrap py-4 pr-6 pl-3 text-right text-sm font-medium">
+                              <button
+                                className="text-white px-3 py-1 bg-purple-900 rounded-2xl hover:bg-purple-800 hover:shadow-xl"
+                                onClick={(e)=>{e.stopPropagation();handleOpenEditListingModal(listing)}}>
+                                  Edit
+                              </button>
                             </td>
                         </tr>
                     ))}
@@ -191,75 +289,77 @@ export default function Listings() {
             </table>
         </div>
     );
-}
+  }
 
-
-    const handleLogout = async () => {
-        try {
-            await logout();
-            navigate('/');
-            toast.success("Logout Successful!", {toastId: 'logout-success'});
-        } catch (error) {
-            console.error("Error signing out:", error);
-        }
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+      toast.success("Logout Successful!", {toastId: 'logout-success'});
+    } catch (error) {
+      console.error("Error signing out:", error);
     }
+  }
 
-    const handleOpenEditListingModal = (listing: Listing) => {
-        setNewTitle(listing.title);
-        setNewPrice(listing.price);
-        setNewCategory(listing.categoryID);
-        setNewLocation(listing.location);
-        setNewDescription(listing.Description);
-        setNewImage(listing.image);
-        setSelectedListing(listing);
-        setShowSelectedListing(true);
+  const handleOpenEditListingModal = (listing: Listing) => {
+    setNewTitle(listing.title);
+    setNewPrice(listing.price);
+    setNewCategory(listing.categoryID);
+    setNewLocation(listing.location);
+    setNewDescription(listing.Description);
+    setNewImage(listing.image);
+    setNewCondition(listing.condition || "");
+    setSelectedListing(listing);
+    setShowSelectedListing(true);
+  }
+
+  const handleCloseEditListingModal = () => {
+    setNewTitle("");
+    setNewPrice(null);
+    setNewCategory("");
+    setNewLocation("");
+    setNewDescription("");
+    setNewImage("");
+    setSelectedListing(null);
+    setShowSelectedListing(false);
+  }
+
+  const handleChangeListing = async (listing:Listing) => {
+    if (!newTitle || newPrice === null || !newLocation || !newDescription) {
+      toast.warn("Please fill in all required fields.", {toastId: 'create-listing-error'});
+      return;
     }
-
-    const handleCloseEditListingModal = () => {
-        setNewTitle("");
-        setNewPrice(null);
-        setNewCategory("");
-        setNewLocation("");
-        setNewDescription("");
-        setNewImage("");
-        setSelectedListing(null);
-        setShowSelectedListing(false);
+    if (newPrice < 1) {
+      toast.warn("Please enter a valid price.", {toastId: 'price-error'});
+      return;
     }
-
-    const handleChangeListing = async (listing:Listing) => {
-        if (!newTitle || newPrice === null || !newLocation || !newDescription) {
-            toast.warn("Please fill in all required fields.", {toastId: 'create-listing-error'});
-            return;
-        }
-      if (newPrice < 1) {
-        toast.warn("Please enter a valid price.", {toastId: 'price-error'});
-        return;
-      }
-      if (newCategory === "") {
-        toast.warn("Please select a category.", {toastId: 'category-error'});
-        return;
-      }
-      try {
-        await updateDoc(doc(db, "Inventory", listing.docId), {
-          Description: newDescription,
-          available: true,
-          categoryID: newCategory,
-          dateListed: new Date(), // Store current date
-          image: newImage || "https://via.placeholder.com/300x200",
-          location: newLocation,      
-          price: newPrice || null,
-          title: newTitle,
-          lastModified: serverTimestamp()
-        });
-        setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
-      } catch (e) {
-        console.error("Error adding document: ", e);
-      }
+    if (newCategory === "") {
+      toast.warn("Please select a category.", {toastId: 'category-error'});
+      return;
+    }
+    try {
+      await updateDoc(doc(db, "Inventory", listing.docId), {
+        Description: newDescription,
+        available: true,
+        categoryID: newCategory,
+        dateListed: new Date(), // Store current date
+        image: newImage || "https://via.placeholder.com/300x200",
+        location: newLocation,      
+        price: newPrice || null,
+        title: newTitle,
+        condition: newCondition,
+        lastModified: serverTimestamp()
+      });
+      setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    } finally {
       handleCloseEditListingModal();
       toast.success("Listing changed successfully!");
-    };
+    }
+  };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'));
@@ -268,40 +368,50 @@ export default function Listings() {
       toast.warn("You can only upload up to 5 images.");
       return;
       }
-    setUploadedImages([...uploadedImages, ...fileArray]);
+      setUploadedImages([...uploadedImages, ...fileArray]);
     }
   }
 
-    const handleRemoveImage = (index: number) => {
+  const handleRemoveImage = (index: number) => {
     setUploadedImages(uploadedImages.filter((_, i) => i !== index));
     setPreviewImageIndex(0); // Always go back to first image
   }
 
-    const handleDeleteListing = async (listing:Listing) => {
-      console.log(listing)
-        // Clean up associated favorite records
-        const batch = writeBatch(db);
-        const favoritesRef=collection(db, "Favorites");
-        console.log(favoritesRef)
-        const querySnapshot = await getDocs(query(favoritesRef, where("listingID", "==", listing.docId)));
-        if (querySnapshot.empty) {
-            console.log(`No favorite records found for listing:${listing.docId}. Cleanup complete.`);
-        }
-        else {
-          querySnapshot.forEach((doc) => {
-            batch.delete(doc.ref)
-          }
-        )};
-        await batch.commit()
-
-        // Delete the listing document
-        await deleteDoc(doc(db, "Inventory", listing.docId));
-        setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
-        setShowDeleteConfirm(false);
-        handleCloseEditListingModal();
+  const handleDeleteListing = async (listing:Listing) => {
+    // Clean up associated favorite records
+    const batch = writeBatch(db);
+    const favoritesRef=collection(db, "Favorites");
+    const querySnapshot = await getDocs(query(favoritesRef, where("listingID", "==", listing.docId)));
+    if (querySnapshot.empty) {
+          console.log(`No favorite records found for listing:${listing.docId}. Cleanup complete.`);
     }
+    else {
+        querySnapshot.forEach((doc) => {
+          batch.delete(doc.ref)
+        }
+    )}
+
+    // Cleans up all associated chats
+    const offersRef=collection(db,"Inventory", listing.docId, "offers")
+    const offerSnapshot = await getDocs(offersRef)
+    if (offerSnapshot.docs.length<=1){
+      console.log(`No chat records found for listing:${listing.docId}. Cleanup complete.`);
+    } else {
+      offerSnapshot.forEach((document) => {
+
+        batch.delete(doc(db,"Chats",document.data().chatId))
+      })
+    }
+    await batch.commit()
+
+    // Delete the listing document
+    await deleteDoc(doc(db, "Inventory", listing.docId));
+    setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
+    setShowDeleteConfirm(false);
+    handleCloseEditListingModal();
+  }
     
-    return (
+  return (
         <div className="min-h-screen bg-gray-50">
             {/* Header Section */}
             <Navbar
@@ -309,7 +419,6 @@ export default function Listings() {
               setShowLoginModal={()=>{}}
               setShowMenu={setShowMenu}
               navigate={navigate}
-              toastWarn={toast.warn}
             />
             <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 
@@ -427,6 +536,8 @@ export default function Listings() {
                               <MapPin className="w-5 h-5 mr-2" />
                               <span className="text-lg">{newLocation || "Location"}</span>
                             </div>
+
+                              
                             {/* Description */}
                             <div className="mb-6 h-1/2">
                               <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
@@ -515,19 +626,71 @@ export default function Listings() {
                               </div>
                             </div>
             
-                            {/* Location */}
-                            <div>
+                           {/* Location */}
+                          <div>
                               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Location <span className="text-red-500">*</span>
+                                Pickup Location <span className="text-red-500">*</span>
                               </label>
-                              <input
-                                type="text"
+                              <select
                                 value={newLocation}
                                 onChange={(e) => setNewLocation(e.target.value)}
-                                placeholder="e.g., Student Union, West Campus"
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                              />
+                              >
+                                <option value="" disabled>Select a safe meetup location</option>
+                                <optgroup label="🛡️ Recommended Safe Spots">
+                                  {safeLocations.filter(loc => loc.safety === "high").map((loc) => (
+                                    <option key={loc.name} value={loc.name}>
+                                      {loc.icon} {loc.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                                <optgroup label="📍 Other Campus Locations">
+                                  {safeLocations.filter(loc => loc.safety === "medium").map((loc) => (
+                                    <option key={loc.name} value={loc.name}>
+                                      {loc.icon} {loc.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                                <optgroup label="⚠️ Off Campus">
+                                  {safeLocations.filter(loc => loc.safety === "low").map((loc) => (
+                                    <option key={loc.name} value={loc.name}>
+                                      {loc.icon} {loc.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              </select>
+                              
+                              {/* Show location details when selected */}
+                              {newLocation && safeLocations.find(loc => loc.name === newLocation) && (
+                                <div className="mt-2 p-3 bg-purple-50 rounded-lg">
+                                  <p className="text-sm text-gray-700">
+                                    {safeLocations.find(loc => loc.name === newLocation)?.description}
+                                  </p>
+                                  <p className="text-sm text-purple-900 font-medium mt-1">
+                                    ⏰ {safeLocations.find(loc => loc.name === newLocation)?.hours}
+                                  </p>
+                                </div>
+                              )}
                             </div>
+
+                           
+                          {/* Condition */ }
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Condition <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                value={newCondition}
+                                onChange={(e) => setNewCondition(e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              >
+                                <option value="" disabled>Select a condition</option>
+                                <option value="New">New</option>
+                                <option value="Like New">Like New</option>
+                                <option value="Used">Used</option>
+                              </select>
+                            </div>
+                
             
                            {/* Image Upload */}
                             <div>
@@ -658,4 +821,4 @@ export default function Listings() {
             <CustomToastContainer/>
         </div>
     );
-  };
+};

@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X, Library, House} from "lucide-react";
+import { X, Library, House, Mail, ShoppingCart} from "lucide-react";
 
 interface MenuProps {
     showMenu: boolean
@@ -13,6 +12,8 @@ export default function Menu({ showMenu, setShowMenu}: MenuProps) {
     const menuItems = [
         { name: 'Home', icon: House, action: () => navigate('/') },
         { name: 'Your Listings', icon: Library, action: () => navigate('/my-listings') },
+        { name: 'Outgoing Offers', icon: ShoppingCart, action: () => navigate('/outgoing-offers') },
+        { name: 'Messages', icon: Mail, action: () => navigate('/messages') },
     ];
 
     return (

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from './auth';
+import { useAuth } from './/AuthContext';
 
 // Define the component props
 interface ProtectedRouteProps {
@@ -19,6 +19,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
   if (!currentUser) {
+    console.log("invalid user")
     return <Navigate to="/" replace />;
   }
   //Continue to render children if authenticated

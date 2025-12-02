@@ -10,6 +10,16 @@ import Listings from './listed_items';
 import { AuthProvider } from './auth/auth';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { PublicRoute } from './auth/PublicRoute';
+import Listings from './listed_items.tsx';
+import Login from './auth/login';
+import Messages from './messages.tsx';
+import ListingOffers from './listingOffers.tsx';
+import OutgoingOffers from './outgoing_offers.tsx';
+import Register from './auth/register';
+import Welcome_Page from './Welcome_Page.tsx';
+import { AuthProvider } from './auth/AuthProvider.tsx';
+import { ProtectedRoute } from './auth/ProtectedRoute.tsx';
+import { PublicRoute } from './auth/PublicRoute.tsx';
 
 function App() {
   return (
@@ -44,17 +54,38 @@ function App() {
           />
 
           {/* Protected Routes */}
-          <Route
+            <Route
             path="/my-listings"
-            element={
-              <ProtectedRoute>
-                <Listings />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Catch-all: go back home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+            element={<ProtectedRoute>
+              <Listings />
+            </ProtectedRoute>}
+            />
+            <Route
+            path="/my-listings/:listingId/offers"
+            element={<ProtectedRoute> {/* Make sure only owner listings can be seen */}
+              <ListingOffers />
+            </ProtectedRoute>}
+            />
+            <Route
+            path="/outgoing-offers"
+            element={<ProtectedRoute>
+              <OutgoingOffers />
+            </ProtectedRoute>}
+            />
+            <Route
+            path="/messages" // change to message component
+            element={<ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>}
+            />
+            <Route
+            path="/messages/:chatId" // change to message component
+            element={<ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>}
+            />
+          {/* Catch-all route for undefined paths */}
+            <Route path="*" element={<Navigate to="/" />} /> {/* Redirect unknown routes to home page */}
         </Routes>
       </BrowserRouter>
     </AuthProvider>
