@@ -2,16 +2,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-import Register from './auth/register';
-import Login from './auth/login';
-import Welcome_Page from './Welcome_Page';      // old page (optional)
+import Login from './auth/login';   // old page (optional)
 import LandingPage from './LandingPage';        // TigerTrade landing page
 import Listings from './listed_items';
-import { AuthProvider } from './auth/auth';
-import { ProtectedRoute } from './auth/ProtectedRoute';
-import { PublicRoute } from './auth/PublicRoute';
-import Listings from './listed_items.tsx';
-import Login from './auth/login';
 import Messages from './messages.tsx';
 import ListingOffers from './listingOffers.tsx';
 import OutgoingOffers from './outgoing_offers.tsx';
