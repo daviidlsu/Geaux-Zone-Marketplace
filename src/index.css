@@ -1,5 +1,6 @@
-@import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap');
+@import "tailwindcss";
 button:hover{
     cursor: pointer;
 }
@@ -24,3 +25,4 @@ button:hover{
   height: 100% !important;
   object-fit: cover !important;
 }
+
