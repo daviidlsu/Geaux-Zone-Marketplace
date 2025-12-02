@@ -36,12 +36,21 @@ export default function Navbar({
                 </button>
                 
                 <div className="flex items-center justify-between w-full ml-[-72px]">
-                    {/* Logo/Title */}
-                    <Link to="/" className="ml-20 flex items-center gap-3">
-                        <img className="w-10 h-10 " src="/geauxzone_tiger.png" alt="Geaux-Zone Tiger Logo"></img>
-                        <span className="text-white font-bold text-xl">Geaux-Zone Marketplace</span>
-                    </Link>
-                    
+                  {/* Logo/Title */}
+<Link to="/" className="ml-20 flex items-center gap-3">
+  <img
+    className="w-10 h-10"
+    src="/geauxzone_tiger.png"
+    alt="TigerTrade logo"
+  />
+  <span
+    className="text-white font-bold text-xl"
+    style={{ fontFamily: "Rock Salt, cursive" }}
+  >
+    TigerTrade
+  </span>
+</Link>
+
                     {/* Auth Buttons (Login/Logout/Signup) */}
                     {location.pathname !="/register" && location.pathname !="/login" && (
                         <div className="absolute flex right-0 gap-2 mr-6 font-sans">
