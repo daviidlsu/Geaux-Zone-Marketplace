@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Search, Filter, MapPin, Heart } from "lucide-react";
-
+import { useAuth } from "../auth/AuthContext";
+import Navbar from "../components/navbar";
+import Menu from "../components/menu";
+import { useNavigate } from "react-router-dom";
 type EventItem = {
   id: string;
   title: string;
@@ -14,7 +17,10 @@ type EventItem = {
 };
 
 export default function EventsPage() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [search, setSearch] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
   const [showOnlyLiked, setShowOnlyLiked] = useState(false);
   const [events, setEvents] = useState<EventItem[]>([
     {
@@ -100,20 +106,39 @@ export default function EventsPage() {
   const primaryHost = events[0]?.host || "LSU Campus Events Council";
   const primaryLocation = events[0]?.location || "Free Speech Alley";
 
+  const handleLogout = async () => {
+      try {
+        await logout();
+        navigate('/listings');
+      } catch (error) {
+        console.error("Error signing out:", error);
+      }
+    }
+
   return (
-    <div className="p-6 min-h-screen text-white bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] overflow-x-hidden">
-      {/* HEADER */}
-      <header className="mb-6">
-        <h1 className="text-4xl font-bold mb-2" style={{ color: "#FDD023" }}>
-          On-Campus Vendor Events
-        </h1>
-        <p className="text-sm opacity-80">
-          Hosted by {primaryHost} and vendor partners in {primaryLocation} until May.
-        </p>
-      </header>
+    <div className="h-screen bg-zinc-100 text-black overflow-x-hidden">
+      <Navbar
+        handleLogout={handleLogout}
+        setShowLoginModal={()=>{}}
+        setShowMenu={setShowMenu}
+        navigate={navigate}/>
+      <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
+      <header className="mt-10 mb-6 pl-8">
+        {/* header*/} 
+  <h1
+    className="text-2xl font-bold mb-2"
+    style={{ color: "#461D7C", fontFamily: "Rock Salt, cursive" }}
+  >
+    On-Campus Vendor Events
+  </h1>
+  <p className="text-sm opacity-80">
+    Hosted by {primaryHost} and vendor partners in {primaryLocation} until May.
+  </p>
+</header>
+
 
       {/* CONTROLS */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-6 p-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 opacity-50" />
           <input
@@ -138,50 +163,61 @@ export default function EventsPage() {
       </div>
 
       {/* EVENTS GRID */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 p-6">
         {filteredEvents.map((e) => (
           <div
             key={e.id}
-            className="p-4 rounded-lg bg-zinc-200 text-black border border-zinc-400 hover:border-[#FDD023] hover:shadow-[0_0_18px_rgba(253,208,35,0.55),0_0_32px_rgba(253,208,35,0.35)] hover:scale-[1.02] transition"
+            className="group p-4 rounded-lg bg-zinc-700 text-white border border-zinc-500 hover:border-[#FDD023] hover:shadow-[0_0_18px_rgba(253,208,35,0.55),0_0_32px_rgba(253,208,35,0.35)] hover:scale-[1.02] overflow-hidden transition"
           >
+            {/* always visible: event name + location */}
             <div className="flex justify-between items-start">
               <h2 className="text-xl font-semibold mb-1">
                 {e.title}
               </h2>
-              <button onClick={() => toggleLike(e.id)}>
+              <button
+                onClick={() => toggleLike(e.id)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              >
                 <Heart className={e.liked ? "fill-white text-white" : ""} />
               </button>
             </div>
 
-            <div className="flex items-center gap-1 text-xs opacity-60 mb-3">
+            <div className="flex items-center gap-1 text-xs opacity-60 mb-1">
               <MapPin className="h-3 w-3" /> {e.location}
             </div>
 
-            <p className="text-xs mb-2">📆 {new Date(e.date).toDateString()}</p>
-            <p className="text-xs opacity-70 mb-2">Host: {e.host}</p>
-            <p className="text-xs opacity-70 mb-2">Sponsor: {e.sponsor}</p>
-            <p className="text-sm opacity-80 mb-4">{e.details}</p>
+            {/* hidden by default, revealed on hover */}
+            <div className="mt-2 space-y-2 max-h-0 opacity-0 group-hover:max-h-[500px] group-hover:opacity-100 transition-all duration-300 ease-out">
+              <p className="text-xs">📆 {new Date(e.date).toDateString()}</p>
+              <p className="text-xs opacity-70">Host: {e.host}</p>
+              <p className="text-xs opacity-70">Sponsor: {e.sponsor}</p>
+              <p className="text-sm opacity-80">{e.details}</p>
 
-            <div className="flex flex-wrap gap-2 mb-3">
-              {e.vendors.map((v, i) => (
-                <span
-                  key={i}
-                  className="text-[10px] px-2 py-1 rounded-full border border-black"
-                  style={{ backgroundColor: "#FFFFFF20", color: "#000000" }}
-                >
-                  {v}
-                </span>
-              ))}
+              <div className="flex flex-wrap gap-2">
+                {e.vendors.map((v, i) => (
+                  <span
+                    key={i}
+                    className="text-[10px] px-2 py-1 rounded-full border border-black"
+                    style={{ backgroundColor: "#FFFFFF20", color: "#FFFFFF" }}
+                  >
+                    {v}
+                  </span>
+                ))}
+              </div>
+
+              <button
+                className="w-full flex items-center justify-center gap-2 p-2 rounded-lg hover:opacity-80 transition bg-[#FDD023] text-black border border-[#FDD023]"
+              >
+                <MapPin className="h-3 w-3" /> View Location
+              </button>
             </div>
-
-            <button
-              className="w-full flex items-center justify-center gap-2 p-2 rounded-lg hover:opacity-80 transition bg-[#FDD023] text-black border border-[#FDD023]"
-            >
-              <MapPin className="h-3 w-3" /> View Location
-            </button>
           </div>
         ))}
       </section>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap');
+      `}</style>
 
       {/* EMPTY STATE */}
       {filteredEvents.length === 0 && (

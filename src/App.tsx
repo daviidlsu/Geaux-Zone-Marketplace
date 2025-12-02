@@ -13,6 +13,7 @@ import Welcome_Page from './Welcome_Page.tsx';
 import Messages from './messages.tsx';
 import ListingOffers from './listingOffers.tsx';
 import OutgoingOffers from './outgoing_offers.tsx';
+import EventsPage from './src/events.tsx';
 
 
 function App() {
@@ -78,6 +79,12 @@ function App() {
               <Messages />
             </ProtectedRoute>}
             />
+            <Route
+            path= "/events"
+            element={<ProtectedRoute>
+              <EventsPage />
+              </ProtectedRoute>}
+              />
           {/* Catch-all route for undefined paths */}
             <Route path="*" element={<Navigate to="/" />} /> {/* Redirect unknown routes to home page */}
         </Routes>
