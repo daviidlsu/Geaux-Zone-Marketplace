@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 
 
+
 type Category = "All" | "Suggested" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
 const safeLocations = [
@@ -102,6 +103,7 @@ interface Listing {
   available: boolean;
   lastModified: Timestamp;
   condition: string;
+  userId: string;
 }
 
 interface Offer {
@@ -989,6 +991,140 @@ export default function WelcomePage() {
               {/* Action Buttons - Fixed at Bottom */}
                 <div className="px-6 py-4 bg-white">
                 <div className="flex gap-3">
+                  {/* Purchase Button */}
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    
+                    if (!currentUser) {
+                      toast.warn("Please login to purchase items.", {toastId: 'login-required'});
+                      setShowLoginModal(true);
+                      return;
+                    }
+                    
+                    if (!selectedListing) {
+                      toast.error("No listing selected", {toastId: 'no-listing'});
+                      return;
+                    }
+                    
+                    // Check if user is trying to buy their own listing
+                    if (selectedListing.sellerUID === currentUser.uid) {
+                      toast.warn("You cannot purchase your own listing!", {toastId: 'own-listing'});
+                      return;
+                    }
+                    
+                    if (!selectedListing.docId) {
+                      toast.error("Invalid listing ID", {toastId: 'invalid-id'});
+                      return;
+                    }
+                    
+                    if (!selectedListing.available) {
+                      toast.warn("This listing is no longer available.", {toastId: 'unavailable-listing'});
+                      handleCloseListing();
+                      return;
+                    }
+                    
+                    try {
+                      setLoading(true);
+                      
+                      // Verify document exists and is still available
+                      const listingRef = doc(db, "Listings", selectedListing.docId);
+                      const listingSnap = await getDoc(listingRef);
+                      
+                      if (!listingSnap.exists()) {
+                        toast.error("This listing no longer exists", {toastId: 'listing-not-found'});
+                        handleCloseListing();
+                        return;
+                      }
+                      
+                      const listingData = listingSnap.data();
+                      if (!listingData.available) {
+                        toast.warn("Sorry, this item was just purchased by someone else!", {toastId: 'just-sold'});
+                        handleCloseListing();
+                        return;
+                      }
+                      
+                      // 1. Mark listing as sold
+                      await updateDoc(listingRef, {
+                        available: false,
+                        soldTo: currentUser.uid,
+                        soldAt: serverTimestamp()
+                      });
+                      
+                      // 2. Create or find existing chat with seller
+                      const chatsRef = collection(db, "Chats");
+                      const existingChatQuery = query(
+                        chatsRef,
+                        where("listingTitle", "==", selectedListing.title),
+                        where("senderUID", "==", currentUser.uid),
+                        where("recUID", "==", selectedListing.sellerUID)
+                      );
+                      
+                      const existingChats = await getDocs(existingChatQuery);
+                      let chatId;
+                      
+                      if (!existingChats.empty) {
+                        // Use existing chat
+                        chatId = existingChats.docs[0].id;
+                        
+                        // Add purchase message to existing chat
+                        await addDoc(collection(db, "Chats", chatId, "messages"), {
+                          senderId: currentUser.uid,
+                          text: `Hi! I'd like to purchase "${selectedListing.title}" for $${selectedListing.price}. Let's arrange a pickup!`,
+                          timestamp: serverTimestamp(),
+                          type: "text"
+                        });
+                        
+                        // Update last message
+                        await updateDoc(doc(db, "Chats", chatId), {
+                          lastMessage: `🎉 Purchase request for ${selectedListing.title}`,
+                          lastMessageSender: currentUser.uid,
+                          lastMessageTime: serverTimestamp(),
+                        });
+                        
+                      } else {
+                        // Create new chat
+                        const newChatRef = await addDoc(chatsRef, {
+                          listingTitle: selectedListing.title,
+                          listingAmount: selectedListing.price,
+                          senderUID: currentUser.uid,
+                          senderName: currentUserData?.username || "Buyer",
+                          recUID: selectedListing.sellerUID,
+                          recName: listingOwner.username,
+                          lastMessage: `🎉 Purchase request for ${selectedListing.title}`,
+                          lastMessageSender: currentUser.uid,
+                          lastMessageTime: serverTimestamp(),
+                        });
+                        chatId = newChatRef.id;
+                        
+                        // Add initial purchase message
+                        await addDoc(collection(db, "Chats", chatId, "messages"), {
+                          senderId: currentUser.uid,
+                          text: `Hi! I'd like to purchase "${selectedListing.title}" for $${selectedListing.price}. Let's arrange a pickup!`,
+                          timestamp: serverTimestamp(),
+                          type: "text"
+                        });
+                      }
+                      
+                      toast.success("Purchase initiated! Check your messages to arrange pickup.", { 
+                        toastId: 'purchase-success' 
+                      });
+                      
+                      handleCloseListing();
+                      navigate(`/messages/${chatId}`);
+                      
+                    } catch (error) {
+                      console.error("Purchase error:", error);
+                      toast.error("Failed to complete purchase. Please try again.", { toastId: 'purchase-error' });
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all disabled:opacity-50"
+                  disabled={!selectedListing?.available || selectedListing?.sellerUID === currentUser?.uid}
+                >
+                  {selectedListing?.sellerUID === currentUser?.uid ? "Your Listing" : "Purchase"}
+                </button>
                   {/* Submit Offer Button */}
                   <button
                     onClick={(e) => {
