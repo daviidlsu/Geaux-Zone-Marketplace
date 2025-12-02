@@ -44,61 +44,8 @@ export default function LandingPage() {
     };
   }, []);
 
-  // Scroll-driven “pointing” bar: hero → about → features
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  
 
-    const handleScroll = () => {
-      const doc = document.documentElement;
-      const scrollTop = window.scrollY || doc.scrollTop;
-      const scrollHeight = doc.scrollHeight - doc.clientHeight;
-      const viewportHeight = window.innerHeight || doc.clientHeight;
-
-      // Where in the page we’re “looking”
-      const focusY = scrollTop + viewportHeight * 0.35;
-
-      // Approx centers for each section
-      const heroCenter = viewportHeight * 0.2;
-      const aboutTop = aboutSectionRef.current?.offsetTop ?? 0;
-      const aboutCenter = aboutTop + 80; // a bit below the heading
-      const featuresTop = featuresSectionRef.current?.offsetTop ?? 0;
-      const featuresCenter = featuresTop + 80;
-
-      const distances = [
-        Math.abs(focusY - heroCenter),
-        Math.abs(focusY - aboutCenter),
-        Math.abs(focusY - featuresCenter),
-      ];
-
-      const closestIndex = distances.indexOf(Math.min(...distances));
-
-      // Heights that visually "point" toward each section
-      const HEIGHT_HERO = 60;
-      const HEIGHT_ABOUT = 260;
-      const HEIGHT_FEATURES = 420;
-
-      const targetHeight =
-        closestIndex === 0
-          ? HEIGHT_HERO
-          : closestIndex === 1
-          ? HEIGHT_ABOUT
-          : HEIGHT_FEATURES;
-
-      // Smoothly ease bar height toward the target
-      setTrackHeight((prev) => prev + (targetHeight - prev) * 0.25);
-
-      // Hide near very bottom
-      const progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
-      setHideScrollIndicator(progress >= 0.99);
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
 
   const setRevealRef = (el: HTMLElement | null) => {
     if (el && !reveals.current.includes(el)) reveals.current.push(el);

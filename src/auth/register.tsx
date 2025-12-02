@@ -162,7 +162,7 @@ const Register: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-center bg-cover bg-[url('/lsu-register.jpg')] flex flex-col">
+        <div className="h-screen overflow-hidden bg-center bg-cover bg-[url('/lsu-register.jpg')] flex flex-col">
             <Navbar
                 handleLogout={{} as unknown as () => Promise<void>}
                 setShowLoginModal={()=>{}}

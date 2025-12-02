@@ -108,7 +108,7 @@ const Login = () => {
     }
 
     return (
-        <div className="min-h-screen bg-cover flex flex-col bg-[url('/lsu-login.jpg')] bg-bottom">
+        <div className="h-screen overflow-hidden bg-cover flex flex-col bg-[url('/lsu-login.jpg')] bg-bottom">
             <Navbar
                 handleLogout={{} as unknown as () => Promise<void>}
                 setShowLoginModal={()=>{}}

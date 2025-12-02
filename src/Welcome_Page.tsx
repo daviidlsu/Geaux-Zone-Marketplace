@@ -604,7 +604,7 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen  bg-gray-50">
       {/* Header Section */}
       <Navbar
         handleLogout={handleLogout}
