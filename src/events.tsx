@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Search, Filter, MapPin, Heart } from "lucide-react";
-import { useAuth } from "../auth/AuthContext";
-import Navbar from "../components/navbar";
-import Menu from "../components/menu";
+import { useAuth } from "./auth/AuthContext";
+import Navbar from "./components/navbar";
+import Menu from "./components/menu";
 import { useNavigate } from "react-router-dom";
 type EventItem = {
   id: string;
