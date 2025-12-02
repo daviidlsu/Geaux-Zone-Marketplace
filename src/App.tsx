@@ -13,7 +13,7 @@ import Welcome_Page from './Welcome_Page.tsx';
 import Messages from './messages.tsx';
 import ListingOffers from './listingOffers.tsx';
 import OutgoingOffers from './outgoing_offers.tsx';
-import EventsPage from './src/events.tsx';
+import EventsPage from './events.tsx';
 
 
 function App() {
