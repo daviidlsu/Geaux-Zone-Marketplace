@@ -431,7 +431,7 @@ export default function WelcomePage() {
     try{
         setLoading(true);
         await signInWithEmailAndPassword(auth, email, password)
-        navigate('/');
+        navigate('/listings');
         toast.success("Login Successful!", {toastId: 'login-success'});
         setShowLoginModal(false);
     }catch(error){
@@ -446,7 +446,7 @@ export default function WelcomePage() {
     try {
       await logout();
       setLikedItems([]);
-      navigate('/');
+      navigate('/listings');
       toast.success("Logout Successful!", {toastId: 'logout-success'});
     } catch (error) {
       console.error("Error signing out:", error);

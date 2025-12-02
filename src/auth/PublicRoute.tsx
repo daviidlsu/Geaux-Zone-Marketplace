@@ -20,7 +20,7 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   }
   if (currentUser) {
     console.log("invalid user public")
-    return <Navigate to="/" replace />;
+    return <Navigate to="/listings" replace />;
   }
   //Continue to render children if not logged in
   return <>{children}</>;

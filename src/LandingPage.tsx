@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Sparkles, MapPin } from "lucide-react";
 
 export default function LandingPage() {
   const reveals = useRef<HTMLElement[]>([]);
+  const navigate = useNavigate();
   const aboutSectionRef = useRef<HTMLElement | null>(null);
   const featuresSectionRef = useRef<HTMLElement | null>(null);
 
@@ -156,7 +158,8 @@ export default function LandingPage() {
       {/* Header / Nav */}
       <nav className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between z-20 relative">
         <div className="flex items-center gap-3">
-          <a href="/" className="flex items-center gap-3">
+          <a
+           className="flex items-center gap-3">
             <img
               src="/geauxzone_tiger.png"
               alt="TigerTrade logo"
@@ -179,7 +182,7 @@ export default function LandingPage() {
             About
           </a>
           <a
-            href="#"
+            onClick={() => navigate("/register")}
             className="px-4 py-2 rounded-md bg-[#f2b200] text-[#41206a] font-semibold hover:brightness-95 transition shadow-sm"
           >
             Get Started
@@ -207,10 +210,10 @@ export default function LandingPage() {
 
             <div className="mt-8 flex flex-wrap gap-4">
               <a
-                href="#"
+                onClick={() => navigate("/listings")}
                 className="inline-flex items-center gap-3 px-5 py-3 rounded-lg bg-[#FDD023] text-[#41206a] font-semibold shadow-lg hover:translate-y-[-2px] hover:shadow-[0_18px_45px_rgba(0,0,0,0.55)] transition"
               >
-                Join with LSU Email
+                Geaux Shop
               </a>
               <a
                 href="#features"
@@ -390,13 +393,12 @@ export default function LandingPage() {
             </p>
             <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
               <a
-                href="#"
+                onClick={() => navigate("/register")}
                 className="px-6 py-3 rounded-lg bg-[#FDD023] text-[#41206a] font-semibold shadow-md hover:shadow-[0_18px_45px_rgba(0,0,0,0.55)] hover:translate-y-[-1px] transition"
               >
                 Join with LSU Email
               </a>
               <a
-                href="#"
                 className="px-6 py-3 rounded-lg border border-white/15 text-white/90 hover:bg-white/5 transition"
               >
                 Learn more

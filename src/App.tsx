@@ -24,6 +24,7 @@ function App() {
 
           {/* Old welcome page (kept just in case you still want it) */}
           <Route path="/welcome-old" element={<Welcome_Page />} />
+          <Route path="/listings" element={<Welcome_Page />} />
 
           {/* /welcome also shows the new landing */}
           <Route path="/welcome" element={<LandingPage />} />
