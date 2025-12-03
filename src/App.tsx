@@ -85,7 +85,13 @@ function App() {
             element={<ProtectedRoute>
               <EventsPage />
               </ProtectedRoute>}
-              />
+            />
+            <Route
+            path= "/profile"
+            element={<ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>}
+            />
           {/* Catch-all route for undefined paths */}
             <Route path="*" element={<Navigate to="/" />} /> {/* Redirect unknown routes to home page */}
         </Routes>
