@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Package, Heart, TrendingUp, MapPin, X, Edit } from "lucide-react";
+import { Package, Heart, TrendingUp, MapPin, Edit } from "lucide-react";
 
 // TigerTrade Profile Page - Matches WelcomePage styling
 export default function ProfilePage() {

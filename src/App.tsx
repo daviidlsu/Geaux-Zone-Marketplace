@@ -14,7 +14,7 @@ import Messages from './messages.tsx';
 import ListingOffers from './listingOffers.tsx';
 import OutgoingOffers from './outgoing_offers.tsx';
 import EventsPage from './events.tsx';
-import ProfilePage from './ProfilePage';
+import ProfilePage from './ProfilePage.tsx';
 
 
 function App() {
