@@ -39,7 +39,7 @@ export default function Menu({ showMenu, setShowMenu}: MenuProps) {
                     <nav className="flex-grow">
                         {menuItems.map((item) => {
                             return (
-                                
+                               <a 
                                     key={item.name}
                                     onClick={() => {setShowMenu(false);item.action()}}
                                     className="flex items-center justify-between p-3 pl-1 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors hover:cursor-pointer"
