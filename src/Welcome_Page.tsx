@@ -328,11 +328,11 @@ export default function WelcomePage() {
 
   // Once listings are fetched, render them
   const renderListings = () => {
-    if (loading) {
-      return (
-      <div className="col-span-full text-center py-10 text-gray-500">
-        <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
-        Loading listings...
+  if (loading) {
+    return (
+      <div className="col-span-full text-center py-20">
+        <div className="animate-spin inline-block w-12 h-12 border-4 border-t-[#FDD023] border-white/20 rounded-full mb-4"></div>
+        <p className="text-white/70 text-lg">Loading listings...</p>
       </div>
     );
   }
@@ -378,42 +378,48 @@ export default function WelcomePage() {
       return 0;
     });
 
-    if (filteredListings.length === 0) {
+  if (filteredListings.length === 0) {
     return (
       <div className="col-span-full text-center py-20">
-        <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
+        <div className="mb-4 text-6xl opacity-30">🔍</div>
+        <p className="text-white/70 text-xl mb-2">No listings found</p>
+        <p className="text-white/50 text-sm">Try adjusting your filters or search terms</p>
       </div>
     );
-    }
+  }
 
-    return filteredListings.map((listing) => (
-      <div
-        key={listing.docId}
-        onClick={() => handleSelectListing(listing)}
-        className="bg-white rounded-xl shadow-sm hover:shadow-xl cursor-pointer border border-gray-200 overflow-hidden group"
-      >
-        <div className="aspect-square bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center">
-          <img src={listing.image} alt={listing.title} className="w-full h-full object-cover" loading="lazy" />
+  return filteredListings.map((listing) => (
+    <div
+      key={listing.docId}
+      onClick={() => handleSelectListing(listing)}
+      className="listing-card bg-white/5 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-2xl cursor-pointer border border-white/10 overflow-hidden group transition-all"
+    >
+      <div className="aspect-square bg-gradient-to-br from-[#41206a] to-[#6b2fb5] flex items-center justify-center">
+        <img src={listing.image} alt={listing.title} className="w-full h-full object-cover" loading="lazy" />
+      </div>
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="font-semibold text-white/95 group-hover:text-[#FDD023] transition-colors flex-grow truncate">
+            {listing.title}
+          </h3>
+          <button 
+            onClick={(e)=>{e.stopPropagation();handleFavorite(listing.docId)}} 
+            className={`transition-colors flex-shrink-0 ml-2 ${
+              likedItems.includes(listing.docId) ? "text-[#FDD023]" : "text-white/40 hover:text-[#FDD023]"
+            }`}
+          >
+            <Heart className={`w-5 h-5 ${likedItems.includes(listing.docId) ? "fill-[#FDD023]" : "fill-none"}`}/>
+          </button>
         </div>
-        <div className="p-4">
-          <div className="flex items-start justify-between mb-2">
-            <h3 className="font-semibold text-gray-900 group-hover:text-purple-900 transition-colors flex-grow truncate">{listing.title}</h3>
-            <div className="flex w-1/10 h-1/10 center-items justify-center">
-            <button onClick={(e)=>{e.stopPropagation();handleFavorite(listing.docId)}} className={`transition-colors flex-shrink-0
-              ${likedItems.includes(listing.docId) ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}> {/* Red heart border if liked, gray if not, red on hover */}
-              <Heart className={`w-5 h-5 ${likedItems.includes(listing.docId) ? "fill-red-500 hover:stroke-white" : "fill-none"}`}/> {/* Red heart if liked, white on hover. Empty heart if not liked */}
-            </button>
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-purple-900 mb-2">${listing.price}</p>
-          <div className="flex items-center text-sm text-gray-500">
-            <MapPin className="w-4 h-4 mr-1" />
-            {listing.location}
-          </div>
+        <p className="text-2xl font-bold text-[#FDD023] mb-2">${listing.price}</p>
+        <div className="flex items-center text-sm text-white/70">
+          <MapPin className="w-4 h-4 mr-1" />
+          {listing.location}
         </div>
       </div>
-    ));
-  }
+    </div>
+  ));
+};
 
   // Closes selected listing
   const handleCloseListing = () => {
@@ -604,7 +610,7 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="h-screen  bg-gray-50">
+    <div className="h-screen  bg-gray-50 bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] overflow-x-hidden">
       {/* Header Section */}
       <Navbar
         handleLogout={handleLogout}
@@ -614,92 +620,90 @@ export default function WelcomePage() {
       <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 
       {/* Search & Filter Section */}
-        <div className="bg-white border-b border-gray-200 shadow-sm">
-          <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3 items-center">
-            {/* Liked Listings Toggle */}
-            <button
-              onClick={
-                auth.currentUser
-                  ? () => setShowLikedOnly((prev) => !prev)
-                  : () =>
-                      toast.warn("Please login to view liked listings", {
-                        toastId: "like-filter",
-                      })
-              }
-              className={`group px-3 py-2 border-2 border-purple-900 rounded-xl transition-all duration-200 ${
-                showLikedOnly ? "bg-purple-900" : "bg-white"
-              }`}
-            >
-              <Heart
-                className={`w-6 h-6 stroke-2 transition-all duration-200 ${
-                  showLikedOnly
-                    ? "fill-red-500 stroke-red-500"
-                    : "fill-none stroke-purple-900 group-hover:fill-purple-900 group-hover:stroke-purple-900"
-                }`}
-              />
-            </button>
+<div className=" from-[#12091a] via-[#1a0f2e] to-[#2c1844] overflow-x-hidden">
+  <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3 items-center">
+    {/* Liked Listings Toggle */}
+    <button
+      onClick={
+        auth.currentUser
+          ? () => setShowLikedOnly((prev) => !prev)
+          : () =>
+              toast.warn("Please login to view liked listings", {
+                toastId: "like-filter",
+              })
+      }
+      className={`group px-3 py-2 border-2 rounded-xl transition-all duration-200 ${
+        showLikedOnly 
+          ? "bg-[#FDD023] border-[#FDD023]" 
+          : "bg-white/5 border-white/20 hover:border-[#FDD023]"
+      }`}
+    >
+      <Heart
+        className={`w-6 h-6 stroke-2 transition-all duration-200 ${
+          showLikedOnly
+            ? "fill-[#FDD023] stroke-white"
+            : "fill-none stroke-white/70 group-hover:stroke-[#FDD023]"
+        }`}
+      />
+    </button>
 
-            {/* Search Input */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for items..."
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-              {searchQuery !== "" && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center"
-                >
-                  <X color="gray" size={20} />
-                </button>
-              )}
-            </div>
+    {/* Search Input */}
+    <div className="flex-1 relative">
+      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search for items..."
+        className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent text-white placeholder-white/50"
+      />
+      {searchQuery !== "" && (
+        <button
+          onClick={() => setSearchQuery("")}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center"
+        >
+          <X color="white" size={20} className="opacity-50 hover:opacity-100" />
+        </button>
+      )}
+    </div>
 
-            {/* Single Filter Toggle Button */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all flex items-center gap-2"
-            >
-              <Filter className="w-5 h-5" />
-              {showFilters ? "Hide Filters" : "Filters"}
-            </button>
-          </div>
-        </div>
+    {/* Single Filter Toggle Button */}
+    <button
+      onClick={() => setShowFilters(!showFilters)}
+      className="px-4 py-2 bg-[#FDD023] text-[#41206a] rounded-lg font-semibold hover:brightness-95 transition-all flex items-center gap-2"
+    >
+      <Filter className="w-5 h-5" />
+      {showFilters ? "Hide Filters" : "Filters"}
+    </button>
+  </div>
+</div>
 
-        {/* Categories */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-6 py-4 pt-2">
-            <div className="flex gap-3 overflow-x-auto">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`flex items-center px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all 
-                    ${category=="Recommended" ? "bg-purple-200 hover:bg-purple-300":"" /*Sets background and hover for AI*/} 
-                    ${selectedCategory === category 
-                      ? category === "Recommended" 
-                        ? "bg-purple-300"
-                        : "bg-purple-900 text-white"
-                      : category === "Recommended"
-                        ? "bg-purple-200 hover:bg-purple-300"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }
-                     `}
-                >
-                  {category=="Recommended" 
-                  ? <WandSparkles className="h-4 w-4 mr-1"/>
-                  : null
-                  }
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+{/* Categories */}
+<div className="">
+  <div className="max-w-7xl mx-auto px-6 py-4 pt-2">
+    <div className="flex gap-3 overflow-x-auto">
+      {categories.map((category) => (
+        <button
+          key={category}
+          onClick={() => setSelectedCategory(category)}
+          className={`flex items-center px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all 
+            ${selectedCategory === category 
+              ? category === "Recommended" 
+                ? "bg-[#FDD023] text-[#41206a]"
+                : "bg-white/20 text-white border-2 border-[#FDD023]"
+              : category === "Recommended"
+                ? "bg-[#FDD023]/80 text-[#41206a] hover:bg-[#FDD023]"
+                : "bg-white/5 text-white/80 hover:bg-white/10 border border-white/20"
+            }
+          `}
+        >
+          {category === "Recommended" && <WandSparkles className="h-4 w-4 mr-1"/>}
+          {category}
+        </button>
+      ))}
+    </div>
+  </div>
+</div>
 
         {/* Filter Panel */}
         <AnimatePresence>
@@ -798,9 +802,10 @@ export default function WelcomePage() {
       {/* Listings Grid */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#FDD023] to-white">
             {filteredNum} {filteredNum === 1 ? "Listing" : "Listings"} Available
           </h2>
+          <p className="text-white/70 mt-2">Browse items from verified LSU students</p>
         </div>
         <div id="listing-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {renderListings()}
