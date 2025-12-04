@@ -825,18 +825,20 @@ export default function WelcomePage() {
         </span>
       </button>
 
-      {/* Listing Detail Modal */}
+     {/* Listing Detail Modal */}
       {selectedListing && listingOwner!=null &&(
         <div
-          className="fixed inset-0 bg-[#444]/70 z-50 flex items-center justify-center p-4"
+          // Dark background overlay
+          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
           onClick={()=>{handleCloseListing()}}
         >
           <div
-            className="bg-white rounded-2xl max-w-5xl w-full h-[80vh] max-h-[90vh] overflow-hidden shadow-2xl flex"
+            // Main modal container: dark purple background
+            className="bg-[#1a0f2e] rounded-2xl max-w-5xl w-full h-[80vh] max-h-[90vh] overflow-hidden shadow-2xl flex"
             onClick={(e) => {e.stopPropagation();handleCloseOfferModal()}}
           >
             {/* Left Side - Image Carousel */}
-            <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center relative overflow-hidden">
+            <div className="w-1/2 bg-gradient-to-br from-[#12091a] to-[#2c1844] flex items-center justify-center relative overflow-hidden">
               {selectedListing.images && selectedListing.images.length > 0 ? (
                 <Carousel
                   showArrows={true}
@@ -852,6 +854,7 @@ export default function WelcomePage() {
                       <button
                         type="button"
                         onClick={onClickHandler}
+                        // Arrow buttons remain dark/white for contrast on image
                         className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-all z-10"
                       >
                         <span className="text-2xl">‹</span>
@@ -863,6 +866,7 @@ export default function WelcomePage() {
                       <button
                         type="button"
                         onClick={onClickHandler}
+                        // Arrow buttons remain dark/white for contrast on image
                         className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-all z-10"
                       >
                         <span className="text-2xl">›</span>
@@ -871,7 +875,7 @@ export default function WelcomePage() {
                   }
                 >
                   {selectedListing.images.map((url: string, index: number) => (
-                    <div key={index} className="h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-yellow-100">
+                    <div key={index} className="h-full flex items-center justify-center bg-gradient-to-br from-[#12091a] to-[#2c1844]">
                       <img
                         src={url}
                         alt={`${selectedListing.title} ${index + 1}`}
@@ -892,17 +896,18 @@ export default function WelcomePage() {
             </div>
 
             {/* Right Side - Details */}
-              <div className="w-1/2 flex flex-col">
+              <div className="w-1/2 flex flex-col text-white">
               {/* Header with Close Button */}
-                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
+                <div className="px-6 py-4 border-b border-zinc-700 flex items-center justify-between bg-[#2c1844]">
+                {/* Category Tag (Gold Accent) */}
+                <span className="inline-block px-3 py-1 bg-[#FDD023] text-black rounded-full text-sm font-medium">
                   {selectedListing.categoryID}
                 </span>
                 <button
                   onClick={()=>{handleCloseListing()}}
-                  className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full transition-all"
+                  className="text-white hover:text-[#FDD023] w-8 h-8 flex items-center justify-center rounded-full transition-all"
                 >
-                  <X size={30} color="#59168b" />
+                  <X size={30} color="#FDD023" />
                 </button>
                 </div>
 
@@ -910,35 +915,36 @@ export default function WelcomePage() {
                 <div className="flex-1 overflow-y-auto p-6">
                 {/* Title and Price */}
                 <div className="mb-6">
-                  <h3 className="text-3xl font-bold text-gray-900 mb-3">{selectedListing.title}</h3>
-                  <p className="text-4xl font-bold text-purple-900">${selectedListing.price}</p>
+                  {/* Title and Price text color updated */}
+                  <h3 className="text-3xl font-bold text-[#FDD023] mb-3">{selectedListing.title}</h3>
+                  <p className="text-4xl font-bold text-white">${selectedListing.price}</p>
                 </div>
 
                 {/* Location */}
-               <div className="bg-purple-50 rounded-xl p-4 mb-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-purple-900" />
+               <div className="bg-[#2c1844] rounded-xl p-4 mb-6 border border-[#FDD023]/30">
+                <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-[#FDD023]" />
                   Pickup Location
                 </h4>
                 
                 <div className="space-y-2">
-                  <p className="font-semibold text-purple-900 text-lg">
+                  <p className="font-semibold text-[#FDD023] text-lg">
                     {safeLocations.find(loc => loc.name === selectedListing.location)?.icon} {selectedListing.location}
                   </p>
                   
                   {/* Show location details if it's a predefined safe spot */}
                   {safeLocations.find(loc => loc.name === selectedListing.location) && (
                     <>
-                      <p className="text-sm text-gray-700">
+                      <p className="text-sm text-gray-300">
                         {safeLocations.find(loc => loc.name === selectedListing.location)?.description}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-400">
                         ⏰ <strong>Best times:</strong> {safeLocations.find(loc => loc.name === selectedListing.location)?.hours}
                       </p>
                       
                       {/* Safety badge */}
                       {safeLocations.find(loc => loc.name === selectedListing.location)?.safety === "high" && (
-                        <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                        <span className="inline-block px-3 py-1 bg-green-700 text-white rounded-full text-xs font-semibold">
                           ✅ Recommended Safe Spot
                         </span>
                       )}
@@ -952,7 +958,7 @@ export default function WelcomePage() {
                       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=LSU+${encodeURIComponent(selectedListing.location)}+Baton+Rouge+LA`;
                       window.open(mapsUrl, '_blank');
                     }}
-                    className="text-sm text-purple-900 hover:underline flex items-center gap-1 mt-2 font-medium"
+                    className="text-sm text-[#FDD023] hover:underline flex items-center gap-1 mt-2 font-medium"
                   >
                     <MapPin className="w-4 h-4" />
                     Open in Google Maps
@@ -962,9 +968,10 @@ export default function WelcomePage() {
 
               {/* Description */}
                 <div className="mb-6 h-13/30">
-                  <h4 className="text-lg font-semibold text-gray-900 ml-2 mb-3">Description</h4>
+                  <h4 className="text-lg font-semibold text-white ml-2 mb-3">Description</h4>
                   <textarea 
-                    className="text-gray-800 rounded-xl p-4 pt-2 pb-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
+                    // Updated textarea for dark background
+                    className="text-gray-200 rounded-xl p-4 pt-2 pb-2 bg-[#2c1844] w-full h-full leading-relaxed resize-none border border-zinc-700"
                     value={selectedListing.Description || "Enter description..."}
                     disabled>
                   </textarea>
@@ -972,32 +979,35 @@ export default function WelcomePage() {
                 </div>
 
                 {/* Category and Condition */}
-                <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
-                  <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
+                <div className="px-6 py-4 border-b border-zinc-700 flex items-center gap-3">
+                  {/* Category Tag (Gold Accent) - already updated in header, but kept here too */}
+                  <span className="inline-block px-3 py-1 bg-[#FDD023] text-black rounded-full text-sm font-medium">
                     {selectedListing.categoryID}
                   </span>
-                  <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                  {/* Condition Tag (White/Gray) */}
+                  <span className="inline-block px-3 py-1 bg-gray-700 text-white rounded-full text-sm font-medium">
                     {selectedListing.condition || "Condition not set"}
                   </span>
                 </div>
 
 
               {/* Seller Info */}
-                <div className="bg-gray-100 rounded-xl p-4 m-6 mt-4 mb-0 py-2">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
+                <div className="bg-[#2c1844] rounded-xl p-4 m-6 mt-4 mb-0 py-2 border-t border-zinc-700">
+                  <h4 className="text-lg font-semibold text-[#FDD023] mb-2">Seller Information</h4>
                   <div className="pb-1 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(listingOwner.username.charAt(0).toUpperCase())}</div>
+                    {/* Seller Initials (Gold Accent) */}
+                    <div className="w-12 h-12 bg-[#FDD023] rounded-full flex items-center justify-center text-black font-bold text-lg">{(listingOwner.username.charAt(0).toUpperCase())}</div>
                     <div>
-                      <p className="font-semibold text-gray-900">{listingOwner.username}</p>
-                      <p className="text-sm text-gray-600">Member since {listingOwner.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
+                      <p className="font-semibold text-white">{listingOwner.username}</p>
+                      <p className="text-sm text-gray-400">Member since {listingOwner.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
                     </div>
                   </div>
                 </div>
 
               {/* Action Buttons - Fixed at Bottom */}
-                <div className="px-6 py-4 bg-white">
+                <div className="px-6 py-4 bg-[#2c1844] border-t border-zinc-700">
                 <div className="flex gap-3">
-                  {/* Purchase Button */}
+                  {/* Purchase Button (Gold Accent) */}
                 <button
                   onClick={async (e) => {
                     e.stopPropagation();
@@ -1124,12 +1134,12 @@ export default function WelcomePage() {
                       setLoading(false);
                     }
                   }}
-                  className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all disabled:opacity-50"
+                  className="flex-1 bg-[#FDD023] text-black py-3 rounded-xl font-bold hover:bg-[#FDD023]/90 transition-all disabled:opacity-50"
                   disabled={!selectedListing?.available || selectedListing?.sellerUID === currentUser?.uid}
                 >
                   {selectedListing?.sellerUID === currentUser?.uid ? "Your Listing" : "Purchase"}
                 </button>
-                  {/* Submit Offer Button */}
+                  {/* Submit Offer Button (Gold Accent) */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1140,30 +1150,38 @@ export default function WelcomePage() {
                         toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId: 'reserved-listing-error'});
                       }
                     }}
-                    className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all"
+                    className="flex-1 bg-[#FDD023] text-black py-3 rounded-xl font-bold hover:bg-[#FDD023]/90 transition-all"
                   >
                     Make Offer
                   </button>
-                  {/* Favorite Button */}
+                  {/* Favorite Button (Dark Background, Gold/Red Accent) */}
                     <button onClick={() => {handleFavorite(selectedListing.docId);}}
-                      className={`px-2 py-2 rounded-xl hover:border-purple-900 hover:text-purple-900 transition-all 
-                        ${likedItems.includes(selectedListing.docId) ? "" : ""}`}
+                      className={`px-2 py-2 rounded-xl border border-zinc-700 hover:border-[#FDD023] transition-all 
+                        ${likedItems.includes(selectedListing.docId) ? "bg-[#1a0f2e]" : "bg-[#1a0f2e] hover:bg-[#2c1844]"}`}
                     >
-                    <Heart className={`w-10 h-10 stroke-2 ${likedItems.includes(selectedListing.docId) ? "fill-red-500 stroke-red-500 hover:fill-white": "fill-none stroke-gray-500 hover:fill-red-500 hover:stroke-red-600 hover:stroke-1" } `} />
+                    <Heart className={`w-10 h-10 stroke-2 
+                      ${likedItems.includes(selectedListing.docId) 
+                        ? "fill-red-500 stroke-red-500 hover:fill-red-400 hover:stroke-red-400"
+                        : "fill-none stroke-gray-400 hover:fill-[#FDD023] hover:stroke-[#FDD023] hover:stroke-1" 
+                      } `} />
                   </button>
                 </div>
                 </div>
             </div>
           </div>
-        {/* New Offer */}
+        {/* New Offer Modal */}
           {showOfferModal 
-          ? (<div onClick={(e) => {e.stopPropagation();}} className="fixed z-60 w-96 p-8 py-6 mr-10 bg-white top-1/2 right-0 rounded-2xl transform -translate-y-1/2">
-            <div className="mb-4 text-black text-2xl text-center font-bold">
+          ? (<div 
+            onClick={(e) => {e.stopPropagation();}} 
+            // New Offer Modal (Dark Background, Gold/White Text)
+            className="fixed z-60 w-96 p-8 py-6 mr-10 bg-[#1a0f2e] top-1/2 right-0 rounded-2xl transform -translate-y-1/2 shadow-2xl border border-[#FDD023]/50 text-white"
+            >
+            <div className="mb-4 text-[#FDD023] text-2xl text-center font-bold">
               New Offer
             </div>
             <form className="">
             {/* Offer Amount */}
-              <label className="block text-sm font-medium text-gray-700">Offer Amount <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-white">Offer Amount <span className="text-red-500">*</span></label>
               <input
                 id="amount"
                 type="string"
@@ -1181,32 +1199,36 @@ export default function WelcomePage() {
                 }
                 }
                 placeholder="$0"
-                className="mt-1 w-full px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                // Input styles updated
+                className="mt-1 w-full px-3 py-1 border border-zinc-700 rounded-lg bg-[#2c1844] text-white focus:outline-none focus:ring-2 focus:ring-[#FDD023]"
                 min="0"
                 max={selectedListing.price}
               />
             {/* Offer Note */}
-              <label className="mt-2 block text-sm font-medium text-gray-700">Note to seller <span className="text-red-500">*</span></label>
+              <label className="mt-2 block text-sm font-medium text-white">Note to seller <span className="text-red-500">*</span></label>
               <textarea
                     value={offerNote}
                     onChange={(e) => setOfferNote(e.target.value)}
                     placeholder="Add a note for the seller..."
                     maxLength={100}
                     rows={3}
-                    className="mt-1 w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    // Input styles updated
+                    className="mt-1 w-full px-2 py-1 border border-zinc-700 rounded-lg bg-[#2c1844] text-white focus:outline-none focus:ring-2 focus:ring-[#FDD023] resize-none"
                   />
-                  <p className="text-sm text-gray-500 mt-1">{100-offerNote.length} characters left</p>
+                  <p className="text-sm text-gray-400 mt-1">{100-offerNote.length} characters left</p>
             </form>
             <div className="mt-6 flex gap-3">
               <button
                 onClick={()=>handleCloseOfferModal()}
-                className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+                // Cancel button updated
+                className="flex-1 px-4 py-2 border-2 border-zinc-700 text-white rounded-lg font-semibold hover:bg-[#2c1844] transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={()=>handleSubmitOffer()}
-                className="flex-1 px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+                // Submit button (Gold Accent) updated
+                className="flex-1 px-4 py-2 bg-[#FDD023] text-black rounded-lg font-semibold hover:bg-[#FDD023]/90 transition-all"
                 disabled={loading}
               >
                 Submit Offer
@@ -1221,28 +1243,28 @@ export default function WelcomePage() {
       {/* Create Listing Modal */}
       {showCreateListing && (
         <div
-          className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center p-4 gap-2"
+          className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 gap-2"
           onClick={handleCloseNewListingModal}
         >
           
           {/* Listing Preview Container LEFT SIDE*/}
           <div
-            className="relative bg-white rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden"
+            className="relative bg-[#1a0f2e] rounded-2xl max-w-5xl w-5/5 h-5/5 max-h-[90vh] shadow-2xl flex "
             onClick={(e) => e.stopPropagation()}>
             
             {/* Left Side - Image with Carousel */}
-            <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center relative">
+            <div className="w-1/2 bg-gradient-to-br from-[#12091a] to-[#FDD023]/20 flex items-center justify-center relative">
               <img 
                 src={
                   uploadedImages.length > 0 
                     ? URL.createObjectURL(uploadedImages[previewImageIndex]) 
-                    : "https://img.freepik.com/free-photo/blurred-abstract-background_58702-1509.jpg?semt=ais_hybrid&w=740&q=80"
+                    : "https://img.freepik.com/free-vector/blurred-purple-background_1107-140.jpg"
                 } 
                 alt={newTitle} 
                 className="w-full h-full object-cover rounded-tl-2xl rounded-bl-2xl" 
               />
               
-              {/* Carousel Navigation - Only show if more than 1 image */}
+              {/* Carousel Navigation */}
               {uploadedImages.length > 1 && (
                 <>
                   {/* Previous Button */}
@@ -1279,10 +1301,11 @@ export default function WelcomePage() {
             
 
             {/* Right Side - Listing Info */}
-            <div className="w-1/2 flex flex-col">
+            <div className="w-1/2 flex flex-col text-white">
               {/* Header */}
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
+              <div className="px-6 py-4 border-b border-zinc-700 flex items-center justify-between">
+                {/* Category Tag */}
+                <span className="inline-block px-3 py-1 bg-[#FDD023] text-black rounded-full text-sm font-medium">
                   {newCategory || "Category"}
                 </span>
               </div>
@@ -1291,20 +1314,21 @@ export default function WelcomePage() {
               <div className="overflow-y-auto p-6 pt-2 h-4/5">
                 {/* Title and Price */}
                 <div className="mb-4">
-                  <h3 className="text-3xl font-bold text-gray-900 mb-2">{newTitle || "Title"}</h3>
-                  <p className="text-4xl font-bold text-purple-900">${newPrice || "0"}</p>
+                  <h3 className="text-3xl font-bold text-[#FDD023] mb-2">{newTitle || "Title"}</h3>
+                  <p className="text-4xl font-bold text-white">${newPrice || "0"}</p>
                 </div>
                 {/* Location */}
-                <div className="flex items-center text-gray-700 mb-4 pb-4 border-b border-gray-200">
+                <div className="flex items-center text-gray-300 mb-4 pb-4 ">
                   <MapPin className="w-5 h-5 mr-2" />
                   <span className="text-lg">{newLocation || "Location"}</span>
                 </div>
 
                 {/* Description */}
                 <div className="mb-6 h-4/7">
-                  <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
+                  <h4 className="text-lg pl-2 font-semibold text-white mb-2">Description</h4>
                   <textarea 
-                    className="text-gray-800 rounded-xl p-4 py-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
+                    // Updated textarea background/text for dark theme
+                    className="text-gray-200 rounded-xl p-4 py-2 bg-[#2c1844] w-full h-full leading-relaxed resize-none"
                     value={newDescription || "Enter description..."}
                     disabled>
                   </textarea>
@@ -1312,13 +1336,14 @@ export default function WelcomePage() {
               </div>
 
               {/* Seller Info */}
-                <div className="bg-gray-100 rounded-xl p-4 m-6 m-0 h-1/5">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
+                {/* Updated seller info background/text */}
+                <div className="bg-[#2c1844] rounded-xl p-4 m-6 m-0 h-1/5">
+                  <h4 className="text-lg font-semibold text-[#FDD023] mb-2">Seller Information</h4>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
+                    <div className="w-12 h-12 bg-[#FDD023] rounded-full flex items-center justify-center text-black font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
                     <div>
-                      <p className="font-semibold text-gray-900">{currentUserData?.username}</p>
-                      <p className="text-sm text-gray-600">Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
+                      <p className="font-semibold text-white">{currentUserData?.username}</p>
+                      <p className="text-sm text-gray-400">Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
                     </div>
                   </div>
                 </div>
@@ -1328,27 +1353,28 @@ export default function WelcomePage() {
 
           {/* Input Form Container RIGHT SIDE*/}
           <div
-            className="flex flex-col relative bg-white border border-gray-300 rounded-2xl max-w-3xl w-2/3 max-h-[90vh] shadow-xl overflow-hidden"
+            // Applied dark gradient to form background
+            className="flex flex-col relative bg-gradient-to-b from-[#1a0f2e] to-[#2c1844] border border-[#FDD023]/30 rounded-2xl max-w-3xl w-2/3 max-h-[90vh] shadow-xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="z-50 sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-              <h2 className="text-2xl font-bold text-gray-900">Create New Listing</h2>
+            <div className="z-50 sticky top-0 bg-[#2c1844] border-b border-zinc-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+              <h2 className="text-2xl font-bold text-[#FDD023]">Create New Listing</h2>
               <button
                   onClick={()=>{handleCloseNewListingModal()}}
-                  className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full transition-all"
+                  className="text-white hover:text-[#FDD023] w-8 h-8 flex items-center justify-center rounded-full transition-all"
                 >
-                  <X size={30} color="#59168b" />
+                  <X size={30} color="#FDD023" />
                 </button>
             </div>
             
 
             {/* Form Content */}
-            <div className="p-6 overflow-y-auto">
+            <div className="p-6 overflow-y-auto text-white">
               <div className="flex flex-col space-y-6">
                 {/* Title */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-white mb-2">
                     Title <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1356,40 +1382,43 @@ export default function WelcomePage() {
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder="e.g., Calculus Textbook"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    // Updated input styles
+                    className="w-full px-4 py-3 border border-zinc-700 rounded-lg bg-[#1a0f2e] focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent"
                   />
                 </div>
 
                 {/* Price and Category Row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-white mb-2">
                       Price <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-semibold">$</span>
                       <input
                         type="text"
                         value={newPrice || ""}
                         onChange={(e) => setNewPrice(e.target.value ? parseFloat(e.target.value) : null)}
                         placeholder="0"
-                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        // Updated input styles
+                        className="w-full pl-8 pr-4 py-3 border border-zinc-700 rounded-lg bg-[#1a0f2e] focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-white mb-2">
                       Category <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={newCategory}
                       onChange={(e) => setNewCategory(e.target.value as Category)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      // Updated select styles
+                      className="w-full px-4 py-3 border border-zinc-700 rounded-lg bg-[#1a0f2e] focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent"
                     >
                       <option value="" disabled>Select a category</option>
                       {categories.filter(cat => cat !== "All").map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat} className="bg-[#1a0f2e]">{cat}</option>
                       ))}
                     </select>
                   </div>
@@ -1397,32 +1426,33 @@ export default function WelcomePage() {
 
                 {/* Location */}
                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-white mb-2">
                     Pickup Location <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={newLocation}
                     onChange={(e) => setNewLocation(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    // Updated select styles
+                    className="w-full px-4 py-3 border border-zinc-700 rounded-lg bg-[#1a0f2e] focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent"
                   >
                     <option value="" disabled>Select a safe meetup location</option>
-                    <optgroup label="🛡️ Recommended Safe Spots">
+                    <optgroup label="🛡️ Recommended Safe Spots" className="bg-[#2c1844]">
                       {safeLocations.filter(loc => loc.safety === "high").map((loc) => (
-                        <option key={loc.name} value={loc.name}>
+                        <option key={loc.name} value={loc.name} className="bg-[#1a0f2e]">
                           {loc.icon} {loc.name}
                         </option>
                       ))}
                     </optgroup>
-                    <optgroup label="📍 Other Campus Locations">
+                    <optgroup label="📍 Other Campus Locations" className="bg-[#2c1844]">
                       {safeLocations.filter(loc => loc.safety === "medium").map((loc) => (
-                        <option key={loc.name} value={loc.name}>
+                        <option key={loc.name} value={loc.name} className="bg-[#1a0f2e]">
                           {loc.icon} {loc.name}
                         </option>
                       ))}
                     </optgroup>
-                    <optgroup label="⚠️ Off Campus">
+                    <optgroup label="⚠️ Off Campus" className="bg-[#2c1844]">
                       {safeLocations.filter(loc => loc.safety === "low").map((loc) => (
-                        <option key={loc.name} value={loc.name}>
+                        <option key={loc.name} value={loc.name} className="bg-[#1a0f2e]">
                           {loc.icon} {loc.name}
                         </option>
                       ))}
@@ -1431,11 +1461,12 @@ export default function WelcomePage() {
                   
                   {/* Show location details when selected */}
                   {newLocation && safeLocations.find(loc => loc.name === newLocation) && (
-                    <div className="mt-2 p-3 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-gray-700">
+                    // Updated location details background/text
+                    <div className="mt-2 p-3 bg-[#2c1844] rounded-lg border border-[#FDD023]/30">
+                      <p className="text-sm text-gray-300">
                         {safeLocations.find(loc => loc.name === newLocation)?.description}
                       </p>
-                      <p className="text-sm text-purple-900 font-medium mt-1">
+                      <p className="text-sm text-[#FDD023] font-medium mt-1">
                         ⏰ {safeLocations.find(loc => loc.name === newLocation)?.hours}
                       </p>
                     </div>
@@ -1444,36 +1475,38 @@ export default function WelcomePage() {
                 {/* Condition */ }
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-white mb-2">
                     Condition <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={newCondition}
                     onChange={(e) => setNewCondition(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    // Updated select styles
+                    className="w-full px-4 py-3 border border-zinc-700 rounded-lg bg-[#1a0f2e] focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent"
                   >
                     <option value="" disabled>Select a condition</option>
-                    <option value="New">New</option>
-                    <option value="Like New">Like New</option>
-                    <option value="Used">Used</option>
+                    <option value="New" className="bg-[#1a0f2e]">New</option>
+                    <option value="Like New" className="bg-[#1a0f2e]">Like New</option>
+                    <option value="Used" className="bg-[#1a0f2e]">Used</option>
                   </select>
                 </div>
 
                 {/* Image Upload */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-white mb-2">
                     Upload Photos <span className="text-red-500">*</span>
                   </label>
                   
                   {/* Upload Button */}
                   <div className="mb-4">
                     <label className="cursor-pointer">
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-all">
+                      {/* Updated upload button styles */}
+                      <div className="border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center hover:border-[#FDD023] transition-all">
                         <div className="flex flex-col items-center">
-                          <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-12 h-12 text-[#FDD023] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                           </svg>
-                          <p className="text-gray-600 font-medium">Click to upload photos</p>
+                          <p className="text-white font-medium">Click to upload photos</p>
                           <p className="text-gray-400 text-sm mt-1">PNG, JPG up to 5 images</p>
                         </div>
                       </div>
@@ -1496,7 +1529,8 @@ export default function WelcomePage() {
                             <img
                               src={URL.createObjectURL(file)}
                               alt={`Upload ${index + 1}`}
-                              className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
+                              // Updated image border
+                              className="w-full h-24 object-cover rounded-lg border-2 border-zinc-700"
                             />
                             <button
                               type="button"
@@ -1506,7 +1540,8 @@ export default function WelcomePage() {
                               ×
                             </button>
                             {index === 0 && (
-                              <span className="absolute bottom-1 left-1 bg-purple-900 text-white text-xs px-2 py-1 rounded">
+                              // Updated cover tag
+                              <span className="absolute bottom-1 left-1 bg-[#FDD023] text-black text-xs px-2 py-1 rounded">
                                 Cover
                               </span>
                             )}
@@ -1516,7 +1551,7 @@ export default function WelcomePage() {
                     </div>
                   )}
                   
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-gray-400 mt-2">
                     {uploadedImages.length}/5 images uploaded
                     {uploadedImages.length > 0 && " • First image will be the cover photo"}
                   </p>
@@ -1524,7 +1559,7 @@ export default function WelcomePage() {
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-white mb-2">
                     Description <span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -1533,9 +1568,10 @@ export default function WelcomePage() {
                     placeholder="Describe your item in detail..."
                     maxLength={500}
                     rows={5}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    // Updated textarea styles
+                    className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-[#1a0f2e] focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent resize-none"
                   />
-                  <p className="text-sm text-gray-500 mt-1">{500-newDescription.length} characters left</p>
+                  <p className="text-sm text-gray-400 mt-1">{500-newDescription.length} characters left</p>
                 </div>
               </div>
 
@@ -1543,13 +1579,15 @@ export default function WelcomePage() {
               <div className="mt-6 flex gap-3">
                 <button
                   onClick={handleCloseNewListingModal}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+                  // Updated Cancel button styles
+                  className="flex-1 px-6 py-3 border-2 border-zinc-700 text-white rounded-lg font-semibold hover:bg-[#1a0f2e] transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSubmitListing}
-                  className="flex-1 px-6 py-3 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+                  // Updated Create Listing button (Gold Accent)
+                  className="flex-1 px-6 py-3 bg-[#FDD023] text-black rounded-lg font-semibold hover:bg-[#FDD023]/90 transition-all"
                   disabled={loading}
                 >
                   Create Listing
