@@ -30,7 +30,7 @@ export default function OutgoingOffers() {
     const [offers, setOffers] = useState<Offer[]>([])
     const [searchQuery, setSearchQuery] = useState<string>("")
     const [showMenu, setShowMenu] = useState<boolean>(false);
-    
+
     const handleLogout = async () => {
         try {
             await logout();
@@ -41,6 +41,7 @@ export default function OutgoingOffers() {
         }
     }
 
+    // Fetch offers
     useEffect(()=>{
         const fetchOutgoingOffers = async() => {
             setLoading(true)
@@ -110,172 +111,98 @@ export default function OutgoingOffers() {
 
     const renderOffers = (offers: Offer[]) => {
         const filteredOffers = offers.filter((offer) => {
-            if (offer.listingTitle){
-                const matchesSearch = offer.listingTitle.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchesSearch; 
-            }
+            return offer.listingTitle?.toLowerCase().includes(searchQuery.toLowerCase())
         });
 
         if (filteredOffers.length === 0) {
             return (
-                // State when no offers are available
-                <div className="text-center py-12 bg-gray-50 rounded-xl shadow-inner">
-                    <p className="text-gray-500 text-lg">You have not made an offer on any listings.</p>
+                <div className="text-center py-12 bg-white/5 rounded-xl shadow-lg border border-white/10">
+                    <p className="text-white/70 text-lg">You have not made an offer on any listings.</p>
                 </div>
             )
-        } else {
-            return (
-                // Container for all offers
-                <div className="">
-                    {filteredOffers.map((offer) => (
-                        // Individual Offer Card
-                        <div 
-                            key={offer.offerId} 
-                            className="bg-white p-6 py-2 mb-4 max-w-7xl mx-auto rounded-xl shadow-md border-l-4 border-purple-500 hover:shadow-lg transition-shadow"
-                        >
-                            {/* Header: Amount and Date */}
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-4xl font-bold text-purple-900">
-                                    {offer.listingTitle}
-                                </h3>
-                                <span className="text-sm text-gray-500 ">
-                                    {offer.timeStamp?.toDate().toLocaleString('en-US', {hour: 'numeric', minute: 'numeric',month: 'long', day: 'numeric'}) || 'Date N/A'}
-                                </span>
-                            </div>             
+        }
 
-                            {/* Offer Amount */}
-                            <h2 className="pb-1 mt-2 text-2xl font-bold text-purple-900">
-                                ${offer.amount.toFixed(2)}
-                            </h2>              
-
-                            {/* Footer: Buyer Info and Action Buttons */}
-                            <div className="mt-1 flex justify-between items-center">
-                            
-                                {/* Offer Note/Message */}
-                                <p className="text-gray-700 italic text-md pb-2">
-                                    "{offer.note || 'No message provided.'}"
-                                </p>               
-
-                                {/* Action Buttons */}
-                                <div className="pb-2">
-                                    <button className={`text-sm px-4 py-2 ${offer.status == "pending" || offer.status=="rejected" ?  "bg-gray-400 text-gray-700 cursor-not-allowed!" : "bg-purple-900 text-white hover:bg-purple-700"} font-semibold rounded-full mr-2 transition-colors shadow-sm`}
-                                        onClick={()=>{handleViewChat(offer)}}
-                                        disabled={(offer.status=="pending" || offer.status=="rejected") ? true : false}>
-                                        {(() => {
-                                            if (offer.status == "pending") {
-                                                return "Pending" 
-                                            }
-                                            else if (offer.status == "rejected") {
-                                                return "Rejected"
-                                            }
-                                            else {return "View chat"}
-                                        })()}
-                                    </button>
-                                    <button onClick={()=>handleDeleteOffer(offer)}className="text-sm px-4 py-2 bg-red-600 text-white font-semibold rounded-full hover:bg-red-700 transition-colors shadow-sm">
-                                        Delete
-                                    </button>
-                                </div>
-                            </div>
+        return (
+            <div className="space-y-6">
+                {filteredOffers.map((offer) => (
+                    <div 
+                        key={offer.offerId} 
+                        className="bg-white/5 p-6 rounded-2xl shadow-[0_12px_40px_rgba(253,208,35,0.2)] border border-white/10 hover:shadow-[0_12px_60px_rgba(253,208,35,0.3)] transition-all"
+                    >
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-2xl sm:text-3xl font-bold text-[#FDD023]">{offer.listingTitle}</h3>
+                            <span className="text-white/60 text-sm">
+                                {offer.timeStamp?.toDate().toLocaleString('en-US', {hour: 'numeric', minute: 'numeric',month: 'long', day: 'numeric'}) || 'Date N/A'}
+                            </span>
                         </div>
-                    ))}
-                </div>
-            )}
+                        <h2 className="text-2xl font-bold text-white/90 mb-2">${offer.amount.toFixed(2)}</h2>
+                        <p className="text-white/70 italic mb-4">"{offer.note || 'No message provided.'}"</p>
+                        <div className="flex justify-end gap-2">
+                            <button 
+                                onClick={()=>handleViewChat(offer)}
+                                disabled={offer.status=="pending" || offer.status=="rejected"}
+                                className={`text-sm px-4 py-2 rounded-full font-semibold transition-all shadow-sm 
+                                ${offer.status=="pending" || offer.status=="rejected" ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-[#FDD023] text-[#41206a] hover:brightness-95"}`}>
+                                {offer.status=="pending" ? "Pending" : offer.status=="rejected" ? "Rejected" : "View Chat"}
+                            </button>
+                            <button 
+                                onClick={()=>handleDeleteOffer(offer)}
+                                className="text-sm px-4 py-2 bg-red-600 text-white font-semibold rounded-full hover:bg-red-700 transition-all shadow-sm">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )
     }
 
     const handleViewChat = async (offer: Offer) => {
         try {
             navigate(`/messages/${offer.chatId}`)
-        }
-        catch (err) {
+        } catch (err) {
             console.error("Error viewing chat:", err)
             toast.error("Error viewing chat", {toastId: "view-chat-error"})
         }
-
     }
 
     if (loading) {
         return (
-            <div>
-                <Navbar
-                    handleLogout={handleLogout}
-                    setShowLoginModal={()=>{}}
-                    setShowMenu={setShowMenu}
-                    navigate={navigate}/>
-                <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
-                <div className="flex flex-col max-w-7xl mx-auto px-4 py-10 min-h-[70vh]">
-                    <div className="flex items-center gap-4 mb-6"> 
-                    
-                    {/* Go back button HERE if needed */}
-                    
-                    {/* Search Bar (flex-grow makes it take up remaining space) */}
-                    <div className="bg-white border-gray-200 shadow-sm rounded-lg flex-grow">
-                        <div className="flex gap-3">
-                            <div className="flex-1 relative w-full">
-                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => {setSearchQuery(e.target.value)}}
-                                    placeholder="Search for items..."
-                                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                /> 
-                                {searchQuery!=="" && (
-                                <button 
-                                    onClick={()=>setSearchQuery("")} 
-                                    className="absolute flex right-3 top-1/2 transform -translate-y-1/2 items-center justify-center">
-                                    <X color="gray" size={20}></X>
-                                </button>)}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {/* Loading message */}
-                    <div className="flex flex-grow justify-center items-center">
-                        <div className="flex items-center text-xl text-gray-700 font-medium">
-                            <div className="animate-spin w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-3"></div>
-                            Loading offers...
-                        </div>
+            <div className="min-h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] flex flex-col">
+                <Navbar handleLogout={handleLogout} setShowMenu={setShowMenu} navigate={navigate} />
+                <Menu showMenu={showMenu} setShowMenu={setShowMenu} />
+                <div className="flex flex-col max-w-7xl mx-auto px-4 py-10 min-h-[70vh] items-center justify-center text-white">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="animate-spin w-8 h-8 border-4 border-t-[#FDD023] border-white/20 rounded-full mr-3"></div>
+                        <span className="text-lg font-medium">Loading offers...</span>
                     </div>
                 </div>
                 <CustomToastContainer/>
             </div>
-        );
+        )
     }
-    
+
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Navbar 
-                handleLogout={handleLogout}
-                setShowLoginModal={()=>{}}
-                setShowMenu={setShowMenu}
-                navigate={navigate}/>
-            <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
-            <div className="flex flex-col max-w-7xl mx-auto px-4 py-10 max-h-[70vh]">
-                <div className="flex items-center gap-4 mb-6"> 
-                 
-                {/* Go back button HERE if needed*/}
-                 
-                {/* Search Bar (flex-grow makes it take up remaining space) */}
-                    <div className="bg-white border-gray-200 shadow-sm rounded-lg flex-grow">
-                    <div className="flex gap-3">
-                        <div className="flex-1 relative w-full">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => {setSearchQuery(e.target.value)}}
-                                placeholder="Search for items..."
-                                className={`w-full pl-12 pr-4 py-3 border border-gray-300 ${offers.length<1 ? "cursor-not-allowed!" : ""} rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
-                                disabled={offers.length<1}
-                            /> 
-                            {searchQuery!=="" && (
-                            <button 
-                                onClick={()=>setSearchQuery("")} 
-                                className="absolute flex right-3 top-1/2 transform -translate-y-1/2 items-center justify-center">
-                                <X color="gray" size={20}></X>
-                            </button>)}
-                        </div>
-                    </div>
+        <div className="min-h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] text-white font-inter">
+            <Navbar handleLogout={handleLogout} setShowMenu={setShowMenu} navigate={navigate} />
+            <Menu showMenu={showMenu} setShowMenu={setShowMenu} />
+            <div className="flex flex-col max-w-7xl mx-auto px-4 py-10 space-y-6">
+                {/* Search Bar */}
+                <div className="flex items-center gap-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e)=>setSearchQuery(e.target.value)}
+                            placeholder="Search for items..."
+                            className="w-full pl-12 pr-4 py-3 bg-white/5 text-white/90 placeholder-white/50 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD023] transition-all"
+                        />
+                        {searchQuery!=="" && (
+                            <button onClick={()=>setSearchQuery("")} className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <X color="white" size={20} />
+                            </button>
+                        )}
                     </div>
                 </div>
                 {renderOffers(offers)}

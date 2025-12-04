@@ -116,48 +116,52 @@ export default function EventsPage() {
     }
 
   return (
-    <div className="h-screen bg-zinc-100 text-black overflow-x-hidden">
+    // Applied the dark gradient background to the entire page
+    <div className="h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] text-white overflow-x-hidden">
       <Navbar
         handleLogout={handleLogout}
         setShowLoginModal={()=>{}}
         setShowMenu={setShowMenu}
         navigate={navigate}/>
       <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
+      
       <header className="mt-10 mb-6 pl-8">
         {/* header*/} 
-  <h1
-    className="text-2xl font-bold mb-2"
-    style={{ color: "#461D7C", fontFamily: "Rock Salt, cursive" }}
-  >
-    On-Campus Vendor Events
-  </h1>
-  <p className="text-sm opacity-80">
-    Hosted by {primaryHost} and vendor partners in {primaryLocation} until May.
-  </p>
-</header>
+        <h1
+          className="text-2xl font-bold mb-2 text-[#FDD023]" // Changed color to gold
+          style={{ fontFamily: "Rock Salt, cursive" }}
+        >
+          On-Campus Vendor Events
+        </h1>
+        <p className="text-sm opacity-80 text-white">
+          Hosted by {primaryHost} and vendor partners in {primaryLocation} until May.
+        </p>
+      </header>
 
 
       {/* CONTROLS */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6 p-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 opacity-50" />
+          <Search className="absolute left-3 top-3 h-4 w-4 text-[#FDD023] opacity-80" /> {/* Changed color */}
           <input
             placeholder="Search events..."
-            className="w-full pl-10 p-2 rounded-lg bg-white text-black border border-zinc-800"
+            // Updated search input for a dark theme: dark background, white text, gold border on focus
+            className="w-full pl-10 p-2 rounded-lg bg-[#1a0f2e] text-white border border-zinc-700 focus:border-[#FDD023] focus:ring focus:ring-[#FDD023]/20"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
+        {/* Updated buttons for a dark theme: dark background, white text, gold on active/hover */}
         <button
           onClick={() => setShowOnlyLiked(!showOnlyLiked)}
-          className="flex items-center gap-2 p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-white"
+          className={`flex items-center gap-2 p-2 rounded-lg transition ${showOnlyLiked ? 'bg-[#FDD023] text-black font-semibold' : 'bg-[#1a0f2e] text-white border border-zinc-700 hover:border-[#FDD023]'}`}
         >
-          <Heart className={showOnlyLiked ? "fill-white text-white" : ""} />
+          <Heart className={showOnlyLiked ? "fill-black text-black" : "fill-transparent text-white"} />
           Liked Only
         </button>
 
-        <button className="flex items-center gap-2 p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-white">
+        <button className="flex items-center gap-2 p-2 rounded-lg bg-[#1a0f2e] text-white border border-zinc-700 hover:border-[#FDD023] transition">
           <Filter /> Filter
         </button>
       </div>
@@ -167,18 +171,20 @@ export default function EventsPage() {
         {filteredEvents.map((e) => (
           <div
             key={e.id}
-            className="group p-4 rounded-lg bg-zinc-700 text-white border border-zinc-500 hover:border-[#FDD023] hover:shadow-[0_0_18px_rgba(253,208,35,0.55),0_0_32px_rgba(253,208,35,0.35)] hover:scale-[1.02] overflow-hidden transition"
+            // Updated event card background, border, and hover shadow to match the theme
+            className="group p-4 rounded-lg bg-[#1a0f2e] text-white border border-[#2c1844] hover:border-[#FDD023] hover:shadow-[0_0_18px_rgba(253,208,35,0.55),0_0_32px_rgba(253,208,35,0.35)] hover:scale-[1.02] overflow-hidden transition"
           >
             {/* always visible: event name + location */}
             <div className="flex justify-between items-start">
-              <h2 className="text-xl font-semibold mb-1">
+              <h2 className="text-xl font-semibold mb-1 text-[#FDD023]">
                 {e.title}
               </h2>
               <button
                 onClick={() => toggleLike(e.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                className="opacity-100 transition-opacity duration-200"
               >
-                <Heart className={e.liked ? "fill-white text-white" : ""} />
+                {/* Changed liked heart color */}
+                <Heart className={e.liked ? "fill-[#FDD023] text-[#FDD023]" : "fill-transparent text-white"} />
               </button>
             </div>
 
@@ -197,8 +203,9 @@ export default function EventsPage() {
                 {e.vendors.map((v, i) => (
                   <span
                     key={i}
-                    className="text-[10px] px-2 py-1 rounded-full border border-black"
-                    style={{ backgroundColor: "#FFFFFF20", color: "#FFFFFF" }}
+                    // Updated vendor tags for better visibility on dark background
+                    className="text-[10px] px-2 py-1 rounded-full border border-white/20 text-white"
+                    style={{ backgroundColor: "#FFFFFF10" }}
                   >
                     {v}
                   </span>
@@ -206,7 +213,8 @@ export default function EventsPage() {
               </div>
 
               <button
-                className="w-full flex items-center justify-center gap-2 p-2 rounded-lg hover:opacity-80 transition bg-[#FDD023] text-black border border-[#FDD023]"
+                // Button now uses the gold color as its primary style
+                className="w-full flex items-center justify-center gap-2 p-2 rounded-lg hover:opacity-90 transition bg-[#FDD023] text-black font-medium"
               >
                 <MapPin className="h-3 w-3" /> View Location
               </button>
