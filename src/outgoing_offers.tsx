@@ -85,7 +85,8 @@ export default function OutgoingOffers() {
             batch.delete(offerRef)
             if (offer.chatId){
                 const chatRef = doc(db,"Chats",offer.chatId)
-                batch.delete(chatRef)
+                //batch.delete(chatRef)
+                batch.update(chatRef, {status: "terminated"})
             }
             batch.update(parentRef, {offers: increment(-1)})
             await batch.commit()

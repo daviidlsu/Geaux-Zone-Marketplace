@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import { addDoc, collection, doc, getDoc, getDocs, updateDoc, writeBatch } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, increment, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "./firebase/firebase.ts";
 import { useAuth } from './auth/AuthContext';
 import { Timestamp } from "firebase/firestore";
@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx";
+import { list } from 'firebase/storage';
 
 interface Offer {
     amount: number
@@ -160,9 +161,13 @@ export default function ListingOffers(){
     const handleReject = async (offer: Offer) => {
         setLoading(true)
         try {
+            const parentRef = doc(db, "Inventory", offer.parentId)
             const docRef = doc(db,"Inventory",offer.parentId, "offers", offer.offerId)
             await updateDoc(docRef, {
                 status:"rejected"
+            })
+            await updateDoc( parentRef, {
+                offers: increment(-1)
             })
             setOffers(prevOffers=> {return (prevOffers.filter(o => o.offerId != offer.offerId))})
             toast.success ("Rejected offer", {toastId: "reject-success"})
@@ -189,10 +194,12 @@ export default function ListingOffers(){
                 lastMessageSender: "",
                 lastMessageTime: null,
                 listingTitle: offer.listingTitle,
-                recName: offer.buyerDisplayName,
-                recUID: offer.buyerUID,
-                senderName: currentUserData?.username,
-                senderUID: currentUserData?.uid
+                listingAmount: offer.amount,
+                recName: currentUserData?.username,
+                recUID: currentUserData?.uid,
+                senderName: offer.buyerDisplayName,
+                senderUID: offer.buyerUID,
+                status: "ongoing"
             })
 
             // Updates offer status and chatId

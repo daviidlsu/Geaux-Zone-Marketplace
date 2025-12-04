@@ -233,7 +233,7 @@ export default function ProfilePage() {
                 <div className="text-center">
                   <div className={`text-3xl font-bold ${ACCENT_GOLD}`}>
                     {currentUserData?.accountCreation 
-                      ? new Date(currentUserData.accountCreation.toDate()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                      ? new Date(currentUserData.accountCreation.toDate()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
                       : "N/A"}
                   </div>
                   <div className="text-sm text-white/70">Member Since</div>
@@ -315,7 +315,7 @@ export default function ProfilePage() {
                       listing={listing}
                       timeAgo={getTimeAgo(listing.dateListed)}
                       onFavorite={null}
-                      onClick={() => navigate('/listings')}
+                      onClick={() => navigate('/my-listings')}
                     />
                   ))}
                 </div>

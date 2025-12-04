@@ -3,16 +3,17 @@ import { toast } from "react-toastify"
 import { useAuth } from './auth/AuthContext';
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { addDoc, collection, CollectionReference, doc, limit, onSnapshot, or, orderBy, query, QueryDocumentSnapshot, serverTimestamp, Timestamp, updateDoc, where } from "firebase/firestore"
+import { addDoc, collection, CollectionReference, deleteDoc, doc, limit, onSnapshot, or, orderBy, query, QueryDocumentSnapshot, serverTimestamp, Timestamp, updateDoc, where } from "firebase/firestore"
 import { db } from "./firebase/firebase"
 
 import Navbar from "./components/navbar"
 import Menu from "./components/menu"
 import CustomToastContainer from "./components/toast"
-import { Plus, Ban, Check, Flag, Scale, X, Clock, ArrowLeft } from "lucide-react"
+import { Plus, Ban, Check, Flag, Scale, X, Clock, ArrowLeft, Trash } from "lucide-react"
 
 type OfferMessageType = 'INCOMING' | 'OUTGOING';
 type MessageContent = 'counter' | 'image' | 'text';
+type ChatStatus = 'ongoing' | 'terminated' ;
 
 interface MessageToggleProps {
     currentView: OfferMessageType;
@@ -34,6 +35,7 @@ interface Chat {
     senderUID: string
     otherUsername: string
     type: OfferMessageType
+    status: ChatStatus
 }
 
 interface Message {
@@ -269,6 +271,7 @@ export default function Messages() {
                     senderUID: sender,
                     otherUsername: data.senderName==currentUserData?.username ? data.recName : data.senderName,
                     type: sender == currentUserData?.uid ? 'OUTGOING' : 'INCOMING',
+                    status: data.status
                 } as Chat
             });
             setConversations(convos);
@@ -357,6 +360,7 @@ export default function Messages() {
 
     // Submits counter offer to firebase
     const sendCounterOffer = async (amount: number) => {
+        console.log(selectedConversation)
         if (!selectedConversation) return;
 
         setShowCounterModal(false); // Close modal immediately
@@ -429,6 +433,11 @@ export default function Messages() {
         }
     }
 
+    // Handles removing offer
+    const handleRemoveOffer = async () => {
+        await deleteDoc(doc(db,"Chats",selectedConversationId))
+    }
+
     const selectedConversation = conversations.find(c=>c.id === selectedConversationId)
 
     return (
@@ -478,11 +487,16 @@ export default function Messages() {
                                                 <span className=" h-2 w-2 rounded-full bg-[#FDD023] flex-shrink-0"/> {/* Notification dot (Gold) */}
                                                 <p className={`ml-2 font-md font-bold ${isSelected ? "text-[#FDD023]" : "text-white"}`}>{convo.listingTitle}</p>
                                             </div>
-                                            <p className={`mt-0.5 text-xs text-gray-400 mt-0.5`}>
-                                                {convo.lastMessageTime ? convo.lastMessageTime.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'New Chat'}
-                                            </p>
+                                            <div className="mt-0.5 items-center text-right">
+                                                <p className={`text-xs text-gray-200 ${convo.status === 'ongoing' ? "mb-4.5" : ""} ${isSelected ? "text-white" : "text-purple-900"}`}>
+                                                    {convo.lastMessageTime ? convo.lastMessageTime.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'New Chat'}
+                                                </p>
+                                                {convo.status === 'terminated' && (
+                                                    <p className="text-red-100 text-xs mt-0.5 font-italic rounded-lg bg-red-500 px-1"> Offer Removed</p>
+                                                )}
+                                            </div>
                                         </div>
-                                        <p className={`text-sm truncate mt-1 ${isSelected ? "text-white opacity-90" : "text-gray-400 opacity-80"}`}>{convo.lastMessageSender == currentUserData?.uid ? "You: " +convo.lastMessage : convo.otherUsername +": "+convo.lastMessage}</p>
+                                        <p className={`text-sm text-gray-500 truncate ${isSelected ? "text-white" : "text-purple-900"}`}>{convo.lastMessageSender == currentUserData?.uid ? "You: " +convo.lastMessage : convo.otherUsername +": "+convo.lastMessage}</p>
                                     </div>
                                 )
                             })}
@@ -612,43 +626,57 @@ export default function Messages() {
                                     <div className="flex space-x-3 items-center">
                                         <input 
                                             type="text" 
-                                            placeholder="Type a message..."
-                                            // Updated input for dark theme
-                                            className="flex-1 px-3 py-3 border border-zinc-600 rounded-xl bg-[#1a0f2e] text-white focus:ring-2 focus:ring-[#FDD023] focus:border-[#FDD023] transition duration-150"
+                                            placeholder={selectedConversation.status === 'terminated' ? "This chat has been terminated." : "Type a message..."}
+                                            className={`flex-1 px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 ${selectedConversation.status === 'terminated' ? "bg-gray-100 !cursor-not-allowed" : ""} focus:border-purple-500 transition duration-150`}
                                             value = {newMessage}
                                             onChange={(e) => setNewMessage(e.target.value)}
                                             onKeyDown = {(e) => {if (e.key == 'Enter') {e.preventDefault(); sendMessage(newMessage)}}}
                                             maxLength={150}
+                                            disabled={selectedConversation.status === 'terminated'}
                                         />
                                         
                                             <div className="flex items-center relative">
                                                {/* Action Button */}
+                                               {selectedConversation.status === 'ongoing' ? (
                                                 <button 
                                                     onClick={() => {setShowActionMenu(prev => !prev);console.log("toggle")}}
-                                                    // Updated button for dark theme/gold accent
-                                                    className="p-3 text-black bg-[#FDD023] hover:bg-[#FDD023]/90 rounded-xl transition duration-150 flex items-center justify-center"
+                                                    className={`p-3 text-white hover:text-white hover:bg-purple-800 bg-purple-900 rounded-xl transition duration-150 flex items-center justify-center`}
                                                     aria-expanded={showActionMenu}
-                                                >
-                                                    <Plus className="w-5 h-5"/>
-                                                </button>
-                                                
-                                                {/* Action Menu (Counter Offer, Image, Flag) */}
-                                                {showActionMenu && (
-                                                    <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#1a0f2e] border border-[#FDD023] rounded-lg shadow-xl p-2 z-20">
-                                                        <button 
-                                                            onClick={() => { setShowCounterModal(true); setShowActionMenu(false); }}
-                                                            className="flex items-center w-full p-2 text-white hover:bg-[#2c1844] rounded-lg transition"
-                                                        >
-                                                            <Scale className="w-5 h-5 mr-2 text-[#FDD023]" /> Send Counter Offer
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => { toast.info("Report User not implemented yet"); setShowActionMenu(false); }}
-                                                            className="flex items-center w-full p-2 text-white hover:bg-[#2c1844] rounded-lg transition"
-                                                        >
-                                                            <Flag className="w-5 h-5 mr-2" /> Report User
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                    title="More Actions"
+                                                 >
+                                                    <Plus className="w-5 h-5" />
+                                                </button>)
+                                                : (
+                                                    <button 
+                                                    onClick={() => {setShowActionMenu(prev => !prev);console.log("toggle")}}
+                                                    className={`p-3 hover:bg-red-600 bg-red-500 rounded-xl transition duration-150 flex items-center justify-center`}
+                                                    aria-expanded={showActionMenu}
+                                                    title="More Actions"
+                                                 >
+                                                    <Trash className="stroke-white w-5 h-5" />
+                                                </button>)
+                                                }
+
+                                               {/* Drop-up Menu */}
+                                               {showActionMenu && (
+                                                   <div className="absolute bottom-full mb-3 right-0 w-40 bg-white rounded-lg shadow-xl border border-gray-200 z-20 overflow-hidden">
+                                                       {selectedConversation.status==="ongoing" ? (
+                                                        <button onClick={()=>{setShowCounterModal(true);setShowActionMenu(false)}} className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-yellow-100">
+                                                        <Scale className="mt-1 mr-2 w-5 h-5 stroke-yellow-400 stroke-3"/>
+                                                           Send Counter
+                                                       </button>) : null}
+                                                       <button className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-red-100">
+                                                        <Flag className="mt-1 mr-2 w-5 h-5 stroke-red-400 stroke-2.5 fill-red-400"/>
+                                                           Report User
+                                                       </button>
+                                                       <button 
+                                                        className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-red-200"
+                                                        onClick={() => {handleRemoveOffer();setShowActionMenu(false)}}>
+                                                        <Ban className="mt-1 mr-2 w-5 h-5 stroke-red-400 stroke-2.5"/>
+                                                           Close Offer
+                                                       </button>
+                                                   </div>
+                                               )}
                                             </div>
                                             <button 
                                                 onClick={() => sendMessage(newMessage)}

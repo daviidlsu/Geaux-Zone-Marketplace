@@ -107,11 +107,6 @@ const Register: React.FC = () => {
                 likedItems: []
             });
 
-            // Create user chats document
-            await setDoc(doc(db, "UserChats", newuser.user.uid), {
-                chats: []
-            });
-
             // Send email verification with action code settings
             const actionCodeSettings = {
                 url: `${window.location.origin}/login?verified=true`,
