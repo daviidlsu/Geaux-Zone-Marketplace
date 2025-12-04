@@ -19,7 +19,7 @@ export default function Navbar({
     }: NavbarProps) {
     const { currentUser, currentUserData } = useAuth();
     return (
-        <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
+        <nav className="sticky top-0 z-50 bg-[#461d7c] shadow-lg">
             <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                 {/* Menu Button */}
                 <button 
