@@ -16,7 +16,7 @@ export default function Navbar({
     setShowLoginModal,
     setShowMenu,
     navigate,
-}: NavbarProps) {
+    }: NavbarProps) {
     const { currentUser, currentUserData } = useAuth();
     return (
         <nav className="sticky top-0 z-50 bg-purple-900 shadow-lg">
@@ -37,7 +37,7 @@ export default function Navbar({
                 
                 <div className="flex items-center justify-between w-full ml-[-72px]">
                   {/* Logo/Title */}
-<Link to="/" className="ml-20 flex items-center gap-3">
+    <Link to="/listings" className="ml-20 flex items-center gap-3">
   <img
     className="w-10 h-10"
     src="/geauxzone_tiger.png"
@@ -49,38 +49,40 @@ export default function Navbar({
   >
     TigerTrade
   </span>
-</Link>
+    </Link>
 
-                    {/* Auth Buttons (Login/Logout/Signup) */}
-                    {location.pathname !="/register" && location.pathname !="/login" && (
-                        <div className="absolute flex right-0 gap-2 mr-6 font-sans">
-                            <button 
-                                onClick={currentUser ? handleLogout : () => setShowLoginModal(true)} 
-                                className={`px-4 py-1 rounded-2xl transition-colors font-semibold
-                                    ${currentUser 
-                                        ? 'text-white hover:text-yellow-600'
-                                        : 'text-white hover:text-yellow-600'}`
-                                }> 
-                                {currentUser ? 'Logout' : 'Login'} 
-                            </button>
+    {/* Auth Buttons (Login/Logout/Signup) */}
+        {location.pathname !="/register" && location.pathname !="/login" && (
+            <div className="absolute flex right-0 gap-2 mr-6 font-sans">
+                <button 
+                    onClick={currentUser ? handleLogout : () => setShowLoginModal(true)} 
+                    className={`px-4 py-1 rounded-2xl transition-colors font-semibold
+                    ${currentUser 
+                        ? 'text-white hover:text-yellow-600'
+                        : 'text-white hover:text-yellow-600'}`
+                    }> 
+                    {currentUser ? 'Logout' : 'Login'} 
+                </button>
                             
-                            {currentUser == null && (
-                                <button 
-                                    onClick={() => navigate("/register")} 
-                                    className="px-2 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing"
-                                >
-                                    Sign Up
-                                </button>
-                            )}
+                {currentUser == null && (
+                    <button 
+                        onClick={() => navigate("/register")} 
+                        className="px-2 py-2 rounded-2xl text-yellow-500 font-semibold hover:text-yellow-600 transition-all active:cursor:grabbing"
+                    >
+                    Sign Up
+                    </button>
+                )}
 
-                            {currentUser != null && currentUserData && (
-                                <button className="w-10 h-10 rounded-full bg-purple-950 text-white font-bold items-center justify-center flex">
-                                    {currentUserData.username?.charAt(0).toUpperCase()} 
-                                </button>
-                            )}
-                        </div>
-                    )}
-                </div>
+                {currentUser != null && currentUserData && (
+                    <button 
+                        className="w-10 h-10 rounded-full bg-purple-950 text-white font-bold items-center justify-center flex"
+                        onClick={() => navigate("/profile")}>
+                        {currentUserData.username?.charAt(0).toUpperCase()} 
+                    </button>
+                )}
+             </div>
+        )}
+        </div>
             </div>
         </nav>
     );

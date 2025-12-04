@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import { addDoc, collection, doc, getDoc, getDocs, updateDoc, writeBatch } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, increment, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "./firebase/firebase.ts";
 import { useAuth } from './auth/AuthContext';
 import { Timestamp } from "firebase/firestore";
@@ -160,9 +160,13 @@ export default function ListingOffers(){
     const handleReject = async (offer: Offer) => {
         setLoading(true)
         try {
+            const parentRef = doc(db, "Inventory", offer.parentId)
             const docRef = doc(db,"Inventory",offer.parentId, "offers", offer.offerId)
             await updateDoc(docRef, {
                 status:"rejected"
+            })
+            await updateDoc( parentRef, {
+                offers: increment(-1)
             })
             setOffers(prevOffers=> {return (prevOffers.filter(o => o.offerId != offer.offerId))})
             toast.success ("Rejected offer", {toastId: "reject-success"})

@@ -149,6 +149,7 @@ export default function WelcomePage() {
   const [newLocation, setNewLocation] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
   const [offerAmount, setOfferAmount] = useState<number | null>(null);
+  const [offerMade, setOfferMade] = useState<boolean>(false);
   const [offerNote, setOfferNote] = useState<string>("");
   const [password, setPassword] = useState('')
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -284,9 +285,9 @@ export default function WelcomePage() {
           item.docId === listing.docId ? updatedListing : item)
         )
         setSelectedListing(updatedListing)
+        checkForOffer(updatedListing);
       } else {
         setSelectedListing(listing);
-        
       }
     } else {
       toast.error("This listing is no longer available.", {toastId: 'listing-unavailable'});
@@ -566,6 +567,21 @@ export default function WelcomePage() {
     }
   }
 
+  // Checks if user has already made an offer on the selected listing
+  const checkForOffer = (listing: Listing) => {
+    const offersCollectionRef = collection(db, "Inventory", listing!.docId, "offers");
+    const existingOfferQuery = query(offersCollectionRef, where("buyerUID", "==", currentUserData?.uid));
+    getDocs(existingOfferQuery).then((querySnapshot) => {
+      if (!querySnapshot.empty) {
+        toast.warn("You have already made an offer on this listing.", {toastId: "existing-offer-warning"});
+        setOfferMade(true);
+      } else {
+        setOfferMade(false);
+      }
+    }).catch((error) => { console.log(error);});
+    setOfferMade(false);
+  }
+
   // Submit new offer
   const handleSubmitOffer = async () => {
     setLoading(true)
@@ -599,6 +615,7 @@ export default function WelcomePage() {
       console.log("Error submitting offer:", error)
       toast.error("Error occured trying to submit offer", {toastId: "submit-offer-error"})
     }
+    setSelectedListing(null)
     handleCloseOfferModal()
     setLoading(false)
   }
@@ -1126,6 +1143,7 @@ export default function WelcomePage() {
                 </button>
                   {/* Submit Offer Button */}
                   <button
+                    disabled={offerMade}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (selectedListing && selectedListing.available) {
@@ -1135,7 +1153,7 @@ export default function WelcomePage() {
                         toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId: 'reserved-listing-error'});
                       }
                     }}
-                    className="flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition-all"
+                    className={`disabled:opacity-50 ${offerMade ? "!cursor-default" : "hover:bg-purple-800"} flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold  transition-all`}
                   >
                     Make Offer
                   </button>
@@ -1636,7 +1654,6 @@ export default function WelcomePage() {
     {showSafetyTips && (
       <div 
         className="fixed inset-0 bg-white bg-opacity-50 z-[70] flex items-center justify-center p-4"
-        onClick={() => setShowSafetyTips(false)}
       >
         <div 
           className="bg-white rounded-2xl max-w-md w-full p-6"
