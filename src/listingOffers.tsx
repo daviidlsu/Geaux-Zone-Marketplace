@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx";
+import { list } from 'firebase/storage';
 
 interface Offer {
     amount: number
@@ -193,10 +194,12 @@ export default function ListingOffers(){
                 lastMessageSender: "",
                 lastMessageTime: null,
                 listingTitle: offer.listingTitle,
-                recName: offer.buyerDisplayName,
-                recUID: offer.buyerUID,
-                senderName: currentUserData?.username,
-                senderUID: currentUserData?.uid
+                listingAmount: offer.amount,
+                recName: currentUserData?.username,
+                recUID: currentUserData?.uid,
+                senderName: offer.buyerDisplayName,
+                senderUID: offer.buyerUID,
+                status: "ongoing"
             })
 
             // Updates offer status and chatId
