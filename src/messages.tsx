@@ -442,7 +442,8 @@ export default function Messages() {
 
     return (
         // Applied the dark gradient background to the entire page
-        <div className="h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] text-white overflow-hidden">
+        <div className="h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] text-white overflow-hidden"
+            onClick={()=>setShowActionMenu(false)}>
             <Navbar 
                 handleLogout={handleLogout}
                 setShowLoginModal={()=>{}}
@@ -488,7 +489,7 @@ export default function Messages() {
                                                 <p className={`ml-2 font-md font-bold ${isSelected ? "text-[#FDD023]" : "text-white"}`}>{convo.listingTitle}</p>
                                             </div>
                                             <div className="mt-0.5 items-center text-right">
-                                                <p className={`text-xs text-gray-200 ${convo.status === 'ongoing' ? "mb-4.5" : ""} ${isSelected ? "text-white" : "text-purple-900"}`}>
+                                                <p className={`text-xs text-white ${convo.status === 'ongoing' ? "mb-4.5" : ""}`}>
                                                     {convo.lastMessageTime ? convo.lastMessageTime.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'New Chat'}
                                                 </p>
                                                 {convo.status === 'terminated' && (
@@ -496,7 +497,7 @@ export default function Messages() {
                                                 )}
                                             </div>
                                         </div>
-                                        <p className={`text-sm text-gray-500 truncate ${isSelected ? "text-white" : "text-purple-900"}`}>{convo.lastMessageSender == currentUserData?.uid ? "You: " +convo.lastMessage : convo.otherUsername +": "+convo.lastMessage}</p>
+                                        <p className={`text-sm text-white truncate `}>{convo.lastMessageSender == currentUserData?.uid ? "You: " +convo.lastMessage : convo.otherUsername +": "+convo.lastMessage}</p>
                                     </div>
                                 )
                             })}
@@ -627,7 +628,7 @@ export default function Messages() {
                                         <input 
                                             type="text" 
                                             placeholder={selectedConversation.status === 'terminated' ? "This chat has been terminated." : "Type a message..."}
-                                            className={`flex-1 px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 ${selectedConversation.status === 'terminated' ? "bg-gray-100 !cursor-not-allowed" : ""} focus:border-purple-500 transition duration-150`}
+                                            className={`flex-1 px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 ${selectedConversation.status === 'terminated' ? "!cursor-not-allowed" : ""} focus:border-purple-500 transition duration-150`}
                                             value = {newMessage}
                                             onChange={(e) => setNewMessage(e.target.value)}
                                             onKeyDown = {(e) => {if (e.key == 'Enter') {e.preventDefault(); sendMessage(newMessage)}}}
@@ -635,7 +636,8 @@ export default function Messages() {
                                             disabled={selectedConversation.status === 'terminated'}
                                         />
                                         
-                                            <div className="flex items-center relative">
+                                            <div className="flex items-center relative"
+                                                onClick={(e)=>e.stopPropagation()}>
                                                {/* Action Button */}
                                                {selectedConversation.status === 'ongoing' ? (
                                                 <button 
@@ -682,7 +684,7 @@ export default function Messages() {
                                                 onClick={() => sendMessage(newMessage)}
                                                 disabled={!newMessage || loading}
                                                 // Send button using gold accent
-                                                className="p-3 text-black bg-[#FDD023] hover:bg-[#FDD023]/90 rounded-xl transition duration-150 disabled:bg-gray-500 disabled:text-gray-300 flex items-center justify-center"
+                                                className="p-3 text-black bg-[#FDD023] hover:bg-[#FDD023]/90 rounded-xl transition duration-150 disabled:!cursor-not-allowed disabled:bg-gray-500 disabled:text-gray-300 flex items-center justify-center"
                                             >
                                                 Send
                                             </button>

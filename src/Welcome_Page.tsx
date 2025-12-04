@@ -1168,8 +1168,7 @@ export default function WelcomePage() {
                         toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId: 'reserved-listing-error'});
                       }
                     }}
-                    className="flex-1 bg-[#FDD023] text-black py-3 rounded-xl font-bold hover:bg-[#FDD023]/90 transition-all"
-                    className={`disabled:opacity-50 ${offerMade ? "!cursor-default" : "hover:bg-purple-800"} flex-1 bg-purple-900 text-white py-3 rounded-xl font-bold  transition-all`}
+                    className={`disabled:opacity-50 ${offerMade ? "!cursor-default" : ""} flex-1 bg-[#FDD023] text-black py-3 rounded-xl font-bold  transition-all`}
                   >
                     Make Offer
                   </button>
