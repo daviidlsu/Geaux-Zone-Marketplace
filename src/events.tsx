@@ -151,13 +151,13 @@ export default function EventsPage() {
 
         <button
           onClick={() => setShowOnlyLiked(!showOnlyLiked)}
-          className="flex items-center gap-2 p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-white"
+          className="flex items-center align-center gap-2 p-2 rounded-lg bg-purple-900 border border-zinc-800 text-white"
         >
-          <Heart className={showOnlyLiked ? "fill-white text-white" : ""} />
+          <Heart className={showOnlyLiked ? "fill-red-500 text-red-500" : ""} />
           Liked Only
         </button>
 
-        <button className="flex items-center gap-2 p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-white">
+        <button className="flex items-center gap-2 p-2 rounded-lg bg-purple-900 border border-zinc-800 text-white">
           <Filter /> Filter
         </button>
       </div>
@@ -178,7 +178,7 @@ export default function EventsPage() {
                 onClick={() => toggleLike(e.id)}
                 className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
               >
-                <Heart className={e.liked ? "fill-white text-white" : ""} />
+                <Heart className={e.liked ? "fill-red-500 text-red-500" : ""} />
               </button>
             </div>
 

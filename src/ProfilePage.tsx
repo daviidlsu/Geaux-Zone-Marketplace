@@ -188,7 +188,7 @@ export default function ProfilePage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
             <div className="relative flex-shrink-0">
-              <div className="w-28 h-28 rounded-2xl bg-purple-900 flex items-center justify-center text-white font-extrabold text-4xl shadow-lg">
+              <div className="w-28 h-28 rounded-full bg-purple-900 flex items-center justify-center text-white font-extrabold text-4xl shadow-lg">
                 {currentUserData?.username?.charAt(0).toUpperCase() || "U"}
               </div>
               <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-green-500 border-4 border-white flex items-center justify-center shadow-md">
@@ -224,7 +224,7 @@ export default function ProfilePage() {
                 <div className="text-center">
                   <div className="text-3xl font-bold text-purple-900">
                     {currentUserData?.accountCreation 
-                      ? new Date(currentUserData.accountCreation.toDate()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                      ? new Date(currentUserData.accountCreation.toDate()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
                       : "N/A"}
                   </div>
                   <div className="text-sm text-gray-600">Member Since</div>
@@ -298,7 +298,7 @@ export default function ProfilePage() {
                       listing={listing}
                       timeAgo={getTimeAgo(listing.dateListed)}
                       onFavorite={null}
-                      onClick={() => navigate('/listings')}
+                      onClick={() => navigate('/my-listings')}
                     />
                   ))}
                 </div>
