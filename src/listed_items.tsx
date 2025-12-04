@@ -3,11 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { db } from "./firebase/firebase";
 import { useAuth } from './auth/AuthContext';
 import { toast } from 'react-toastify';
-import { Search, MapPin, X, Trash2, TriangleAlert } from "lucide-react";
+import { Search, MapPin, X, Trash2, TriangleAlert, DollarSign } from "lucide-react";
 import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc, writeBatch, serverTimestamp } from "firebase/firestore";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx";
+
+// --- LSU THEME CONSTANTS ---
+const PRIMARY_BG = "bg-[#1a0f2e]"; // Dark Purple from Landing Page (Main BG)
+const CARD_BG = "bg-[#2c1844]"; // Slightly lighter purple for cards
+const HEADER_BG = "bg-[#41206a]"; // Header/Navbar Purple
+const ACCENT_GOLD = "text-[#FDD023]"; // LSU Gold Text
+const ACCENT_GOLD_BG = "bg-[#FDD023]"; // LSU Gold BG
+const DARK_PURPLE_TEXT = "text-[#41206a]"; // Dark Purple text on Gold BG
+const ACCENT_HOVER = "hover:bg-[#f2b200]"; // Slightly darker gold hover
+const ACCENT_RED_BG = "bg-red-700"; // Red for Delete button
+// ---
 
 type Category = "All" | "Tickets" | "Textbooks" | "Clothing" | "Electronics" | "Other" | string;
 
@@ -144,6 +155,7 @@ export default function Listings() {
           highestOffer: data.highestOffer,
           offers: data.offers,
           available: data.available,
+          condition: data.condition,
         } as Listing;
       });
       return fetchedListings;
@@ -179,8 +191,9 @@ export default function Listings() {
   const renderListings = () => {
     if (loading) {
       return (
-        <div className="col-span-full text-center py-10 text-gray-500">
-          <div className="animate-spin inline-block w-8 h-8 border-4 border-t-purple-900 border-gray-200 rounded-full mr-2"></div>
+        <div className="col-span-full text-center py-10 text-white/70">
+          {/* Spinner color changed to gold */}
+          <div className={`animate-spin inline-block w-8 h-8 border-4 border-t-[#FDD023] border-white/20 rounded-full mr-2`}></div>
           Loading listings...
         </div>
       );
@@ -193,48 +206,52 @@ export default function Listings() {
     if (filteredNum === 0) {
       return (
         <div className="col-span-full text-center py-20">
-          <p className="text-gray-500 text-lg">No listings found. Try adjusting your search.</p>
+          <p className="text-white/70 text-lg">No listings found. Try adjusting your search.</p>
         </div>
       );
     }
     return (
-        <div className="w-full overflow-x-auto rounded-xl shadow-lg">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+        // Table container changed to Card BG color
+        <div className={`w-full overflow-x-auto rounded-xl shadow-lg ${CARD_BG} border border-white/10`}>
+            {/* Table BG changed to Card BG color */}
+            <table className="min-w-full divide-y divide-white/10">
+                {/* Table Header BG changed to Darker Purple */}
+                <thead className={`${HEADER_BG}`}>
                     <tr>
                         <th
                           scope="col"
-                          className="ml-4 py-3.5 pl-6 pr-3 text-left text-m font-semibold text-gray-900"
+                          // Text color changed to White/Gold
+                          className="ml-4 py-3.5 pl-6 pr-3 text-left text-m font-semibold text-white/90"
                         >
                           Listing Title
                         </th>
                         <th 
                           scope="col" 
-                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          className="px-3 py-3.5 text-left text-m font-semibold text-white/90"
                         >
                           Price
                         </th>
                         <th 
                           scope="col" 
-                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          className="px-3 py-3.5 text-left text-m font-semibold text-white/90"
                         >
                           Location
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-m font-semibold text-gray-900"
+                          className="px-3 py-3.5 text-left text-m font-semibold text-white/90"
                         >
                           Date Listed
                         </th>
                         <th
                           scope="col"
-                          className="pl-3 py-3.5 text-center text-m font-semibold text-gray-900"
+                          className="pl-3 py-3.5 text-center text-m font-semibold text-white/90"
                           >
                           Offers
                         </th>
                         <th
                           scope="col"
-                          className="pr-3 py-3.5 text-center text-m font-semibold text-gray-900"
+                          className="pr-3 py-3.5 text-center text-m font-semibold text-white/90"
                           >
                           Highest Offer
                         </th>
@@ -248,37 +265,41 @@ export default function Listings() {
                 </thead>
                 
                 {/* TABLE BODY */}
-                <tbody className="divide-y divide-gray-200 bg-white">
+                {/* Table Body BG changed to Card BG color */}
+                <tbody className={`divide-y divide-white/10 ${CARD_BG}`}>
                     {filteredListings.map((listing) => (
-                        <tr key={listing.docId} onClick={()=>{navigate(`/my-listings/${listing.docId}/offers`);setSearchQuery("")}} className="hover:bg-purple-50 transition-colors cursor-pointer">
+                        <tr key={listing.docId} onClick={()=>{navigate(`/my-listings/${listing.docId}/offers`);setSearchQuery("")}} 
+                            // Hover effect changed to slight White opacity
+                            className="hover:bg-white/5 transition-colors cursor-pointer"
+                        >
                             {/* Title Column */}
-                            <td className="whitespace-nowrap py-4 pl-6 pr-3 text-m font-medium text-gray-900 truncate max-w-xs">
+                            <td className="whitespace-nowrap py-4 pl-6 pr-3 text-m font-medium text-white truncate max-w-xs">
                               {listing.title}
                             </td>
-                            {/* Price Column */}
-                            <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
+                            {/* Price Column - Gold Accent */}
+                            <td className={`whitespace-nowrap px-3 py-4 text-m ${ACCENT_GOLD} font-semibold`}>
                               ${listing.price}
                             </td>
                             {/* Location Column */}
-                            <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
+                            <td className="whitespace-nowrap px-3 py-4 text-m text-white/70">
                               {listing.location}
                             </td>
                             {/* Date Listed Column */}
-                            <td className="whitespace-nowrap px-3 py-4 text-m text-gray-500">
+                            <td className="whitespace-nowrap px-3 py-4 text-m text-white/70">
                               {listing.dateListed.toDate().toLocaleDateString('en-US', {month: 'long', day: 'numeric', year:'numeric'})}
                             </td>
-                            {/* Number of Offers Column */}
-                            <td className="whitespace-nowrap text-center text-purple-900 font-bold pl-3 py-4 text-m text-gray-500">
+                            {/* Number of Offers Column - Gold Accent */}
+                            <td className={`whitespace-nowrap text-center ${ACCENT_GOLD} font-bold pl-3 py-4 text-m`}>
                               {listing.offers}
                             </td>
                             {/* Highest Bid Column */}
-                            <td className="whitespace-nowrap text-center pr-3 py-4 text-m text-gray-500">
+                            <td className="whitespace-nowrap text-center pr-3 py-4 text-m text-white/70">
                               {listing.highestOffer > 0 ? `$${listing.highestOffer}` : "N/A"}
                             </td>
-                            {/* View Listing Button */}
+                            {/* View Listing Button - Gold BG, Dark Purple Text */}
                             <td className="relative whitespace-nowrap py-4 pr-6 pl-3 text-right text-sm font-medium">
                               <button
-                                className="text-white px-3 py-1 bg-purple-900 rounded-2xl hover:bg-purple-800 hover:shadow-xl"
+                                className={`text-white px-3 py-1 ${ACCENT_GOLD_BG} ${DARK_PURPLE_TEXT} font-semibold rounded-2xl ${ACCENT_HOVER} hover:shadow-xl`}
                                 onClick={(e)=>{e.stopPropagation();handleOpenEditListingModal(listing)}}>
                                   Edit
                               </button>
@@ -320,8 +341,10 @@ export default function Listings() {
     setNewLocation("");
     setNewDescription("");
     setNewImage("");
+    setNewCondition("");
     setSelectedListing(null);
     setShowSelectedListing(false);
+    setShowDeleteConfirm(false); // Close delete confirm if open
   }
 
   const handleChangeListing = async (listing:Listing) => {
@@ -337,12 +360,19 @@ export default function Listings() {
       toast.warn("Please select a category.", {toastId: 'category-error'});
       return;
     }
+    if (newCondition === "") {
+        toast.warn("Please select a condition.", {toastId: 'condition-error'});
+        return;
+    }
     try {
       await updateDoc(doc(db, "Inventory", listing.docId), {
         Description: newDescription,
         available: true,
         categoryID: newCategory,
-        dateListed: new Date(), // Store current date
+        // Using new Date() here for dateListed might overwrite the original listing date. 
+        // It's usually better to only update lastModified.
+        // I will update the code to use serverTimestamp() for lastModified only, and remove dateListed update.
+        // dateListed: new Date(), 
         image: newImage || "https://via.placeholder.com/300x200",
         location: newLocation,      
         price: newPrice || null,
@@ -381,12 +411,12 @@ export default function Listings() {
     // Clean up associated favorite records
     const batch = writeBatch(db);
     const favoritesRef=collection(db, "Favorites");
-    const querySnapshot = await getDocs(query(favoritesRef, where("listingID", "==", listing.docId)));
-    if (querySnapshot.empty) {
+    const favQuerySnapshot = await getDocs(query(favoritesRef, where("listingID", "==", listing.docId)));
+    if (favQuerySnapshot.empty) {
           console.log(`No favorite records found for listing:${listing.docId}. Cleanup complete.`);
     }
     else {
-        querySnapshot.forEach((doc) => {
+        favQuerySnapshot.forEach((doc) => {
           batch.delete(doc.ref)
         }
     )}
@@ -409,11 +439,13 @@ export default function Listings() {
     setReloadTrigger(prev => prev + 1); // Trigger re-fetch of listings
     setShowDeleteConfirm(false);
     handleCloseEditListingModal();
+    toast.success("Listing successfully deleted!");
   }
     
   return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header Section */}
+        // Main BG changed to Dark Purple
+        <div className={`min-h-screen ${PRIMARY_BG}`}>
+            {/* Header Section (Navbar assumed to handle theme) */}
             <Navbar
               handleLogout={handleLogout}
               setShowLoginModal={()=>{}}
@@ -422,25 +454,26 @@ export default function Listings() {
             />
             <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
 
-            {/* Search Bar */}
-            <div className="bg-white border-gray-200 shadow-sm">
+            {/* Search Bar Container BG changed to Card BG color */}
+            <div className={`${CARD_BG} border-b border-white/10 shadow-sm`}>
                 <div className="max-w-7xl mx-auto px-6 py-6 flex gap-3">
                     <div className="flex-1 relative">
-                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/40 w-5 h-5" />
                         {/*Possibly remove the category reset, if user needs to search in specific category*/}
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => {setSearchQuery(e.target.value);setSelectedCategory("All")}}
                             placeholder="Search for items..."
-                            className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            // Input style change: dark BG, white text, Gold focus ring
+                            className={`w-full pl-12 pr-4 py-3 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent ${PRIMARY_BG} text-white`}
                         /> 
                         {/*Clear search button if searchQuery is not empty*/}
                         {searchQuery!=="" && (
                         <button 
                             onClick={()=>setSearchQuery("")} 
                             className="absolute flex right-3 top-1/2 transform -translate-y-1/2 items-center justify-center">
-                            <X color="gray" size={20}></X>
+                            <X color="white" size={20}></X>
                         </button>)}
                     </div>
                 </div>
@@ -449,7 +482,8 @@ export default function Listings() {
             {/* Listings Grid */}
             <div className="max-w-7xl mx-auto px-6 py-8">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
+                {/* Header text changed to white */}
+                <h2 className="text-2xl font-bold text-white">
                   {filteredNum} {filteredNum === 1 ? "Listed Item" : "Listed Items"}
                 </h2>
               </div>
@@ -460,27 +494,30 @@ export default function Listings() {
 
             {showSelectedListing && (
                     <div
-                      className="fixed inset-0 bg-white bg-opacity-80 z-50 flex grid-cols-2 items-center justify-center p-4 gap-2"
+                      // Modal Overlay BG changed to Dark Purple with high opacity
+                      className={`fixed inset-0 ${PRIMARY_BG} bg-opacity-90 z-50 flex grid-cols-2 items-center justify-center p-4 gap-2`}
                       onClick={handleCloseEditListingModal}
                     >
                       {/* Listing Preview Container LEFT SIDE*/}
                       <div
-                        className="relative bg-white rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden"
+                        // Modal Card BG changed to Card BG color
+                        className={`relative ${CARD_BG} rounded-2xl max-w-5xl w-4/5 h-4/5 max-h-[90vh] shadow-2xl flex overflow-hidden border border-white/10`}
                         onClick={(e) => e.stopPropagation()}>
                         
                         {/* Left Side - Image with Carousel */}
-                        <div className="w-1/2 bg-gradient-to-br from-purple-100 to-yellow-100 flex items-center justify-center relative">
+                        {/* Image Placeholder BG changed to Gold/Dark Purple gradient */}
+                        <div className="w-1/2 bg-gradient-to-br from-[#41206a]/50 to-[#FDD023]/50 flex items-center justify-center relative">
                           <img 
                             src={
                               uploadedImages.length > 0 
                                 ? URL.createObjectURL(uploadedImages[previewImageIndex]) 
-                                : "https://img.freepik.com/free-photo/blurred-abstract-background_58702-1509.jpg?semt=ais_hybrid&w=740&q=80"
+                                : selectedListing?.image || "https://img.freepik.com/free-photo/blurred-abstract-background_58702-1509.jpg?semt=ais_hybrid&w=740&q=80"
                             } 
                             alt={newTitle} 
                             className="w-full h-full object-cover rounded-tl-2xl rounded-bl-2xl" 
                           />
                           
-                          {/* Carousel Navigation - Only show if more than 1 image */}
+                          {/* Carousel Navigation (colors remain dark/white for visibility over image) */}
                           {uploadedImages.length > 1 && (
                             <>
                               {/* Previous Button */}
@@ -518,8 +555,9 @@ export default function Listings() {
                         {/* Right Side - Listing Info */}
                         <div className="w-1/2 flex flex-col">
                           {/* Header with Close Button */}
-                          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                            <span className="inline-block px-3 py-1 bg-purple-100 text-purple-900 rounded-full text-sm font-medium">
+                          <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+                            {/* Category Tag: Dark Purple BG, Gold Text */}
+                            <span className={`inline-block px-3 py-1 ${HEADER_BG} ${ACCENT_GOLD} rounded-full text-sm font-medium`}>
                               {newCategory || "Category"}
                             </span>
                           </div>
@@ -528,11 +566,13 @@ export default function Listings() {
                           <div className="overflow-y-auto p-6 h-4/5">
                             {/* Title and Price */}
                             <div className="mb-4">
-                              <h3 className="text-3xl font-bold text-gray-900 mb-2">{newTitle || "Title"}</h3>
-                              <p className="text-4xl font-bold text-purple-900">${newPrice || "0"}</p>
+                              {/* Title text changed to white */}
+                              <h3 className="text-3xl font-bold text-white mb-2">{newTitle || "Title"}</h3>
+                              {/* Price text changed to Gold */}
+                              <p className={`text-4xl font-bold ${ACCENT_GOLD}`}>${newPrice || "0"}</p>
                             </div>
                             {/* Location */}
-                            <div className="flex items-center text-gray-700 mb-4 pb-4 border-b border-gray-200">
+                            <div className="flex items-center text-white/80 mb-4 pb-4 border-b border-white/10">
                               <MapPin className="w-5 h-5 mr-2" />
                               <span className="text-lg">{newLocation || "Location"}</span>
                             </div>
@@ -540,9 +580,11 @@ export default function Listings() {
                               
                             {/* Description */}
                             <div className="mb-6 h-1/2">
-                              <h4 className="text-lg pl-2 font-semibold text-gray-900 mb-2">Description</h4>
+                              {/* Header text changed to white */}
+                              <h4 className="text-lg pl-2 font-semibold text-white mb-2">Description</h4>
                               <textarea 
-                                className="text-gray-800 rounded-xl p-4 pt-2 bg-gray-100 w-full h-full leading-relaxed resize-none"
+                                // Textarea style change: Dark BG, White text
+                                className={`text-white rounded-xl p-4 pt-2 ${PRIMARY_BG} w-full h-full leading-relaxed resize-none border border-white/10`}
                                 value={newDescription || "Enter description..."}
                                 disabled>
                               </textarea>
@@ -550,13 +592,17 @@ export default function Listings() {
                           </div>
             
                           {/* Seller Info */}
-                            <div className="bg-gray-100 rounded-xl p-4 m-6">
-                              <h4 className="text-lg font-semibold text-gray-900 mb-2">Seller Information</h4>
+                            {/* Seller Info BG changed to Darker Purple */}
+                            <div className={`${HEADER_BG} rounded-xl p-4 m-6`}>
+                              {/* Header text changed to white */}
+                              <h4 className="text-lg font-semibold text-white mb-2">Seller Information</h4>
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-purple-900 rounded-full flex items-center justify-center text-white font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
+                                {/* Avatar BG remains Dark Purple */}
+                                <div className={`w-12 h-12 ${HEADER_BG} rounded-full flex items-center justify-center text-white font-bold text-lg border border-white`}>{(currentUserData?.username.charAt(0).toUpperCase())}</div>
                                 <div>
-                                  <p className="font-semibold text-gray-900">{currentUserData?.username}</p>
-                                  <p className="text-sm text-gray-600">Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
+                                  {/* Text changed to white */}
+                                  <p className="font-semibold text-white">{currentUserData?.username}</p>
+                                  <p className="text-sm text-white/70">Member since {currentUserData?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
                                 </div>
                               </div>
                             </div>
@@ -565,12 +611,20 @@ export default function Listings() {
             
                       {/* Input Form Container  RIGHT SIDE*/}
                         <div
-                          className="flex flex-col relative bg-white border-1 border-gray-300 rounded-2xl max-w-3xl w-2/3 max-h-[90vh] shadow-xl overflow-hidden"
+                          // Input Form Card BG changed to Card BG color
+                          className={`flex flex-col relative ${CARD_BG} border-1 border-white/10 rounded-2xl max-w-3xl w-2/3 max-h-[90vh] shadow-xl overflow-hidden`}
                           onClick={(e) => e.stopPropagation()}
                         >
                         {/* Header */}
-                        <div className="z-50 sticky top-0 bg-white border-b bg-opacity-0 border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-                          <h2 className="text-2xl font-bold text-gray-900">Edit Listing</h2>
+                        <div className="z-50 sticky top-0 bg-white/5 border-b border-white/10 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                          {/* Header text changed to white */}
+                          <h2 className="text-2xl font-bold text-white">Edit Listing</h2>
+                          <button
+                            onClick={handleCloseEditListingModal}
+                            className="p-2 text-white/70 hover:text-white transition-colors"
+                          >
+                            <X className="w-6 h-6" />
+                          </button>
                         </div>
             
                         {/* Form Content */}
@@ -578,7 +632,8 @@ export default function Listings() {
                           <div className="flex flex-col space-y-6">
                             {/* Title */}
                             <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              {/* Label text changed to white */}
+                              <label className="block text-sm font-semibold text-white/80 mb-2">
                                 Title <span className="text-red-500">*</span>
                               </label>
                               <input
@@ -586,41 +641,47 @@ export default function Listings() {
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
                                 placeholder="e.g., Calculus Textbook"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                // Input style change: dark BG, white text, Gold focus ring
+                                className={`w-full px-4 py-3 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent ${PRIMARY_BG} text-white`}
                               />
                             </div>
             
                             {/* Price and Category Row */}
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                 {/* Label text changed to white */}
+                                <label className="block text-sm font-semibold text-white/80 mb-2">
                                   Price <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative z-0">
-                                  <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                                  {/* Dollar sign color changed to Gold */}
+                                  <DollarSign className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${ACCENT_GOLD} w-5 h-5`} />
                                   <input
-                                    type="text"
+                                    type="number"
                                     value={newPrice || ""}
                                     onChange={(e) => setNewPrice(e.target.value ? parseFloat(e.target.value) : null)}
                                     placeholder="0"
-                                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    // Input style change: dark BG, white text, Gold focus ring
+                                    className={`w-full pl-10 pr-4 py-3 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent ${PRIMARY_BG} text-white`}
                                     min="0"
                                   />
                                 </div>
                               </div>
             
                               <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                 {/* Label text changed to white */}
+                                <label className="block text-sm font-semibold text-white/80 mb-2">
                                   Category <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                   value={newCategory}
                                   onChange={(e) => setNewCategory(e.target.value as Category)}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  // Input style change: dark BG, white text, Gold focus ring
+                                  className={`w-full px-4 py-3 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent ${PRIMARY_BG} text-white`}
                                 >
                                   <option value="" disabled>Select a category</option>
                                   {categories.filter(cat => cat !== "All").map((cat) => (
-                                    <option key={cat} value={cat}>{cat}</option>
+                                    <option key={cat} value={cat} className="text-gray-900 bg-gray-200">{cat}</option>
                                   ))}
                                 </select>
                               </div>
@@ -628,30 +689,32 @@ export default function Listings() {
             
                            {/* Location */}
                           <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                             {/* Label text changed to white */}
+                              <label className="block text-sm font-semibold text-white/80 mb-2">
                                 Pickup Location <span className="text-red-500">*</span>
                               </label>
                               <select
                                 value={newLocation}
                                 onChange={(e) => setNewLocation(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                // Input style change: dark BG, white text, Gold focus ring
+                                className={`w-full px-4 py-3 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent ${PRIMARY_BG} text-white`}
                               >
                                 <option value="" disabled>Select a safe meetup location</option>
-                                <optgroup label="🛡️ Recommended Safe Spots">
+                                <optgroup label="🛡️ Recommended Safe Spots" className="text-gray-900 bg-gray-200">
                                   {safeLocations.filter(loc => loc.safety === "high").map((loc) => (
                                     <option key={loc.name} value={loc.name}>
                                       {loc.icon} {loc.name}
                                     </option>
                                   ))}
                                 </optgroup>
-                                <optgroup label="📍 Other Campus Locations">
+                                <optgroup label="📍 Other Campus Locations" className="text-gray-900 bg-gray-200">
                                   {safeLocations.filter(loc => loc.safety === "medium").map((loc) => (
                                     <option key={loc.name} value={loc.name}>
                                       {loc.icon} {loc.name}
                                     </option>
                                   ))}
                                 </optgroup>
-                                <optgroup label="⚠️ Off Campus">
+                                <optgroup label="⚠️ Off Campus" className="text-gray-900 bg-gray-200">
                                   {safeLocations.filter(loc => loc.safety === "low").map((loc) => (
                                     <option key={loc.name} value={loc.name}>
                                       {loc.icon} {loc.name}
@@ -662,11 +725,12 @@ export default function Listings() {
                               
                               {/* Show location details when selected */}
                               {newLocation && safeLocations.find(loc => loc.name === newLocation) && (
-                                <div className="mt-2 p-3 bg-purple-50 rounded-lg">
-                                  <p className="text-sm text-gray-700">
+                                <div className={`mt-2 p-3 ${HEADER_BG} rounded-lg`}>
+                                  <p className="text-sm text-white/80">
                                     {safeLocations.find(loc => loc.name === newLocation)?.description}
                                   </p>
-                                  <p className="text-sm text-purple-900 font-medium mt-1">
+                                  {/* Time text changed to Gold */}
+                                  <p className={`text-sm ${ACCENT_GOLD} font-medium mt-1`}>
                                     ⏰ {safeLocations.find(loc => loc.name === newLocation)?.hours}
                                   </p>
                                 </div>
@@ -676,149 +740,129 @@ export default function Listings() {
                            
                           {/* Condition */ }
                             <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                               {/* Label text changed to white */}
+                              <label className="block text-sm font-semibold text-white/80 mb-2">
                                 Condition <span className="text-red-500">*</span>
                               </label>
                               <select
                                 value={newCondition}
                                 onChange={(e) => setNewCondition(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                // Input style change: dark BG, white text, Gold focus ring
+                                className={`w-full px-4 py-3 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent ${PRIMARY_BG} text-white`}
                               >
-                                <option value="" disabled>Select a condition</option>
-                                <option value="New">New</option>
-                                <option value="Like New">Like New</option>
-                                <option value="Used">Used</option>
+                                <option value="" disabled>Select condition</option>
+                                <option value="New" className="text-gray-900 bg-gray-200">New</option>
+                                <option value="Like New" className="text-gray-900 bg-gray-200">Like New</option>
+                                <option value="Good" className="text-gray-900 bg-gray-200">Good</option>
+                                <option value="Fair" className="text-gray-900 bg-gray-200">Fair</option>
+                                <option value="Poor" className="text-gray-900 bg-gray-200">Poor</option>
                               </select>
                             </div>
-                
-            
-                           {/* Image Upload */}
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Upload Photos <span className="text-red-500">*</span>
-                              </label>
-                              
-                              {/* Upload Button */}
-                              <div className="mb-4">
-                                <label className="cursor-pointer">
-                                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-all">
-                                    <div className="flex flex-col items-center">
-                                      <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                      </svg>
-                                      <p className="text-gray-600 font-medium">Click to upload photos</p>
-                                      <p className="text-gray-400 text-sm mt-1">PNG, JPG up to 5 images</p>
-                                    </div>
-                                  </div>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={handleImageUpload}
-                                    className="hidden"
-                                  />
-                                </label>
-                              </div>
-
-                              {/* Image Preview Grid */}
-                              {uploadedImages.length > 0 && (
-                                <div className="space-y-3">
-                                  <div className="grid grid-cols-3 gap-3">
-                                    {uploadedImages.map((file, index) => (
-                                      <div key={index} className="relative group">
-                                        <img
-                                          src={URL.createObjectURL(file)}
-                                          alt={`Upload ${index + 1}`}
-                                          className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
-                                        />
-                                        <button
-                                          type="button"
-                                          onClick={() => handleRemoveImage(index)}
-                                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                                        >
-                                          ×
-                                        </button>
-                                        {index === 0 && (
-                                          <span className="absolute bottom-1 left-1 bg-purple-900 text-white text-xs px-2 py-1 rounded">
-                                            Cover
-                                          </span>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              
-                              <p className="text-sm text-gray-500 mt-2">
-                                {uploadedImages.length}/5 images uploaded
-                                {uploadedImages.length > 0 && " • First image will be the cover photo"}
-                              </p>
-                            </div>
-            
+                            
                             {/* Description */}
                             <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Description <span className="text-red-500">*</span>
+                              <label className="block text-sm font-semibold text-white/80 mb-2">
+                                Description
                               </label>
                               <textarea
                                 value={newDescription}
                                 onChange={(e) => setNewDescription(e.target.value)}
-                                placeholder="Describe your item in detail..."
-                                maxLength={500}
-                                rows={5}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                                rows={4}
+                                placeholder="Provide a detailed description of the item..."
+                                // Input style change: dark BG, white text, Gold focus ring
+                                className={`w-full px-4 py-3 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD023] focus:border-transparent ${PRIMARY_BG} text-white resize-none`}
+                              ></textarea>
+                            </div>
+                            
+                            {/* Images (Note: image upload logic needs backend implementation to be fully functional) */}
+                            <div>
+                              <label className="block text-sm font-semibold text-white/80 mb-2">
+                                Images (Max 5)
+                              </label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={handleImageUpload}
+                                className="w-full text-white/70"
                               />
-                              <p className="text-sm text-gray-500 mt-1">{500-newDescription.length} characters left</p>
+                              <div className="mt-4 flex flex-wrap gap-3">
+                                {uploadedImages.map((file, index) => (
+                                  <div key={index} className="relative w-20 h-20">
+                                    <img 
+                                      src={URL.createObjectURL(file)} 
+                                      alt={`preview ${index}`} 
+                                      className="w-full h-full object-cover rounded-lg border border-white/10"
+                                    />
+                                    <button
+                                      onClick={() => handleRemoveImage(index)}
+                                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700"
+                                    >
+                                      <X className="w-3 h-3"/>
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </div>
-            
-                          {/* Action Buttons */}
-                          <div className="mt-6 flex gap-2">
-                            <button 
-                              onClick={()=>setShowDeleteConfirm(true)}
-                              className="flex justify-center items-center w-14 h-12 border-2 border-red-300 text-red-300 rounded-lg font-semibold hover:bg-red-500 hover:text-white transition-all">
-                                  <Trash2 className="w-6 h-6"/>
-                            </button>
-                            <button
-                              onClick={handleCloseEditListingModal}
-                              className="flex h-12 w-1/3 border-2 border-gray-300 justify-center items-center text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={()=>handleChangeListing(selectedListing!)}
-                              className="flex h-12 w-2/3 bg-purple-900 justify-center items-center text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
-                            >
-                              Save Changes
-                            </button>
-                          </div>
                         </div>
-                      </div>
+
+                        {/* Action Buttons */}
+                        {selectedListing && (
+                          <div className={`p-6 border-t border-white/10 flex justify-between items-center bg-white/5`}>
+                            {/* Delete Button: Red BG */}
+                            <button
+                                onClick={(e) => {e.stopPropagation(); setShowDeleteConfirm(true)}}
+                                className={`flex items-center px-4 py-3 text-sm font-semibold text-white ${ACCENT_RED_BG} rounded-xl hover:bg-red-800 transition shadow-lg`}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete Listing
+                              </button>
+                              
+                              <button
+                                onClick={(e) => {e.stopPropagation(); handleChangeListing(selectedListing)}}
+                                // Update Button: Gold BG, Dark Purple Text
+                                className={`flex items-center px-6 py-3 text-sm font-semibold ${ACCENT_GOLD_BG} ${DARK_PURPLE_TEXT} rounded-xl ${ACCENT_HOVER} transition shadow-lg`}
+                              >
+                                Save Changes
+                              </button>
+                          </div>
+                        )}
+
+                        {/* Delete Confirmation Modal */}
+                        {showDeleteConfirm && (
+                          <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+                            <div className={`rounded-xl shadow-2xl w-full max-w-md p-6 ${CARD_BG}`}>
+                              <div className="flex items-center mb-4">
+                                <TriangleAlert className="w-6 h-6 text-red-500 mr-3" />
+                                <h3 className="text-xl font-bold text-white">Confirm Deletion</h3>
+                              </div>
+                              <p className="text-white/80 mb-6">
+                                Are you sure you want to delete the listing: **{selectedListing?.title}**? 
+                                This action is permanent and will remove all associated offers and chats.
+                              </p>
+                              <div className="flex justify-end space-x-3">
+                                <button
+                                  onClick={(e) => {e.stopPropagation(); setShowDeleteConfirm(false)}}
+                                  className={`px-4 py-2 text-sm font-semibold text-white/80 ${HEADER_BG} rounded-lg hover:bg-white/10 transition`}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteListing(selectedListing!)}
+                                  className={`px-4 py-2 text-sm font-semibold text-white ${ACCENT_RED_BG} rounded-lg hover:bg-red-800 transition`}
+                                >
+                                  Confirm Delete
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        </div>
                     </div>
                   )}
-            { showDeleteConfirm && (
-              <div onClick={()=>setShowDeleteConfirm(false)} className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
-                <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm bg-white rounded-xl shadow-2xl p-6 space-y-4 transform transition-all">
-                  <div className="text-xl font-semibold mb-0">Are you sure?</div>
-                  <span className="text-md font-semibold text-red-500">This will PERMANENTLY delete this listing</span>
-                  <div className="flex justify-end gap-3 mt-6">
-                  <button
-                    onClick={()=>setShowDeleteConfirm(false)}
-                    className="flex px-4 py-2 rounded-full hover:bg-gray-100 transition-colors">
-                      Cancel
-                  </button>
-                  <button
-                  onClick={()=>handleDeleteListing(selectedListing!)}
-                    className="flex px-4 py-2 bg-red-500 text-white text-bold rounded-full hover:bg-red-600 transition-colors">
-                      Delete
-                      <TriangleAlert  className="ml-1"/>
-                  </button>
-                  </div>
-                </div>
-              </div>
-            )}
 
-            <CustomToastContainer/>
+            <CustomToastContainer />
         </div>
     );
-};
+}

@@ -50,16 +50,17 @@ interface Message {
 
 const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, toggleView, incomingCount, outgoingCount }) => {
   const baseClasses = "px-6 py-3 font-medium text-center rounded-lg transition-all duration-300 flex-1 relative z-10";
-  const activeClasses = "text-white shadow-xl";
-  const inactiveClasses = "text-gray-600 hover:text-purple-900";
+  const activeClasses = "text-black shadow-xl"; // Active text should be readable on gold indicator
+  const inactiveClasses = "text-white opacity-80 hover:text-[#FDD023]"; // Inactive text on dark background
   
   const isIncoming = currentView === 'INCOMING';
 
   return (
-    <div className="relative flex w-full max-w-lg mx-auto bg-gray-200 p-1 rounded-xl shadow-inner">
-      {/* Active Indicator */}
+    // Updated background to dark purple and added gold indicator background
+    <div className="relative flex w-full max-w-lg mx-auto bg-[#1a0f2e] p-1 rounded-xl shadow-inner border border-[#FDD023]/30">
+      {/* Active Indicator (Gold) */}
       <div
-        className={`absolute top-1 bottom-1 w-1/2 bg-purple-900 rounded-lg shadow-md transition-all duration-300 ease-in-out`}
+        className={`absolute top-1 bottom-1 w-1/2 bg-[#FDD023] rounded-lg shadow-md transition-all duration-300 ease-in-out`}
         style={{ left: isIncoming ? '0.25rem' : 'calc(50% - 0.25rem)' }}
       ></div>
 
@@ -110,10 +111,11 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ isOpen, onClose, 
     }
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/50">
+            {/* Modal Content - Kept white background for contrast/pop-up feel, but updated accents */}
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
                 <div className="flex justify-between items-center border-b pb-3 mb-4">
-                    <h2 className="text-xl font-bold text-purple-900">Send Counter Offer</h2>
+                    <h2 className="text-xl font-bold text-[#1a0f2e]">Send Counter Offer</h2>
                     <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 transition">
                         <X className="w-6 h-6" />
                     </button>
@@ -123,7 +125,7 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ isOpen, onClose, 
                     Submitting a counter offer for: <span className="font-semibold">{listingTitle}</span>
                 </p>
                 <p className="text-gray-500 mb-2">
-                    Listed Price: <span className="font-semibold text-purple-900">${listingAmount}</span>
+                    Listed Price: <span className="font-semibold text-[#1a0f2e]">${listingAmount}</span>
                 </p>
 
                 <div className="mb-6">
@@ -154,7 +156,8 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ isOpen, onClose, 
                                 }
                             }}
                             placeholder="0"
-                            className="w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-lg"
+                            // Updated focus ring to gold accent
+                            className="w-full pl-7 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-[#FDD023] focus:border-[#FDD023] text-lg"
                             min="0"
                             max={listingAmount}
                         />
@@ -170,7 +173,8 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ isOpen, onClose, 
                     </button>
                     <button
                         onClick={handleSend}
-                        className="px-4 py-2 text-sm font-semibold text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 transition"
+                        // Changed background to gold accent
+                        className="px-4 py-2 text-sm font-semibold text-black bg-[#FDD023] rounded-lg hover:bg-[#FDD023]/80 transition disabled:bg-gray-300 disabled:text-gray-500"
                         disabled={amount! <= 0 || amount == null}
                     >
                         Send Counter
@@ -437,30 +441,34 @@ export default function Messages() {
     const selectedConversation = conversations.find(c=>c.id === selectedConversationId)
 
     return (
-        <div className="h-screen bg-gray-50 overflow-hidden">
+        // Applied the dark gradient background to the entire page
+        <div className="h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] text-white overflow-hidden">
             <Navbar 
                 handleLogout={handleLogout}
                 setShowLoginModal={()=>{}}
                 setShowMenu={setShowMenu}
                 navigate={navigate}/>
             <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
+            <CustomToastContainer />
             {/* Header */}
                 <div className="flex mt-2 mb-2">
-                    {/* Go back button */}
+                    {/* Go back button - Updated text color to gold/white */}
                         <button 
                             onClick={() => navigate(-1)} // Go back to the previous page (Listings)
-                            className="flex items-center text-purple-900 hover:text-purple-700 p-4 pr-0 font-semibold"
+                            className="flex items-center text-[#FDD023] hover:text-white p-4 pr-0 font-semibold"
                         >
                         <ArrowLeft className="w-5 h-5 mr-2" />
                         Back to Listings
                         </button> 
                     <MessageToggle currentView={view} toggleView={handleToggleView} incomingCount={incomingCount} outgoingCount={outgoingCount}/>
                 </div>
+            {/* Main Chat Area */}
             <main className="flex flex-1 h-[calc(100vh-142px)] overflow-hidden">
                 {/* Sidebar: Chat List */}
-                    <aside className="w-full sm:w-1/3 max-w-xs h-full border-gray-300 border-t border-r rounded-r-md bg-white flex flex-col">
-                        <div className="p-4 border-gray-300 border-b">
-                            <h2 className="text-xl font-semibold text-gray-800">Chats ({view == 'INCOMING' ? incomingCount : outgoingCount})</h2>
+                    {/* Updated sidebar background, border, and text colors */}
+                    <aside className="w-full sm:w-1/3 max-w-xs h-full border-zinc-700 border-t border-r rounded-r-md bg-[#1a0f2e] flex flex-col">
+                        <div className="p-4 border-zinc-700 border-b">
+                            <h2 className="text-xl font-semibold text-[#FDD023]">Chats ({view == 'INCOMING' ? incomingCount : outgoingCount})</h2>
                         </div>
                         <div className="flex-1 overflow-y-auto">
                             {conversations.filter((convo) => convo.type===view).map((convo) => {
@@ -469,14 +477,15 @@ export default function Messages() {
                                     <div
                                         key={convo.id}
                                         onClick={()=> setSelectedConversationId(convo.id)}
-                                        className={`p-3 border-1 border-gray-300 ${
-                                            isSelected ? 'bg-purple-900 border-l-4 border-purple-900' : 'bg-gray-200 hover:cursor-pointer hover:bg-gray-300'
+                                        // Updated selected/unselected styles
+                                        className={`p-3 border-zinc-700 border-b transition-colors ${
+                                            isSelected ? 'bg-[#2c1844] border-l-4 border-[#FDD023]' : 'bg-transparent hover:cursor-pointer hover:bg-[#1a0f2e]/50'
                                         }`}
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center justify-center">
-                                                <span className=" h-2 w-2 rounded-full bg-blue-500 flex-shrink-0"/> {/* Notification dot */}
-                                                <p className={`ml-2 font-md font-bold ${isSelected ? "text-white" : "text-purple-900"}`}>{convo.listingTitle}</p>
+                                                <span className=" h-2 w-2 rounded-full bg-[#FDD023] flex-shrink-0"/> {/* Notification dot (Gold) */}
+                                                <p className={`ml-2 font-md font-bold ${isSelected ? "text-[#FDD023]" : "text-white"}`}>{convo.listingTitle}</p>
                                             </div>
                                             <div className="mt-0.5 items-center text-right">
                                                 <p className={`text-xs text-gray-200 ${convo.status === 'ongoing' ? "mb-4.5" : ""} ${isSelected ? "text-white" : "text-purple-900"}`}>
@@ -494,18 +503,18 @@ export default function Messages() {
                         </div>
                     </aside>
                 {/* Chat Window: Message Display */}
-                    <section className="flex-1 flex flex-col bg-white border-t border-gray-300 shadow-lg rounded-tl-md">
+                    <section className="flex-1 flex flex-col  shadow-lg rounded-tl-md">
                         {selectedConversation ? (
                             <>
                                 {/* Chat Header */}
-                                <div className="p-4 border-b border-gray-300 bg-purple-900 text-white shadow-md">
+                                <div className="p-4  bg-[#2c1844] text-white shadow-md">
                                     <h2 className="text-xl font-bold">
                                         Chat with {selectedConversation.otherUsername}
                                     </h2>
                                 </div>
 
                                 {/* Messages Container */}
-                                <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+                                <div className="flex-1 p-4 space-y-4 overflow-y-auto bg-[#1a0f2e]">
                                     {currentMessages.map((msg, index) => {
                                         const isCurrentUser = msg.senderId === currentUserData?.uid;
                                         const time = msg.timestamp 
@@ -522,32 +531,32 @@ export default function Messages() {
                                                     className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                                                 >
                                                     <div
-                                                        // Distinct card style for counter offers
+                                                        // Distinct card style for counter offers - using gold accent
                                                         className={`max-w-[80%] sm:max-w-[70%] lg:max-w-[60%] p-4 rounded-2xl shadow-lg border-2 ${
                                                             isCurrentUser 
-                                                                ? 'bg-yellow-50 border-yellow-300 text-gray-800 rounded-br-md' // Outgoing
-                                                                : 'bg-yellow-100 border-yellow-400 text-gray-800 rounded-tl-md' // Incoming
+                                                                ? 'bg-[#FDD023]/20 border-[#FDD023]/40 text-white rounded-br-md' // Outgoing
+                                                                : 'bg-[#FDD023]/30 border-[#FDD023]/60 text-white rounded-tl-md' // Incoming
                                                         }`}
                                                     >
                                                         <div className="flex items-center space-x-2">
-                                                            <Scale className="w-6 h-6 text-yellow-600" />
-                                                            <h4 className="font-bold text-lg text-yellow-800">
+                                                            <Scale className="w-6 h-6 text-[#FDD023]" />
+                                                            <h4 className="font-bold text-lg text-[#FDD023]">
                                                                 {isCurrentUser ? 'Your Counter Offer' : 'Incoming Counter Offer'}
                                                             </h4>
                                                         </div>
-                                                        <p className="mb-1 text-gray-500">
+                                                        <p className="mb-1 text-gray-300">
                                                             Listed Price: ${selectedConversation.listingAmount}
                                                         </p>
 
                                                         <p className="text-sm font-semibold mb-3">
-                                                            Amount: <span className="text-yellow-700">${msg.counterAmount}</span>
+                                                            Amount: <span className="text-[#FDD023]">${msg.counterAmount}</span>
                                                         </p>
 
                                                         {/* Status Indicator */}
                                                         <div className={`text-xs font-medium py-1 px-2 rounded-full inline-flex items-center ${
-                                                            msg.counterStatus === 'accepted' ? 'bg-green-100 text-green-700' :
-                                                            msg.counterStatus === 'rejected' ? 'bg-red-100 text-red-700' :
-                                                            'bg-blue-100 text-blue-700'
+                                                            msg.counterStatus === 'accepted' ? 'bg-green-600 text-white' :
+                                                            msg.counterStatus === 'rejected' ? 'bg-red-600 text-white' :
+                                                            'bg-blue-600 text-white'
                                                         }`}>
                                                             {msg.counterStatus === 'accepted' && <Check className="w-4 h-4 mr-1" />}
                                                             {msg.counterStatus === 'rejected' && <Ban className="w-4 h-4 mr-1" />}
@@ -557,24 +566,24 @@ export default function Messages() {
 
                                                         {/* Accept/Reject Buttons for INCOMING PENDING Offers */}
                                                         {isIncomingOffer && isPending && (
-                                                            <div className="mt-4 pt-3 border-t border-yellow-300 flex space-x-2">
+                                                            <div className="mt-4 pt-3 border-t border-zinc-700 flex space-x-2">
                                                                 <button
                                                                     onClick={() => handleCounterAction(msg.id, 'accept')}
                                                                     disabled={loading}
-                                                                    className="flex-1 py-2 px-3 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition disabled:bg-gray-400"
+                                                                    className="flex-1 py-2 px-3 text-sm font-semibold text-black bg-[#FDD023] rounded-lg hover:bg-[#FDD023]/90 transition disabled:bg-gray-400"
                                                                 >
                                                                     <Check className="w-4 h-4 mr-1 inline-block" /> Accept
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleCounterAction(msg.id, 'reject')}
                                                                     disabled={loading}
-                                                                    className="flex-1 py-2 px-3 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition disabled:bg-gray-400"
+                                                                    className="flex-1 py-2 px-3 text-sm font-semibold text-white bg-red-700 rounded-lg hover:bg-red-800 transition disabled:bg-gray-400"
                                                                 >
                                                                     <X className="w-4 h-4 mr-1 inline-block" /> Decline
                                                                 </button>
                                                             </div>
                                                         )}
-                                                        <span className="block text-xs mt-2 text-right opacity-80 text-gray-600">
+                                                        <span className="block text-xs mt-2 text-right opacity-80 text-gray-400">
                                                             {time}
                                                         </span>
                                                     </div>
@@ -590,14 +599,15 @@ export default function Messages() {
                                                     <div
                                                         className={`max-w-[80%] sm:max-w-[70%] lg:max-w-[60%] p-3 rounded-2xl shadow-sm ${
                                                             isCurrentUser
-                                                                ? 'bg-purple-600 text-white rounded-br-md rounded-tr-xl rounded-bl-xl rounded-tl-xl'
-                                                                : 'bg-gray-200 text-gray-800 rounded-tl-md rounded-br-xl rounded-bl-xl rounded-tr-xl'
+                                                                // Updated message bubble styles to dark purple/gold accent
+                                                                ? 'bg-[#2c1844] text-white rounded-br-md rounded-tr-xl rounded-bl-xl rounded-tl-xl'
+                                                                : 'bg-[#dfba25] text-black rounded-tl-md rounded-br-xl rounded-bl-xl rounded-tr-xl'
                                                         }`}
                                                     >
                                                     {msg.type=='text' && (
                                                         <div>
                                                             <p className="text-sm break-words leading-relaxed">{msg.text}</p>
-                                                            <span className={`block text-xs mt-1 text-right opacity-70 ${isCurrentUser ? 'text-purple-200' : 'text-gray-600'}`}>
+                                                            <span className={`block text-xs mt-1 text-right opacity-70 ${isCurrentUser ? 'text-gray-400' : 'text-gray-700'}`}>
                                                                 {time}
                                                             </span>
                                                         </div>
@@ -612,7 +622,7 @@ export default function Messages() {
                                 </div>
                                 
                                 {/* Message Input */}
-                                <div className="p-4 border-t border-gray-300 bg-white shadow-t-lg">
+                                <div className="p-4 border-t border-zinc-700 bg-[#2c1844] shadow-t-lg">
                                     <div className="flex space-x-3 items-center">
                                         <input 
                                             type="text" 
@@ -668,34 +678,32 @@ export default function Messages() {
                                                    </div>
                                                )}
                                             </div>
-                                        
-
-                                        <button 
-                                            className={`px-6 py-3 ${loading || newMessage=="" ? "bg-gray-400 cursor-not-allowed!"  : "bg-purple-900"} text-white font-semibold rounded-xl transition duration-150`}
-                                            disabled={loading || newMessage==""}
-                                            onClick = {()=>sendMessage(newMessage)}
-                                        >
-                                            Send
-                                        </button>
+                                            <button 
+                                                onClick={() => sendMessage(newMessage)}
+                                                disabled={!newMessage || loading}
+                                                // Send button using gold accent
+                                                className="p-3 text-black bg-[#FDD023] hover:bg-[#FDD023]/90 rounded-xl transition duration-150 disabled:bg-gray-500 disabled:text-gray-300 flex items-center justify-center"
+                                            >
+                                                Send
+                                            </button>
                                     </div>
                                 </div>
                             </>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-gray-500 p-8 text-center">
-                                <svg className="w-16 h-16 mb-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                                <p className="text-xl font-medium">Select a chat to start messaging.</p>
-                                <p className="text-md mt-2">Your conversations will appear in the list on the left.</p>
+                            <div className="flex flex-col items-center justify-center h-full bg-[#1a0f2e] text-white">
+                                <p className="text-xl font-semibold mb-2">No conversation selected</p>
+                                <p className="text-gray-400">Select a chat from the sidebar to view messages.</p>
                             </div>
                         )}
                     </section>
-            </main>
+                </main>
             <CounterOfferModal 
-                isOpen={showCounterModal}
+                isOpen={showCounterModal} 
                 onClose={() => setShowCounterModal(false)}
                 onSend={sendCounterOffer}
-                listingTitle={selectedConversation?.listingTitle || 'the listing'}
-                listingAmount={selectedConversation?.listingAmount || 0}/>
-            <CustomToastContainer/>
+                listingTitle={selectedConversation?.listingTitle || "Item"}
+                listingAmount={selectedConversation?.listingAmount || 0}
+            />
         </div>
-    )
+    );
 }
