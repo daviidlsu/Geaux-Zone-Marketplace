@@ -9,7 +9,7 @@ import { db } from "./firebase/firebase"
 import Navbar from "./components/navbar"
 import Menu from "./components/menu"
 import CustomToastContainer from "./components/toast"
-import { Plus, Ban, Check, Flag, Scale, X, Clock, ArrowLeft, Trash } from "lucide-react"
+import { Plus, Ban, Check, Flag, Scale, X, Clock, ArrowLeft, Trash, Send, SendHorizonal, SendHorizontal } from "lucide-react"
 
 type OfferMessageType = 'INCOMING' | 'OUTGOING';
 type MessageContent = 'counter' | 'image' | 'text';
@@ -68,6 +68,7 @@ const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, toggleView, 
       <button
         className={`${baseClasses} ${isIncoming ? activeClasses : inactiveClasses}`}
         onClick={() => {toggleView('INCOMING')}}
+        disabled={incomingCount===0 || currentView==='INCOMING'}
       >
         Incoming Offers ({incomingCount})
       </button>
@@ -76,6 +77,7 @@ const MessageToggle: React.FC<MessageToggleProps> = ({ currentView, toggleView, 
       <button
         className={`${baseClasses} ${!isIncoming ? activeClasses : inactiveClasses}`}
         onClick={() => {toggleView('OUTGOING')}}
+        disabled={outgoingCount===0 || currentView==='OUTGOING'}
       >
         Outgoing Offers ({outgoingCount})
       </button>
@@ -453,14 +455,6 @@ export default function Messages() {
             <CustomToastContainer />
             {/* Header */}
                 <div className="flex mt-2 mb-2">
-                    {/* Go back button - Updated text color to gold/white */}
-                        <button 
-                            onClick={() => navigate(-1)} // Go back to the previous page (Listings)
-                            className="flex items-center text-[#FDD023] hover:text-white p-4 pr-0 font-semibold"
-                        >
-                        <ArrowLeft className="w-5 h-5 mr-2" />
-                        Back to Listings
-                        </button> 
                     <MessageToggle currentView={view} toggleView={handleToggleView} incomingCount={incomingCount} outgoingCount={outgoingCount}/>
                 </div>
             {/* Main Chat Area */}
@@ -628,7 +622,7 @@ export default function Messages() {
                                         <input 
                                             type="text" 
                                             placeholder={selectedConversation.status === 'terminated' ? "This chat has been terminated." : "Type a message..."}
-                                            className={`flex-1 px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 ${selectedConversation.status === 'terminated' ? "!cursor-not-allowed" : ""} focus:border-purple-500 transition duration-150`}
+                                            className={`flex-1 px-3 py-3 border border-gray-300 rounded-xl ${selectedConversation.status === 'terminated' ? "!cursor-not-allowed" : ""} focus:outline-none `}
                                             value = {newMessage}
                                             onChange={(e) => setNewMessage(e.target.value)}
                                             onKeyDown = {(e) => {if (e.key == 'Enter') {e.preventDefault(); sendMessage(newMessage)}}}
@@ -641,7 +635,7 @@ export default function Messages() {
                                                {/* Action Button */}
                                                {selectedConversation.status === 'ongoing' ? (
                                                 <button 
-                                                    onClick={() => {setShowActionMenu(prev => !prev);console.log("toggle")}}
+                                                    onClick={() => {setShowActionMenu(prev => !prev)}}
                                                     className={`p-3 text-white hover:text-white hover:bg-purple-800 bg-purple-900 rounded-xl transition duration-150 flex items-center justify-center`}
                                                     aria-expanded={showActionMenu}
                                                     title="More Actions"
@@ -650,7 +644,7 @@ export default function Messages() {
                                                 </button>)
                                                 : (
                                                     <button 
-                                                    onClick={() => {setShowActionMenu(prev => !prev);console.log("toggle")}}
+                                                    onClick={() => {setShowActionMenu(prev => !prev)}}
                                                     className={`p-3 hover:bg-red-600 bg-red-500 rounded-xl transition duration-150 flex items-center justify-center`}
                                                     aria-expanded={showActionMenu}
                                                     title="More Actions"
@@ -661,18 +655,18 @@ export default function Messages() {
 
                                                {/* Drop-up Menu */}
                                                {showActionMenu && (
-                                                   <div className="absolute bottom-full mb-3 right-0 w-40 bg-white rounded-lg shadow-xl border border-gray-200 z-20 overflow-hidden">
+                                                   <div className="absolute bottom-full mb-3 right-0 w-40 bg-purple-900 rounded-lg shadow-xl z-20 overflow-hidden">
                                                        {selectedConversation.status==="ongoing" ? (
-                                                        <button onClick={()=>{setShowCounterModal(true);setShowActionMenu(false)}} className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-yellow-100">
+                                                        <button onClick={()=>{setShowCounterModal(true);setShowActionMenu(false)}} className="items-center flex w-full text-left px-4 py-2 text-sm text-white font-semibold hover:text-yellow-400">
                                                         <Scale className="mt-1 mr-2 w-5 h-5 stroke-yellow-400 stroke-3"/>
                                                            Send Counter
                                                        </button>) : null}
-                                                       <button className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-red-100">
+                                                       <button className="items-center flex w-full text-left px-4 py-2 text-sm text-white font-semibold hover:text-red-400">
                                                         <Flag className="mt-1 mr-2 w-5 h-5 stroke-red-400 stroke-2.5 fill-red-400"/>
                                                            Report User
                                                        </button>
                                                        <button 
-                                                        className="items-center flex w-full text-left px-4 py-2 text-sm text-gray-700 font-semibold hover:bg-red-200"
+                                                        className="items-center flex w-full text-left px-4 py-2 text-sm text-white font-semibold hover:text-red-400"
                                                         onClick={() => {handleRemoveOffer();setShowActionMenu(false)}}>
                                                         <Ban className="mt-1 mr-2 w-5 h-5 stroke-red-400 stroke-2.5"/>
                                                            Close Offer
@@ -686,7 +680,7 @@ export default function Messages() {
                                                 // Send button using gold accent
                                                 className="p-3 text-black bg-[#FDD023] hover:bg-[#FDD023]/90 rounded-xl transition duration-150 disabled:!cursor-not-allowed disabled:bg-gray-500 disabled:text-gray-300 flex items-center justify-center"
                                             >
-                                                Send
+                                                <SendHorizontal className="w-5 h-5 stroke-[#41206a]"/>
                                             </button>
                                     </div>
                                 </div>

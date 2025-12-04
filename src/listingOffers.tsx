@@ -297,25 +297,25 @@ export default function ListingOffers(){
     }
     
     return(
-        <div>
+        <div className='bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844]'>
             <Navbar
               handleLogout={handleLogout}
               setShowLoginModal={()=>{}}
               setShowMenu={setShowMenu}
               navigate={navigate}/>
             <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
-            <div className="max-w-4xl mx-auto px-4 py-10">
+            <div className="max-w-4xl mx-auto px-4 py-10 ">
             {/* Go back button */}
                 <button 
                     onClick={() => navigate(-1)} // Go back to the previous page (Your Listings)
-                    className="flex items-center text-purple-900 hover:text-purple-700 mb-6 font-semibold"
+                    className="flex items-center text-[#FDD023]  mb-6 font-semibold"
                 >
                 <ArrowLeft className="w-5 h-5 mr-2" />
                 Back to Your Listings
                 </button>
             {/* Listing Title */}
-                <h1 className="text-3xl font-bold text-gray-900 mb-6">
-                Offers for: <span className="text-purple-900">{listingTitle}</span>
+                <h1 className="text-3xl font-bold text-[#FDD023] mb-6">
+                Offers for: <span className="text-[#FDD023]">{listingTitle}</span>
                 </h1>
             {/* Offers */}
                 {offers.length === 0 ? (
@@ -325,19 +325,19 @@ export default function ListingOffers(){
                 ) : (
                     <div className="space-y-4">
                         {offers.filter((offer)=>offer.status != "rejected" ).map((offer) => (
-                            <div key={offer.offerId} className="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
+                            <div key={offer.offerId} className="bg-[#2c1844] p-6 rounded-xl shadow-md border-l-4 border-purple-500">
                                 <div className="flex justify-between items-start">
-                                    <h2 className="text-2xl font-bold text-purple-900">
+                                    <h2 className="text-2xl font-bold text-[#FDD023]">
                                         ${offer.amount}
                                     </h2>
-                                    <span className="text-sm text-gray-500">
+                                    <span className="text-sm text-gray-400">
                                         {/* Format the timestamp here */}
                                         {offer.timeStamp?.toDate().toLocaleString('en-US', {hour: 'numeric', minute: 'numeric',month: 'long', day: 'numeric'}) || 'Date N/A'}
                                     </span>
                                 </div>
-                                <p className="text-gray-700 mt-2 italic">"{offer.note || 'No message provided.'}"</p>
+                                <p className="text-gray-300 mt-2 italic">"{offer.note || 'No message provided.'}"</p>
                                 <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-                                    <p className="text-sm text-gray-600">Offered by: {offer.buyerDisplayName || "cannot find user"}</p>
+                                    <p className="text-sm text-gray-400">Offered by: {offer.buyerDisplayName || "cannot find user"}</p>
                                     <CheckStatus status={offer.status} handleReject={()=>handleReject(offer)} handleAccept={()=>handleAccept(offer)} handleChat={()=>handleChat(offer)}/>
                                 </div>
                             </div>

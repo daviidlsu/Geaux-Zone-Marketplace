@@ -730,17 +730,17 @@ export default function WelcomePage() {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="bg-white p-4 rounded-xl shadow mb-6 overflow-hidden max-w-7xl mx-auto px-6"
+              className="bg-[#2c1844] p-4 rounded-xl shadow mb-6 overflow-hidden max-w-7xl mx-auto px-6"
             >
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold mb-3">Filters</h2>
-                <button onClick={()=>setFilters(InitialFilters)} className="text-gray-500 font-semibold bg-gray-300 px-2 rounded-xl hover:shadow-sm hover:text-gray-400">
+                <h2 className="text-lg font-semibold mb-3 text-[#FDD023]">Filters</h2>
+                <button onClick={()=>setFilters(InitialFilters)} className="text-white text-center font-semibold bg-purple-900 px-2 rounded-xl hover:shadow-sm ">
                   Clear
                 </button>
               </div>
 
               {/* Price Range */}
-              <label className="block mb-2">
+              <label className="block mb-2 text-white">
                 Price Range: ${filters.priceRange[0]} - ${filters.priceRange[1]}
               </label>
               <input
@@ -752,15 +752,15 @@ export default function WelcomePage() {
                 onChange={(e) =>
                   setFilters({ ...filters, priceRange: [0, Number(e.target.value)] })
                 }
-                className="w-full mb-4"
+                className="w-full mb-4 accent-[#FDD023] "
               />
 
               {/* Sort */}
-              <label className="block mb-2">Sort by:</label>
+              <label className="block mb-2 text-white">Sort by:</label>
               <select
                 value={filters.sortBy}
                 onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-                className="w-full border rounded p-2 mb-4"
+                className="w-full border rounded p-2 mb-4 bg-[#2c1844] text-[#FDD023]"
               >
                 <option>Newest</option>
                 <option>Lowest Price</option>
@@ -768,13 +768,13 @@ export default function WelcomePage() {
               </select>
 
               {/* Condition */}
-              <label className="block mb-2">Condition:</label>
+              <label className="block mb-2 text-white">Condition:</label>
               <select
                 value={filters.condition}
                 onChange={(e) =>
                   setFilters({ ...filters, condition: e.target.value })
                 }
-                className="w-full border rounded p-2 mb-4"
+                className="w-full border rounded p-2 mb-4 bg-[#2c1844] text-[#FDD023]"
               >
                 <option>All</option>
                 <option>New</option>
@@ -784,7 +784,7 @@ export default function WelcomePage() {
               </select>
 
               {/* Distance */}
-              <label className="block mb-2">
+              <label className="block mb-2 text-white">
                 Distance from Campus (miles): {filters.distance}
               </label>
               <input
@@ -795,17 +795,17 @@ export default function WelcomePage() {
                 onChange={(e) =>
                   setFilters({ ...filters, distance: Number(e.target.value) })
                 }
-                className="w-full mb-4"
+                className="w-full mb-4 accent-[#FDD023]"
               />
 
               {/* Posted Date */}
-              <label className="block mb-2">Posted Date:</label>
+              <label className="block mb-2 text-white">Posted Date:</label>
               <select
                 value={filters.postedDate}
                 onChange={(e) =>
                   setFilters({ ...filters, postedDate: e.target.value })
                 }
-                className="w-full border rounded p-2"
+                className="w-full border rounded p-2 bg-[#2c1844] text-[#FDD023]"
               >
                 <option>All</option>
                 <option>Today</option>
@@ -851,7 +851,7 @@ export default function WelcomePage() {
         >
           <div
             // Main modal container: dark purple background
-            className="bg-[#1a0f2e] rounded-2xl max-w-5xl w-full h-[80vh] max-h-[90vh] overflow-hidden shadow-2xl flex"
+            className="bg-[#1a0f2e] rounded-2xl max-w-5xl w-full h-[95vh] max-h-[110vh] overflow-hidden shadow-2xl flex"
             onClick={(e) => {e.stopPropagation();handleCloseOfferModal()}}
           >
             {/* Left Side - Image Carousel */}
@@ -915,11 +915,17 @@ export default function WelcomePage() {
             {/* Right Side - Details */}
               <div className="w-1/2 flex flex-col text-white">
               {/* Header with Close Button */}
-                <div className="px-6 py-4 border-b border-zinc-700 flex items-center justify-between bg-[#2c1844]">
+                <div className="px-6 py-3 border-b border-zinc-700 flex items-center justify-between bg-[#2c1844]">
+                
                 {/* Category Tag (Gold Accent) */}
-                <span className="inline-block px-3 py-1 bg-[#FDD023] text-black rounded-full text-sm font-medium">
-                  {selectedListing.categoryID}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="inline-block px-3 py-1 bg-[#FDD023] text-black rounded-full text-sm font-medium">
+                    {selectedListing.categoryID}
+                  </span>
+                  <span className="inline-block px-3 py-1 bg-gray-700 text-white rounded-full text-sm font-medium">
+                    {selectedListing.condition || "Condition not set"}
+                  </span>
+                </div>
                 <button
                   onClick={()=>{handleCloseListing()}}
                   className="text-white hover:text-[#FDD023] w-8 h-8 flex items-center justify-center rounded-full transition-all"
@@ -929,7 +935,7 @@ export default function WelcomePage() {
                 </div>
 
               {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-6 border-b border-zinc-700">
                 {/* Title and Price */}
                 <div className="mb-6">
                   {/* Title and Price text color updated */}
@@ -938,7 +944,7 @@ export default function WelcomePage() {
                 </div>
 
                 {/* Location */}
-               <div className="bg-[#2c1844] rounded-xl p-4 mb-6 border border-[#FDD023]/30">
+               <div className="bg-[#2c1844] rounded-xl p-4 mb-6 border border-zinc-700">
                 <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-[#FDD023]" />
                   Pickup Location
@@ -993,23 +999,10 @@ export default function WelcomePage() {
                     disabled>
                   </textarea>
                 </div>
-                </div>
-
-                {/* Category and Condition */}
-                <div className="px-6 py-4 border-b border-zinc-700 flex items-center gap-3">
-                  {/* Category Tag (Gold Accent) - already updated in header, but kept here too */}
-                  <span className="inline-block px-3 py-1 bg-[#FDD023] text-black rounded-full text-sm font-medium">
-                    {selectedListing.categoryID}
-                  </span>
-                  {/* Condition Tag (White/Gray) */}
-                  <span className="inline-block px-3 py-1 bg-gray-700 text-white rounded-full text-sm font-medium">
-                    {selectedListing.condition || "Condition not set"}
-                  </span>
-                </div>
-
+              </div>
 
               {/* Seller Info */}
-                <div className="bg-[#2c1844] rounded-xl p-4 m-6 mt-4 mb-0 py-2 border-t border-zinc-700">
+                <div className="bg-[#2c1844] rounded-xl p-4 m-6 mt-4 mb-1 py-2 ">
                   <h4 className="text-lg font-semibold text-[#FDD023] mb-2">Seller Information</h4>
                   <div className="pb-1 flex items-center gap-3">
                     {/* Seller Initials (Gold Accent) */}
@@ -1022,7 +1015,7 @@ export default function WelcomePage() {
                 </div>
 
               {/* Action Buttons - Fixed at Bottom */}
-                <div className="px-6 py-4 bg-[#2c1844] border-t border-zinc-700">
+                <div className="px-6 py-4">
                 <div className="flex gap-3">
                   {/* Purchase Button (Gold Accent) */}
                 <button
@@ -1151,38 +1144,38 @@ export default function WelcomePage() {
                       setLoading(false);
                     }
                   }}
-                  className="flex-1 bg-[#FDD023] text-black py-3 rounded-xl font-bold hover:bg-[#FDD023]/90 transition-all disabled:opacity-50"
+                  className="flex-1 bg-[#FDD023] text-black py-2 rounded-xl font-bold hover:bg-[#FDD023]/90 transition-all disabled:opacity-50"
                   disabled={!selectedListing?.available || selectedListing?.sellerUID === currentUser?.uid}
                 >
                   {selectedListing?.sellerUID === currentUser?.uid ? "Your Listing" : "Purchase"}
                 </button>
-                  {/* Submit Offer Button (Gold Accent) */}
-                  <button
-                    disabled={offerMade}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (selectedListing && selectedListing.available) {
-                        setShowOfferModal(true)
-                        setShowSafetyTips(true)
-                      } else {
-                        toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId: 'reserved-listing-error'});
-                      }
-                    }}
-                    className={`disabled:opacity-50 ${offerMade ? "!cursor-default" : ""} flex-1 bg-[#FDD023] text-black py-3 rounded-xl font-bold  transition-all`}
+                {/* Submit Offer Button (Gold Accent) */}
+                <button
+                  disabled={offerMade}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (selectedListing && selectedListing.available) {
+                      setShowOfferModal(true)
+                      setShowSafetyTips(true)
+                    } else {
+                      toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId: 'reserved-listing-error'});
+                    }
+                  }}
+                  className={`disabled:opacity-50 ${offerMade ? "!cursor-default" : ""} flex-1 bg-[#FDD023] hover:bg-[#FDD023]/90 text-black py-2 rounded-xl font-bold  transition-all`}
+                >                  
+                  Make Offer
+                </button>
+                {/* Favorite Button (Dark Background, Gold/Red Accent) */}
+                  <button onClick={() => {handleFavorite(selectedListing.docId);}}
+                    className={`px-2 py-2 rounded-xl border border-zinc-700 hover:border-[#FDD023] transition-all 
+                      ${likedItems.includes(selectedListing.docId) ? "bg-[#1a0f2e]" : "bg-[#1a0f2e] hover:bg-[#2c1844]"}`}
                   >
-                    Make Offer
-                  </button>
-                  {/* Favorite Button (Dark Background, Gold/Red Accent) */}
-                    <button onClick={() => {handleFavorite(selectedListing.docId);}}
-                      className={`px-2 py-2 rounded-xl border border-zinc-700 hover:border-[#FDD023] transition-all 
-                        ${likedItems.includes(selectedListing.docId) ? "bg-[#1a0f2e]" : "bg-[#1a0f2e] hover:bg-[#2c1844]"}`}
-                    >
-                    <Heart className={`w-10 h-10 stroke-2 
-                      ${likedItems.includes(selectedListing.docId) 
-                        ? "fill-red-500 stroke-red-500 hover:fill-red-400 hover:stroke-red-400"
-                        : "fill-none stroke-gray-400 hover:fill-[#FDD023] hover:stroke-[#FDD023] hover:stroke-1" 
-                      } `} />
-                  </button>
+                  <Heart className={`w-8 h-8 stroke-2 
+                    ${likedItems.includes(selectedListing.docId) 
+                      ? "fill-red-500 stroke-red-500 "
+                      : "fill-none stroke-gray-400 hover:fill-[#FDD023] hover:stroke-[#FDD023] hover:stroke-1" 
+                    } `} />
+                </button>
                 </div>
                 </div>
             </div>
@@ -1693,84 +1686,93 @@ export default function WelcomePage() {
       )}
       <CustomToastContainer/>
 
-    {/* Safety Tips Modal */}
     {showSafetyTips && (
       <div 
-        className="fixed inset-0 bg-white bg-opacity-50 z-[70] flex items-center justify-center p-4"
+        className="fixed inset-0 bg-[#2c1844] bg-opacity-70 z-[70] flex items-center justify-center p-4"
       >
         <div 
-          className="bg-white rounded-2xl max-w-md w-full p-6"
+          className="bg-[#2c1844] rounded-2xl max-w-md w-full p-6 border border-purple-900 shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="text-center mb-4">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            {/* Shield Icon: Updated to gold accent background */}
+            <div className="w-16 h-16 bg-[#FDD023]/20 border border-[#FDD023]/40 rounded-full flex items-center justify-center mx-auto mb-3">
               <span className="text-3xl">🛡️</span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900">Safety First!</h3>
-            <p className="text-sm text-gray-600 mt-1">Please review these tips before meeting</p>
+            {/* Title: Updated to gold text */}
+            <h3 className="text-2xl font-bold text-[#FDD023]">Safety First!</h3>
+            {/* Subtitle: Updated to light gray text */}
+            <p className="text-sm text-gray-300 mt-1">Please review these tips before meeting</p>
           </div>
 
           <div className="space-y-3 mb-6">
-            <div className="flex gap-3 p-3 bg-green-50 rounded-lg">
-              <span className="text-green-600 text-xl flex-shrink-0">✅</span>
+            {/* Positive Tip (Meet in Public): Darkened background, white text, gold icon */}
+            <div className="flex gap-3 p-3 bg-gray-700/50 rounded-lg">
+              <span className="text-[#FDD023] text-xl flex-shrink-0">✅</span>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">Meet in Public Places</p>
-                <p className="text-xs text-gray-600">Student Union, Library, or busy campus locations</p>
+                <p className="font-semibold text-white text-sm">Meet in Public Places</p>
+                <p className="text-xs text-gray-400">Student Union, Library, or busy campus locations</p>
               </div>
             </div>
 
-            <div className="flex gap-3 p-3 bg-green-50 rounded-lg">
-              <span className="text-green-600 text-xl flex-shrink-0">✅</span>
+            {/* Positive Tip (Daylight): Darkened background, white text, gold icon */}
+            <div className="flex gap-3 p-3 bg-gray-700/50 rounded-lg">
+              <span className="text-[#FDD023] text-xl flex-shrink-0">✅</span>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">Meet During Daylight</p>
-                <p className="text-xs text-gray-600">Avoid late night meetings when possible</p>
+                <p className="font-semibold text-white text-sm">Meet During Daylight</p>
+                <p className="text-xs text-gray-400">Avoid late night meetings when possible</p>
               </div>
             </div>
 
-            <div className="flex gap-3 p-3 bg-green-50 rounded-lg">
-              <span className="text-green-600 text-xl flex-shrink-0">✅</span>
+            {/* Positive Tip (Bring a Friend): Darkened background, white text, gold icon */}
+            <div className="flex gap-3 p-3 bg-gray-700/50 rounded-lg">
+              <span className="text-[#FDD023] text-xl flex-shrink-0">✅</span>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">Bring a Friend</p>
-                <p className="text-xs text-gray-600">Safety in numbers - never go alone</p>
+                <p className="font-semibold text-white text-sm">Bring a Friend</p>
+                <p className="text-xs text-gray-400">Safety in numbers - never go alone</p>
               </div>
             </div>
 
-            <div className="flex gap-3 p-3 bg-yellow-50 rounded-lg">
-              <span className="text-yellow-600 text-xl flex-shrink-0">⚠️</span>
+            {/* Warning Tip (Inspect): Darkened background, white text, gold icon */}
+            <div className="flex gap-3 p-3 bg-gray-700/50 rounded-lg">
+              <span className="text-[#FDD023] text-xl flex-shrink-0">⚠️</span>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">Inspect Before Paying</p>
-                <p className="text-xs text-gray-600">Check item condition carefully</p>
+                <p className="font-semibold text-white text-sm">Inspect Before Paying</p>
+                <p className="text-xs text-gray-400">Check item condition carefully</p>
               </div>
             </div>
 
-            <div className="flex gap-3 p-3 bg-red-50 rounded-lg">
-              <span className="text-red-600 text-xl flex-shrink-0">❌</span>
+            {/* Negative Tip (No Personal Info): Darkened background, white text, red icon */}
+            <div className="flex gap-3 p-3 bg-gray-700/50 rounded-lg">
+              <span className="text-red-400 text-xl flex-shrink-0">❌</span>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">Never Share Personal Info</p>
-                <p className="text-xs text-gray-600">Don't give out your address or dorm room</p>
+                <p className="font-semibold text-white text-sm">Never Share Personal Info</p>
+                <p className="text-xs text-gray-400">Don't give out your address or dorm room</p>
               </div>
             </div>
           </div>
 
           <div className="flex gap-3">
+            {/* Secondary Button (Cancel): Dark theme styling */}
             <button
               onClick={() => {setShowSafetyTips(false);setShowOfferModal(false)}}
-              className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+              className="flex-1 px-4 py-2 border border-gray-500 text-gray-300 rounded-lg font-semibold bg-[#2c1844] hover:bg-[#1a0f2e] transition-all"
             >
               Cancel
             </button>
+            {/* Primary Button (I Understand): Gold accent styling */}
             <button
               onClick={() => {
                 setShowSafetyTips(false);
               }}
-              className="flex-1 px-4 py-2 bg-purple-900 text-white rounded-lg font-semibold hover:bg-purple-800 transition-all"
+              className="flex-1 px-4 py-2 bg-[#FDD023] text-black rounded-lg font-semibold hover:bg-[#FDD023]/80 transition-all"
             >
               I Understand
             </button>
           </div>
         </div>
       </div>
-    )}
+)}
     </div>  
   );
 }

@@ -170,7 +170,7 @@ export default function OutgoingOffers() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] flex flex-col">
-                <Navbar handleLogout={handleLogout} setShowMenu={setShowMenu} navigate={navigate} />
+                <Navbar handleLogout={handleLogout} setShowLoginModal={() => {}} setShowMenu={setShowMenu} navigate={navigate} />
                 <Menu showMenu={showMenu} setShowMenu={setShowMenu} />
                 <div className="flex flex-col max-w-7xl mx-auto px-4 py-10 min-h-[70vh] items-center justify-center text-white">
                     <div className="flex items-center gap-3 mb-6">
@@ -185,7 +185,7 @@ export default function OutgoingOffers() {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] text-white font-inter">
-            <Navbar handleLogout={handleLogout} setShowMenu={setShowMenu} navigate={navigate} />
+            <Navbar handleLogout={handleLogout} setShowLoginModal={() => {}} setShowMenu={setShowMenu} navigate={navigate} />
             <Menu showMenu={showMenu} setShowMenu={setShowMenu} />
             <div className="flex flex-col max-w-7xl mx-auto px-4 py-10 space-y-6">
                 {/* Search Bar */}

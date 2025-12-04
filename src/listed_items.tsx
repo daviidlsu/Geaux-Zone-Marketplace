@@ -299,7 +299,7 @@ export default function Listings() {
                             {/* View Listing Button - Gold BG, Dark Purple Text */}
                             <td className="relative whitespace-nowrap py-4 pr-6 pl-3 text-right text-sm font-medium">
                               <button
-                                className={`text-white px-3 py-1 ${ACCENT_GOLD_BG} ${DARK_PURPLE_TEXT} font-semibold rounded-2xl ${ACCENT_HOVER} hover:shadow-xl`}
+                                className={`text-[#A38200] px-3 py-1 ${ACCENT_GOLD_BG} ${DARK_PURPLE_TEXT} font-semibold rounded-2xl ${ACCENT_HOVER} hover:shadow-xl`}
                                 onClick={(e)=>{e.stopPropagation();handleOpenEditListingModal(listing)}}>
                                   Edit
                               </button>
