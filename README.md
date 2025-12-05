@@ -2,7 +2,8 @@
 
 A  LSU-themed online marketplace where students can list items, make offers, chat with buyers/sellers, and manage their listings. This is a marketplace to help students buy tickets and items without the worry of getting scammed or be lied to.
 
-Features
+Features:
+
 🔐 Authentication
 
 - LSU Email verification
