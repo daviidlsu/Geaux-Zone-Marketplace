@@ -25,7 +25,6 @@ export default function Menu({ showMenu, setShowMenu }: MenuProps) {
       onClick={() => setShowMenu(false)}
     >
       <div 
-        // FIX APPLIED HERE: Added bg-gradient-to-b (bottom) and the three color stops
         className={`fixed top-0 left-0 w-64 h-full rounded-r-2xl bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] shadow-2xl z-[50] transform transition-transform duration-300 ease-in-out ${showMenu ? 'translate-x-0' : '-translate-x-full'}`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -35,7 +34,6 @@ export default function Menu({ showMenu, setShowMenu }: MenuProps) {
             <h2 className="text-2xl ml-2 font-bold text-[#FDD023]">Menu</h2>
             <button 
               onClick={() => setShowMenu(false)} 
-              // FIX APPLIED HERE: Changed hover:bg-gray-100 to hover:bg-white/10 and icon color to white for contrast
               className="p-2 rounded-full hover:bg-white/10 transition-colors"
               aria-label="Close menu"
             >
@@ -51,7 +49,6 @@ export default function Menu({ showMenu, setShowMenu }: MenuProps) {
                   setShowMenu(false);
                   item.action();
                 }}
-                // SUGGESTION: Changed hover:bg-gray-100 to hover:bg-white/10 for better contrast on a dark background
                 className="flex items-center justify-between w-full p-3 pl-1 rounded-lg text-[#FDD023] hover:bg-white/10 transition-colors hover:cursor-pointer"
               >
                 <div className="flex items-center">

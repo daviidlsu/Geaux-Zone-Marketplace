@@ -8,8 +8,8 @@ export default function LandingPage() {
   const aboutSectionRef = useRef<HTMLElement | null>(null);
   const featuresSectionRef = useRef<HTMLElement | null>(null);
 
-  const [trackHeight, setTrackHeight] = useState<number>(60);
-  const [hideScrollIndicator, setHideScrollIndicator] = useState<boolean>(false);
+  const [trackHeight] = useState<number>(60);
+  const [hideScrollIndicator] = useState<boolean>(false);
 
   // Reveal sections on scroll
   useEffect(() => {
