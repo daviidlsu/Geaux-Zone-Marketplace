@@ -8,6 +8,7 @@ import { collection, getDocs, doc, query, Timestamp, where, updateDoc, deleteDoc
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx";
+import ReportUserButton from "./components/reportUser.tsx";
 
 // --- LSU THEME CONSTANTS ---
 const PRIMARY_BG = "bg-[#1a0f2e]"; // Dark Purple from Landing Page (Main BG)
@@ -591,12 +592,23 @@ export default function Listings() {
                             </div>
                           </div>
             
-                          {/* Seller Info */}
+                            {/* Seller Info */}
                             {/* Seller Info BG changed to Darker Purple */}
                             <div className={`${HEADER_BG} rounded-xl p-4 m-6`}>
-                              {/* Header text changed to white */}
-                              <h4 className="text-lg font-semibold text-white mb-2">Seller Information</h4>
-                              <div className="flex items-center gap-3">
+                              <div className="flex justify-between items-start">
+                                {/* Header text changed to white */}
+                                <h4 className="text-lg font-semibold text-white mb-2">Seller Information</h4>
+                                <div className="ml-4">
+                                  <ReportUserButton
+                                    reportedName={currentUserData?.username || 'Unknown User'}
+                                    reportedUID={currentUserData?.uid}
+                                    listingId={selectedListing?.docId}
+                                    reporterName={currentUser?.displayName || currentUserData?.username}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3 mt-3">
                                 {/* Avatar BG remains Dark Purple */}
                                 <div className={`w-12 h-12 ${HEADER_BG} rounded-full flex items-center justify-center text-white font-bold text-lg border border-white`}>{(currentUserData?.username.charAt(0).toUpperCase())}</div>
                                 <div>
