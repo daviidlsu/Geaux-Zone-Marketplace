@@ -34,6 +34,10 @@ Features:
 
 - Outgoing + incoming offers pages
 
+⌨️ Report System
+
+- Users can report shady sellers
+
 🎨 LSU-Themed UI
 
 - Dark purple gradient background
