@@ -1,73 +1,64 @@
-# React + TypeScript + Vite
+# Tiger Trade
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A  LSU-themed online marketplace where students can list items, make offers, chat with buyers/sellers, and manage their listings. This is a marketplace to help students buy tickets and items without the worry of getting scammed or be lied to.
 
-Currently, two official plugins are available:
+Features
+🔐 Authentication
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- LSU Email verification
 
-## React Compiler
+📦 Listings
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+- Create, edit, and delete listings
 
-## Expanding the ESLint configuration
+- Image upload + preview
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Search and filter listings
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Responsive grid display
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+💬 Buyer/Seller Chat
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- Real-time chat between buyers and sellers
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- Auto-generated chat rooms when offers are accepted
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Notification support via toasts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+💸 Offers System
+
+- Users can send, view, and delete offers
+
+- Offer states: pending, accepted, rejected
+
+- Outgoing + incoming offers pages
+
+🎨 LSU-Themed UI
+
+- Dark purple gradient background
+
+- Gold accent components
+
+- Glassmorphism cards and panels
+
+- Smooth animation using Framer Motion
+
+- Mobile-friendly navbar + slide-out menu
+
+🛠️ Tech Stack
+
+Frontend
+
+- React + TypeScript
+
+- Vite
+
+- TailwindCSS
+
+Backend / Database
+
+- Firebase Authentication
+
+- Firebase Firestore
+
+- Firebase Storage
