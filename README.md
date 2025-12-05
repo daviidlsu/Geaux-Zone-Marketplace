@@ -64,4 +64,4 @@ Backend / Database
 
 - Firebase Storage
 
-** Made by: Ethan Snead, David Sandoval, Mirina Benferhat, Madelaine Brown, Aaroh M Desai **
+**Made by: Ethan Snead, David Sandoval, Mirina Benferhat, Madelaine Brown, Aaroh M Desai**
