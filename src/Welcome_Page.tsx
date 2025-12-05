@@ -13,6 +13,7 @@ import { Carousel } from "react-responsive-carousel";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx"
+import ReportUserButton from "./components/reportUser.tsx";
 import { motion, AnimatePresence } from "framer-motion";
 
 
@@ -1004,12 +1005,25 @@ export default function WelcomePage() {
               {/* Seller Info */}
                 <div className="bg-[#2c1844] rounded-xl p-4 m-6 mt-4 mb-1 py-2 ">
                   <h4 className="text-lg font-semibold text-[#FDD023] mb-2">Seller Information</h4>
-                  <div className="pb-1 flex items-center gap-3">
-                    {/* Seller Initials (Gold Accent) */}
-                    <div className="w-12 h-12 bg-[#FDD023] rounded-full flex items-center justify-center text-black font-bold text-lg">{(listingOwner.username.charAt(0).toUpperCase())}</div>
-                    <div>
-                      <p className="font-semibold text-white">{listingOwner.username}</p>
-                      <p className="text-sm text-gray-400">Member since {listingOwner.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
+                  <div className="pb-1 flex items-center gap-3 justify-between">
+                    <div className="flex items-center gap-3">
+                      {/* Seller Initials (Gold Accent) */}
+                      <div className="w-12 h-12 bg-[#FDD023] rounded-full flex items-center justify-center text-black font-bold text-lg">{(listingOwner?.username.charAt(0).toUpperCase())}</div>
+                      <div>
+                        <p className="font-semibold text-white flex items-center gap-3">
+                          {listingOwner?.username}
+                        </p>
+                        <p className="text-sm text-gray-400">Member since {listingOwner?.accountCreation.toDate().toLocaleDateString('en-US', {month: 'long', year:'numeric'})}</p>
+                      </div>
+                    </div>
+
+                    <div className="ml-4">
+                      <ReportUserButton
+                        reportedName={listingOwner?.username || 'Unknown User'}
+                        reportedUID={selectedListing?.sellerUID}
+                        listingId={selectedListing?.docId}
+                        reporterName={currentUserData?.username}
+                      />
                     </div>
                   </div>
                 </div>
