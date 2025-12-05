@@ -38,6 +38,8 @@ Features:
 
 - Users can report shady sellers
 
+- Support team that handles reports 
+
 🎨 LSU-Themed UI
 
 - Dark purple gradient background
