@@ -40,6 +40,14 @@ Features:
 
 - Support team that handles reports 
 
+🌆 Events Page
+
+- Tracks and lists LSU/Local events in and around campus
+
+- Updated daily
+
+- Further encourages connectivity 
+
 🎨 LSU-Themed UI
 
 - Dark purple gradient background
