@@ -568,7 +568,7 @@ export default function WelcomePage() {
     const existingOfferQuery = query(offersCollectionRef, where("buyerUID", "==", currentUserData?.uid));
     getDocs(existingOfferQuery).then((querySnapshot) => {
       if (!querySnapshot.empty) {
-        toast.warn("You have already made an offer on this listing.", {toastId: "existing-offer-warning"});
+        toast.info("You have already made an offer on this listing.", {toastId: "existing-offer-warning"});
         setOfferMade(true);
       } else {
         setOfferMade(false);
@@ -827,17 +827,15 @@ export default function WelcomePage() {
       {/* Listing Detail Modal */}
         {selectedListing && listingOwner!=null &&(
         <div
-          // Dark background overlay
           className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
           onClick={()=>{handleCloseListing()}}
         >
           <div
-            // Main modal container: dark purple background
             className="bg-[#1a0f2e] rounded-2xl max-w-5xl w-full h-[95vh] max-h-[110vh] overflow-hidden shadow-2xl flex"
             onClick={(e) => {e.stopPropagation();handleCloseOfferModal()}}
           >
             {/* Left Side - Image Carousel */}
-            <div className="w-1/2 bg-gradient-to-br from-[#12091a] to-[#2c1844] flex items-center justify-center relative overflow-hidden">
+              <div className="w-1/2 bg-gradient-to-br from-[#12091a] to-[#2c1844] flex items-center justify-center relative overflow-hidden">
               {selectedListing.images && selectedListing.images.length > 0 ? (
                 <Carousel
                   showArrows={true}
@@ -890,21 +888,18 @@ export default function WelcomePage() {
                   loading="lazy"
                 />
               )}
-            </div>
+              </div>
 
             {/* Right Side - Details */}
               <div className="w-1/2 flex flex-col text-white">
               {/* Header with Close Button */}
-                <div className="px-6 py-3 border-b border-zinc-700 flex items-center justify-between bg-[#2c1844]">
-                
+                <div className="px-6 py-3 border-b border-zinc-700 flex items-center justify-between bg-[#2c1844]"> 
                 {/* Category Tag (Gold Accent) */}
                   <div className="flex items-center gap-3">
                     <span className="inline-block px-3 py-1 bg-[#FDD023] text-black rounded-full text-sm font-medium">
                       {selectedListing.categoryID}
                     </span>
-                    <span className="inline-block px-3 py-1 bg-gray-700 text-white rounded-full text-sm font-medium">
-                      {selectedListing.condition || "Condition not set"}
-                    </span>
+                    
                   </div>
                   <button
                   onClick={()=>{handleCloseListing()}}
@@ -914,73 +909,75 @@ export default function WelcomePage() {
                   </button>
                   </div>
 
-              {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto p-6 ">
-                {/* Title and Price */}
-                <div className="mb-6">
-                  {/* Title and Price text color updated */}
-                  <h3 className="text-3xl font-bold text-[#FDD023] mb-3">{selectedListing.title}</h3>
-                  <p className="text-4xl font-bold text-white">${selectedListing.price}</p>
-                </div>
+                {/* Scrollable Content */}
+                  <div className="flex-1 overflow-y-auto p-6 ">
+                  {/* Title and Price */}
+                  <div className="mb-4">
+                    <h3 className="text-3xl font-bold text-[#FDD023] mb-2">{selectedListing.title}</h3>
+                    <span className="text-white font-semibold">Condition: </span>
+                    <span className="inline-block px-3 py-1 bg-gray-700 text-white rounded-full text-sm font-medium">
+                        {selectedListing.condition || "Condition not set"}
+                    </span>
+                    <p className="text-4xl font-bold text-white">${selectedListing.price}</p>
+                  </div>
 
-                {/* Location */}
-               <div className="bg-[#2c1844] rounded-xl p-4 mb-6 border border-zinc-700">
-                <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-[#FDD023]" />
-                  Pickup Location
-                </h4>
+                  {/* Location */}
+                  <div className="bg-[#2c1844] rounded-xl p-4 mb-6 border border-zinc-700">
+                    <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-[#FDD023]" />
+                      Pickup Location
+                    </h4>
                 
-                <div className="space-y-2">
-                  <p className="font-semibold text-[#FDD023] text-lg">
-                    {safeLocations.find(loc => loc.name === selectedListing.location)?.icon} {selectedListing.location}
-                  </p>
+                    <div className="space-y-2">
+                      <p className="font-semibold text-[#FDD023] text-lg">
+                        {safeLocations.find(loc => loc.name === selectedListing.location)?.icon} {selectedListing.location}
+                      </p>
                   
-                  {/* Show location details if it's a predefined safe spot */}
-                  {safeLocations.find(loc => loc.name === selectedListing.location) && (
-                    <>
-                      <p className="text-sm text-gray-300">
-                        {safeLocations.find(loc => loc.name === selectedListing.location)?.description}
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        ⏰ <strong>Best times:</strong> {safeLocations.find(loc => loc.name === selectedListing.location)?.hours}
-                      </p>
-                      
-                      {/* Safety badge */}
-                      {safeLocations.find(loc => loc.name === selectedListing.location)?.safety === "high" && (
-                        <span className="inline-block px-3 py-1 bg-green-700 text-white rounded-full text-xs font-semibold">
-                          ✅ Recommended Safe Spot
-                        </span>
+                    {/* Show location details if it's a predefined safe spot */}
+                      {safeLocations.find(loc => loc.name === selectedListing.location) && (
+                        <>
+                          <p className="text-sm text-gray-300">
+                            {safeLocations.find(loc => loc.name === selectedListing.location)?.description}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            ⏰ <strong>Best times:</strong> {safeLocations.find(loc => loc.name === selectedListing.location)?.hours}
+                          </p>
+                        {/* Safety badge */}
+                          {safeLocations.find(loc => loc.name === selectedListing.location)?.safety === "high" && (
+                            <span className="inline-block px-3 py-1 bg-green-700 text-white rounded-full text-xs font-semibold">
+                              ✅ Recommended Safe Spot
+                            </span>
+                          )}
+                        </>
                       )}
-                    </>
-                  )}
                   
-                  {/* Link to open in Google Maps */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=LSU+${encodeURIComponent(selectedListing.location)}+Baton+Rouge+LA`;
-                      window.open(mapsUrl, '_blank');
-                    }}
-                    className="text-sm text-[#FDD023] hover:underline flex items-center gap-1 mt-2 font-medium"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    Open in Google Maps
-                  </button>
-                </div>
-              </div>
+                    {/* Link to open in Google Maps */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const mapsUrl = `https://www.google.com/maps/search/?api=1&query=LSU+${encodeURIComponent(selectedListing.location)}+Baton+Rouge+LA`;
+                          window.open(mapsUrl, '_blank');
+                        }}
+                        className="text-sm text-[#FDD023] hover:underline flex items-center gap-1 mt-2 font-medium"
+                      >
+                        <MapPin className="w-4 h-4" />
+                        Open in Google Maps
+                      </button>
+                    </div>
+                  </div>
 
-              {/* Description */}
-                <div className="mb-6 h-13/30">
-                  <h4 className="text-lg font-semibold text-white ml-2 mb-3">Description</h4>
-                  <textarea 
-                    className="text-gray-200 rounded-xl p-4 pt-2 pb-2 bg-[#2c1844] w-full h-full leading-relaxed resize-none border border-zinc-700"
-                    value={selectedListing.Description || "Enter description..."}
-                    disabled>
-                  </textarea>
-                </div>
-              </div>
+                  {/* Description */}
+                  <div className="mb-6 h-13/30">
+                    <h4 className="text-lg font-semibold text-white ml-2 mb-3">Description</h4>
+                    <textarea 
+                      className="text-gray-200 rounded-xl p-4 pt-2 pb-2 bg-[#2c1844] w-full h-full leading-relaxed resize-none border border-zinc-700"
+                      value={selectedListing.Description || "Enter description..."}
+                      disabled>
+                    </textarea>
+                  </div>
+                  </div>
 
-              {/* Seller Info */}
+                {/* Seller Info */}
                 <div className="bg-[#2c1844] rounded-xl p-4 m-6 mt-4 mb-1 py-2 h-460px">
                   <h4 className="text-lg font-semibold text-[#FDD023] mb-2">Seller Information</h4>
                   <div className="pb-1 flex items-center gap-3 justify-between">
@@ -1006,7 +1003,7 @@ export default function WelcomePage() {
                   </div>
                 </div>
 
-              {/* Action Buttons - Fixed at Bottom */}
+                {/* Action Buttons - Fixed at Bottom */}
                 <div className="px-6 py-4">
                 <div className="flex gap-3">
                   {/* Purchase Button (Gold Accent) */}
@@ -1170,74 +1167,73 @@ export default function WelcomePage() {
                 </button>
                 </div>
                 </div>
-            </div>
+                </div>
+              </div>
+            {/* New Offer Modal */}
+              {showOfferModal 
+                ? (
+                <div 
+                  onClick={(e) => {e.stopPropagation();}} 
+                  className="fixed z-60 w-96 p-8 py-6 mr-10 bg-[#1a0f2e] top-1/2 right-0 rounded-2xl transform -translate-y-1/2 shadow-2xl border border-[#FDD023]/50 text-white"
+                >
+                  <div className="mb-4 text-[#FDD023] text-2xl text-center font-bold">
+                    New Offer
+                  </div>
+                  <form className="">
+                  {/* Offer Amount */}
+                    <label className="block text-sm font-medium text-white">Offer Amount <span className="text-red-500">*</span></label>
+                    <input
+                      id="amount"
+                      type="string"
+                      name="amount"
+                      value={offerAmount !== null ? `$${offerAmount}`  : ""}
+                      onChange={(e) => {
+                        const cleanValue = e.target.value.replace(/[^\d.]/g, '');
+                        const numericalValue = cleanValue ? parseFloat(cleanValue) : null;
+                        if (numericalValue !== null && numericalValue >= selectedListing.price) {
+                          setOfferAmount(selectedListing.price); // MAX amount is set to original price
+                          toast.warn("Amount too high. Enter lower number",{toastId:"exceed-max-error"})
+                        } else {
+                          setOfferAmount(numericalValue);
+                        }
+                      }}
+                      placeholder="$0"
+                      className="mt-1 w-full px-3 py-1 border border-zinc-700 rounded-lg bg-[#2c1844] text-white focus:outline-none focus:ring-2 focus:ring-[#FDD023]"
+                      min="0"
+                      max={selectedListing.price}
+                    />
+                  {/* Offer Note */}
+                    <label className="mt-2 block text-sm font-medium text-white">Note to seller <span className="text-red-500">*</span></label>
+                    <textarea
+                      value={offerNote}
+                      onChange={(e) => setOfferNote(e.target.value)}
+                      placeholder="Add a note for the seller..."
+                      maxLength={100}
+                      rows={3}
+                      className="mt-1 w-full px-2 py-1 border border-zinc-700 rounded-lg bg-[#2c1844] text-white focus:outline-none focus:ring-2 focus:ring-[#FDD023] resize-none"
+                    />
+                    <p className="text-sm text-gray-400 mt-1">{100-offerNote.length} characters left</p>
+                  </form>
+                  <div className="mt-6 flex gap-3">
+                    <button
+                      onClick={()=>handleCloseOfferModal()}
+                      className="flex-1 px-4 py-2 border-2 border-zinc-700 text-white rounded-lg font-semibold hover:bg-[#2c1844] transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={()=>handleSubmitOffer()}
+                      className="flex-1 px-4 py-2 bg-[#FDD023] text-black rounded-lg font-semibold hover:bg-[#FDD023]/90 transition-all"
+                      disabled={loading}
+                    >
+                      Submit Offer
+                    </button>
+                  </div>
+                </div>)
+                : null
+              }
           </div>
-        {/* New Offer Modal */}
-          {showOfferModal 
-          ? (<div 
-            onClick={(e) => {e.stopPropagation();}} 
-            // New Offer Modal (Dark Background, Gold/White Text)
-            className="fixed z-60 w-96 p-8 py-6 mr-10 bg-[#1a0f2e] top-1/2 right-0 rounded-2xl transform -translate-y-1/2 shadow-2xl border border-[#FDD023]/50 text-white"
-            >
-            <div className="mb-4 text-[#FDD023] text-2xl text-center font-bold">
-              New Offer
-            </div>
-            <form className="">
-            {/* Offer Amount */}
-              <label className="block text-sm font-medium text-white">Offer Amount <span className="text-red-500">*</span></label>
-              <input
-                id="amount"
-                type="string"
-                name="amount"
-                value={offerAmount !== null ? `$${offerAmount}`  : ""}
-                onChange={(e) => {
-                  const cleanValue = e.target.value.replace(/[^\d.]/g, '');
-                  const numericalValue = cleanValue ? parseFloat(cleanValue) : null;
-                  if (numericalValue !== null && numericalValue >= selectedListing.price) {
-                    setOfferAmount(selectedListing.price); // MAX amount is set to original price
-                    toast.warn("Amount too high. Enter lower number",{toastId:"exceed-max-error"})
-                  } else {
-                    setOfferAmount(numericalValue);
-                  }
-                }
-                }
-                placeholder="$0"
-                className="mt-1 w-full px-3 py-1 border border-zinc-700 rounded-lg bg-[#2c1844] text-white focus:outline-none focus:ring-2 focus:ring-[#FDD023]"
-                min="0"
-                max={selectedListing.price}
-              />
-            {/* Offer Note */}
-              <label className="mt-2 block text-sm font-medium text-white">Note to seller <span className="text-red-500">*</span></label>
-              <textarea
-                    value={offerNote}
-                    onChange={(e) => setOfferNote(e.target.value)}
-                    placeholder="Add a note for the seller..."
-                    maxLength={100}
-                    rows={3}
-                    className="mt-1 w-full px-2 py-1 border border-zinc-700 rounded-lg bg-[#2c1844] text-white focus:outline-none focus:ring-2 focus:ring-[#FDD023] resize-none"
-                  />
-                  <p className="text-sm text-gray-400 mt-1">{100-offerNote.length} characters left</p>
-            </form>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={()=>handleCloseOfferModal()}
-                className="flex-1 px-4 py-2 border-2 border-zinc-700 text-white rounded-lg font-semibold hover:bg-[#2c1844] transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={()=>handleSubmitOffer()}
-                className="flex-1 px-4 py-2 bg-[#FDD023] text-black rounded-lg font-semibold hover:bg-[#FDD023]/90 transition-all"
-                disabled={loading}
-              >
-                Submit Offer
-              </button>
-            </div>
-          </div>)
-          : null
-          }
-        </div>
-      )}
+        )}
       {/* Create Listing Modal */}
         {showCreateListing && (
         <div
@@ -1245,7 +1241,7 @@ export default function WelcomePage() {
           onClick={handleCloseNewListingModal}
         >
           
-          {/* Modal LEFT SIDE - Listing*/}
+          {/* Modal LEFT SIDE - Listing */}
             <div
             className="relative bg-[#1a0f2e] rounded-2xl max-w-5xl w-5/5 h-5/5 max-h-[90vh] shadow-2xl flex "
             onClick={(e) => e.stopPropagation()}>
@@ -1313,13 +1309,43 @@ export default function WelcomePage() {
                     {/* Title and Price */}
                       <div className="mb-4">
                         <h3 className="text-3xl font-bold text-[#FDD023] mb-2">{newTitle || "Title"}</h3>
+                        <span className="text-white font-semibold">Condition: </span>
+                        <span className="inline-block px-3 py-1 bg-gray-700 text-white rounded-full text-sm font-medium">
+                          {newCondition|| "N/A"}
+                        </span>
                         <p className="text-4xl font-bold text-white">${newPrice || "0"}</p>
                       </div>
                     {/* Location */}
-                      <div className="flex items-center text-gray-300 mb-4 pb-4 ">
-                        <MapPin className="w-5 h-5 mr-2" />
-                        <span className="text-lg">{newLocation || "Location"}</span>
-                      </div>
+                      <div className="bg-[#2c1844] rounded-xl p-4 mb-6 border border-zinc-700">
+                    <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-[#FDD023]" />
+                      Pickup Location
+                    </h4>
+                
+                    <div className="space-y-2">
+                      <p className="font-semibold text-[#FDD023] text-lg">
+                        {safeLocations.find(loc => loc.name === newLocation)?.icon} {newLocation}
+                      </p>
+                  
+                    {/* Show location details if it's a predefined safe spot */}
+                      {safeLocations.find(loc => loc.name === newLocation) && (
+                        <>
+                          <p className="text-sm text-gray-300">
+                            {safeLocations.find(loc => loc.name === newLocation)?.description}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            ⏰ <strong>Best times:</strong> {safeLocations.find(loc => loc.name === newLocation)?.hours}
+                          </p>
+                        {/* Safety badge */}
+                          {safeLocations.find(loc => loc.name === newLocation)?.safety === "high" && (
+                            <span className="inline-block px-3 py-1 bg-green-700 text-white rounded-full text-xs font-semibold">
+                              ✅ Recommended Safe Spot
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    </div>
                     {/* Description */}
                       <div className="mb-6 h-4/7">
                         <h4 className="text-lg pl-2 font-semibold text-white mb-2">Description</h4>

@@ -103,8 +103,7 @@ const Register: React.FC = () => {
                 username,
                 email: trimmedEmail,
                 uid: newuser.user.uid,
-                accountCreation: serverTimestamp(),
-                likedItems: []
+                accountCreation: serverTimestamp()
             });
 
             // Send email verification with action code settings
