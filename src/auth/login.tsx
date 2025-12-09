@@ -120,7 +120,7 @@ const Login = () => {
                 <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
                     <div className="text-center mb-4">
                         <div className="mx-auto w-24 h-24 bg-purple-900 rounded-lg flex items-center justify-center">
-                            <img className="w-16 h-16 " src="/geauxzone_tiger.png" alt="GeauxZone Tiger" />
+                            <img className="w-18 h-16 " src="/tiger_logo.png" alt="GeauxZone Tiger" />
                         </div>
                         <h1 className="text-2xl font-bold text-gray-900 mt-4">Welcome Back</h1>
                         <p className="text-sm text-gray-500">Sign in with your @lsu.edu account</p>

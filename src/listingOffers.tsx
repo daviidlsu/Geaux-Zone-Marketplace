@@ -38,23 +38,23 @@ const CheckStatus: React.FC<CheckStatusProps> = ({status, handleReject, handleAc
             if (status=="pending") {
                 return (
                     <div>
-                        <span className='px-2 py-1 rounded-full bg-blue-100 mr-2 text-xs text-blue-500'>New</span>
-                        <button onClick={handleAccept} className="text-sm px-4 py-2 bg-green-500 text-white rounded-full mr-2 hover:bg-green-600">Accept</button>
-                        <button onClick={handleReject} className="text-sm px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600">Reject</button>
+                        <span className='px-2 py-1 rounded-full bg-blue-200 mr-2 text-xs text-blue-500 font-semibold'>New</span>
+                        <button onClick={handleAccept} className="text-sm px-4 py-2 bg-green-500 text-white font-semibold rounded-full mr-2 hover:bg-green-600">Accept</button>
+                        <button onClick={handleReject} className="text-sm px-4 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600">Reject</button>
                     </div>
                 )
             } else if (status=="in-progress") {
                 return (
                     <div>
-                        <span className='rounded-full bg-gray-300 px-2 py-1 mr-2 text-xs text-gray-500'>In-progress</span>
-                        <button onClick={handleChat} className="text-sm px-4 py-2 bg-purple-900 text-white rounded-full hover:bg-purple-800">View Chat</button>
+                        <span className='rounded-full bg-gray-300 px-2 py-1 mr-2 text-xs text-gray-500 font-semibold'>In-progress</span>
+                        <button onClick={handleChat} className="text-sm px-4 py-2 bg-purple-900 text-white font-semibold rounded-full hover:bg-purple-800">View Chat</button>
                     </div>
                 )
             } else if (status=="accepted") {
                 return (
                     <div>
-                        <span className="text-xs px-2 py-1 bg-green-300 mr-2 text-green-600 rounded-full">Accepted</span>
-                        <button onClick={handleChat} className="text-sm px-4 py-2 bg-purple-900 text-white rounded-full hover:bg-purple-800">View Chat</button>
+                        <span className="text-xs px-2 py-1 bg-green-300 mr-2 text-green-600 font-semibold rounded-full">Accepted</span>
+                        <button onClick={handleChat} className="text-sm px-4 py-2 bg-purple-900 text-white font-semibold rounded-full hover:bg-purple-800">View Chat</button>
                     </div>
                 )
             }
@@ -297,7 +297,7 @@ export default function ListingOffers(){
     }
     
     return(
-        <div className='bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844]'>
+        <div className='min-h-screen w-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844]'>
             <Navbar
               handleLogout={handleLogout}
               setShowLoginModal={()=>{}}

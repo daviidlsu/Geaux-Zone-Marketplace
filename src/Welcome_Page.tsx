@@ -78,13 +78,6 @@ const safeLocations = [
     hours: "Daylight hours recommended",
     icon: "🌳",
     safety: "medium"
-  },
-  {
-    name: "Off Campus",
-    description: "Choose a safe public location",
-    hours: "Use caution",
-    icon: "📍",
-    safety: "low"
   }
 ];
 
@@ -919,24 +912,24 @@ export default function WelcomePage() {
                 <div className="px-6 py-3 border-b border-zinc-700 flex items-center justify-between bg-[#2c1844]">
                 
                 {/* Category Tag (Gold Accent) */}
-                <div className="flex items-center gap-3">
-                  <span className="inline-block px-3 py-1 bg-[#FDD023] text-black rounded-full text-sm font-medium">
-                    {selectedListing.categoryID}
-                  </span>
-                  <span className="inline-block px-3 py-1 bg-gray-700 text-white rounded-full text-sm font-medium">
-                    {selectedListing.condition || "Condition not set"}
-                  </span>
-                </div>
-                <button
+                  <div className="flex items-center gap-3">
+                    <span className="inline-block px-3 py-1 bg-[#FDD023] text-black rounded-full text-sm font-medium">
+                      {selectedListing.categoryID}
+                    </span>
+                    <span className="inline-block px-3 py-1 bg-gray-700 text-white rounded-full text-sm font-medium">
+                      {selectedListing.condition || "Condition not set"}
+                    </span>
+                  </div>
+                  <button
                   onClick={()=>{handleCloseListing()}}
                   className="text-white hover:text-[#FDD023] w-8 h-8 flex items-center justify-center rounded-full transition-all"
-                >
+                  >
                   <X size={30} color="#FDD023" />
-                </button>
-                </div>
+                  </button>
+                  </div>
 
               {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto p-6 border-b border-zinc-700">
+                <div className="flex-1 overflow-y-auto p-6 ">
                 {/* Title and Price */}
                 <div className="mb-6">
                   {/* Title and Price text color updated */}
@@ -1003,7 +996,7 @@ export default function WelcomePage() {
               </div>
 
               {/* Seller Info */}
-                <div className="bg-[#2c1844] rounded-xl p-4 m-6 mt-4 mb-1 py-2 ">
+                <div className="bg-[#2c1844] rounded-xl p-4 m-6 mt-4 mb-1 py-2 h-460px">
                   <h4 className="text-lg font-semibold text-[#FDD023] mb-2">Seller Information</h4>
                   <div className="pb-1 flex items-center gap-3 justify-between">
                     <div className="flex items-center gap-3">
@@ -1362,7 +1355,7 @@ export default function WelcomePage() {
 
               {/* Seller Info */}
                 {/* Updated seller info background/text */}
-                <div className="bg-[#2c1844] rounded-xl p-4 m-6 m-0 h-1/5">
+                <div className="bg-[#2c1844] rounded-xl p-4 m-6 m-0 h-460px">
                   <h4 className="text-lg font-semibold text-[#FDD023] mb-2">Seller Information</h4>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-[#FDD023] rounded-full flex items-center justify-center text-black font-bold text-lg">{(currentUserData?.username.charAt(0).toUpperCase())}</div>
@@ -1470,13 +1463,6 @@ export default function WelcomePage() {
                     </optgroup>
                     <optgroup label="📍 Other Campus Locations" className="bg-[#2c1844]">
                       {safeLocations.filter(loc => loc.safety === "medium").map((loc) => (
-                        <option key={loc.name} value={loc.name} className="bg-[#1a0f2e]">
-                          {loc.icon} {loc.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="⚠️ Off Campus" className="bg-[#2c1844]">
-                      {safeLocations.filter(loc => loc.safety === "low").map((loc) => (
                         <option key={loc.name} value={loc.name} className="bg-[#1a0f2e]">
                           {loc.icon} {loc.name}
                         </option>
@@ -1630,7 +1616,7 @@ export default function WelcomePage() {
             <div id="box" onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 relative">
               <div className="text-center mb-6 ">
                 <div className="mx-auto w-24 h-24 bg-purple-900 rounded-lg flex items-center justify-center">
-                  <img className="w-16 h-16 " src="/geauxzone_tiger.png">
+                  <img className="w-18 h-16 " src="/tiger_logo.png">
                   </img>
                 </div>
                 <h1 className="text-2xl font-bold text-gray-900 mt-4">Welcome Back</h1>

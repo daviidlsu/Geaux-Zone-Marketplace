@@ -97,13 +97,6 @@ const safeLocations = [
     hours: "Daylight hours recommended",
     icon: "🌳",
     safety: "medium"
-  },
-  {
-    name: "Off Campus",
-    description: "Choose a safe public location",
-    hours: "Use caution",
-    icon: "📍",
-    safety: "low"
   }
 ];
 
@@ -721,13 +714,6 @@ export default function Listings() {
                                 </optgroup>
                                 <optgroup label="📍 Other Campus Locations" className="text-gray-900 bg-gray-200">
                                   {safeLocations.filter(loc => loc.safety === "medium").map((loc) => (
-                                    <option key={loc.name} value={loc.name}>
-                                      {loc.icon} {loc.name}
-                                    </option>
-                                  ))}
-                                </optgroup>
-                                <optgroup label="⚠️ Off Campus" className="text-gray-900 bg-gray-200">
-                                  {safeLocations.filter(loc => loc.safety === "low").map((loc) => (
                                     <option key={loc.name} value={loc.name}>
                                       {loc.icon} {loc.name}
                                     </option>

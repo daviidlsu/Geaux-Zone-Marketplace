@@ -169,7 +169,7 @@ const Register: React.FC = () => {
                 <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8 pt-6 pb-6 my-4">
                     <div className="text-center mb-4">
                         <div className="mx-auto w-24 h-24 bg-purple-900 rounded-lg flex items-center justify-center">
-                            <img className="w-16 h-16 " src="/geauxzone_tiger.png" alt="GeauxZone Tiger"></img>
+                            <img className="w-18 h-16 " src="/tiger_logo.png" alt="GeauxZone Tiger"></img>
                         </div>                        
                         <h1 className="text-2xl font-bold text-gray-900 mt-2">Create an account</h1>
                         <p className="text-sm text-gray-500">Register with your @lsu.edu account</p>

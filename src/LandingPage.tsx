@@ -106,9 +106,9 @@ export default function LandingPage() {
       <nav className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between z-20 relative">
         <div className="flex items-center gap-3">
           <a
-           className="flex items-center gap-3">
+           className="flex items-center gap-2">
             <img
-              src="/geauxzone_tiger.png"
+              src="/tiger_logo.png"
               alt="TigerTrade logo"
               className="w-10 h-10 md:w-12 md:h-12 object-contain"
             />
@@ -148,10 +148,10 @@ export default function LandingPage() {
                 backgroundImage: "linear-gradient(90deg, #FDD023 0%, #FFFFFF 100%)",
               }}
             >
-              Buy. Sell. Geaux — the LSU way.
+              Buy. Sell. Geaux — the safe way.
             </h1>
             <p className="mt-6 text-lg text-white/85 max-w-xl">
-              A trusted campus marketplace built by and for Tigers — verified LSU logins, safe
+              A trusted campus marketplace built by and for Tigers — verified student users, safe
               meet-up spots, smart pricing suggestions, and student-only deals.
             </p>
 
@@ -171,8 +171,8 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-6 text-sm text-white/65">
-              Trusted by students across campus — built during 2025 by LSU students.
-              <span className="ml-2 text-white/85">No ads, just community.</span>
+              <p>Trusted by students across campus — built during 2025 by LSU students.</p>
+              <p className="text-white/85">Community built. Community driven.</p>
             </div>
 
             {/* Scroll indicator (desktop): follows sections */}
@@ -208,7 +208,7 @@ export default function LandingPage() {
               <div className="w-full h-full rounded-3xl bg-[#150b24]/95 border border-white/10 p-6 backdrop-blur-md flex flex-col gap-5 justify-center">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-xl bg-[#f2b200] flex items-center justify-center text-[#41206a] font-bold">
-                    LSU
+                    S
                   </div>
                   <div>
                     <div className="text-sm text-white/85 font-semibold">
@@ -268,7 +268,7 @@ export default function LandingPage() {
             <h3 className="text-2xl font-bold">About TigerTrade</h3>
             <p className="mt-4 text-white/80">
               TigerTrade simplifies student life — buy textbooks, sell dorm furniture, swap
-              game day gear. LSU email verification keeps the community safe.
+              game day gear. Student email verification keeps the community safe.
             </p>
             <p className="mt-4 text-white/70">
               Our mission: a campus-first marketplace that&apos;s simple, private, and trusted.
@@ -279,7 +279,7 @@ export default function LandingPage() {
             <div className="listing-card p-6 rounded-xl bg-white/4 border border-white/5">
               <div className="text-sm font-semibold">Verified Community</div>
               <div className="text-sm text-white/70 mt-2">
-                Only LSU emails can sign up — less spam, more trust.
+                Only students with LSU emails can sign up — less spam, more trust.
               </div>
             </div>
             <div className="listing-card p-6 rounded-xl bg-white/4 border border-white/5">
@@ -310,7 +310,7 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <FeatureCard
-            title="LSU Email Verified"
+            title="Student Email Verification"
             desc="Sign up with @lsu.edu — verified profiles reduce scams."
             Icon={ShieldCheck}
           />
@@ -336,14 +336,14 @@ export default function LandingPage() {
               Ready to join the Tiger community?
             </h3>
             <p className="mt-3 text-white/80">
-              Create an account with your LSU email to start buying and selling today.
+              Create an account with your LSU student email to start buying and selling today.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
               <a
                 onClick={() => navigate("/register")}
                 className="px-6 py-3 rounded-lg bg-[#FDD023] text-[#41206a] font-semibold shadow-md hover:shadow-[0_18px_45px_rgba(0,0,0,0.55)] hover:translate-y-[-1px] transition"
               >
-                Join with LSU Email
+                Join now
               </a>
               <a
                 className="px-6 py-3 rounded-lg border border-white/15 text-white/90 hover:bg-white/5 transition"

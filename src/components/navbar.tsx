@@ -37,10 +37,10 @@ export default function Navbar({
                 
                 <div className="flex items-center justify-between w-full ml-[-72px]">
                   {/* Logo/Title */}
-    <Link to="/listings" className="ml-20 flex items-center gap-3">
+    <Link to="/listings" className="ml-20 flex items-center gap-2">
   <img
-    className="w-10 h-10"
-    src="/geauxzone_tiger.png"
+    className="w-10 h-8"
+    src="/tiger_logo.png"
     alt="TigerTrade logo"
   />
   <span
@@ -56,11 +56,7 @@ export default function Navbar({
             <div className="absolute flex right-0 gap-2 mr-6 font-sans">
                 <button 
                     onClick={currentUser ? handleLogout : () => setShowLoginModal(true)} 
-                    className={`px-4 py-1 rounded-2xl transition-colors font-semibold
-                    ${currentUser 
-                        ? 'text-white hover:text-yellow-600'
-                        : 'text-white hover:text-yellow-600'}`
-                    }> 
+                    className={`px-4 py-1 rounded-2xl transition-colors font-semibold text-yellow-500 hover:text-yellow-600`}> 
                     {currentUser ? 'Logout' : 'Login'} 
                 </button>
                             
