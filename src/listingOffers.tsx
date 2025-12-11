@@ -9,7 +9,6 @@ import { useState, useEffect } from "react";
 import Menu from "./components/menu.tsx"
 import Navbar from "./components/navbar.tsx";
 import CustomToastContainer from "./components/toast.tsx";
-import { list } from 'firebase/storage';
 
 interface Offer {
     amount: number
@@ -319,8 +318,8 @@ export default function ListingOffers(){
                 </h1>
             {/* Offers */}
                 {offers.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-xl shadow-md">
-                        <p className="text-gray-500 text-lg">No offers have been submitted for this listing yet.</p>
+                    <div className="text-center py-12 rounded-xl shadow-md">
+                        <p className="text-gray-200 text-lg">No offers have been submitted for this listing yet.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">

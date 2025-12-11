@@ -9,7 +9,7 @@ import { db } from "./firebase/firebase"
 import Navbar from "./components/navbar"
 import Menu from "./components/menu"
 import CustomToastContainer from "./components/toast"
-import { Plus, Ban, Check, Flag, Scale, X, Clock, ArrowLeft, Trash, Send, SendHorizonal, SendHorizontal } from "lucide-react"
+import { Plus, Ban, Check, Flag, Scale, X, Clock, Trash, SendHorizontal } from "lucide-react"
 
 type OfferMessageType = 'INCOMING' | 'OUTGOING';
 type MessageContent = 'counter' | 'image' | 'text';
@@ -201,6 +201,7 @@ export default function Messages() {
     const [view, setView] = useState<OfferMessageType>('INCOMING');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [showCounterModal, setShowCounterModal] = useState<boolean>(false)
+    const [showDisclaimer, setShowDisclaimer] = useState<boolean>(true)
     
     // Handles logout 
     const handleLogout = async () => {
@@ -443,7 +444,6 @@ export default function Messages() {
     const selectedConversation = conversations.find(c=>c.id === selectedConversationId)
 
     return (
-        // Applied the dark gradient background to the entire page
         <div className="h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] text-white overflow-hidden"
             onClick={()=>setShowActionMenu(false)}>
             <Navbar 
@@ -453,6 +453,74 @@ export default function Messages() {
                 navigate={navigate}/>
             <Menu showMenu={showMenu} setShowMenu={setShowMenu}/>
             <CustomToastContainer />
+            {showDisclaimer && (
+                <div 
+          className="fixed inset-0 bg-[#2c1844]/40 z-[70] flex items-center justify-center p-4"
+        >
+          <div 
+            className="bg-[#2c1844] rounded-2xl max-w-md w-full p-6 border border-purple-900 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-4">
+            {/* Shield Icon: Updated to gold accent background */}
+              <div className="w-16 h-16 bg-[#FDD023]/20 border border-[#FDD023]/40 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-3xl">🛡️</span>
+              </div>
+            {/* Title: Updated to gold text */}
+              <h3 className="text-2xl font-bold text-[#FDD023]">Safety First!</h3>
+            {/* Subtitle: Updated to light gray text */}
+              <p className="text-sm text-gray-300 mt-1">Please review these terms before chatting</p>
+            </div>
+            <div className="space-y-3">
+            {/* Positive Tip (Meet in Public): Darkened background, white text, gold icon */}
+              <div className="flex gap-3 p-3 bg-gray-700/50 rounded-lg">
+                <span className="text-[#FDD023] text-xl flex-shrink-0">✅</span>
+                <div>
+                  <p className="font-semibold text-white text-sm">Meet in Public Places</p>
+                  <p className="text-xs text-gray-400">Student Union, Library, or busy campus locations</p>
+                </div>
+              </div>
+
+            {/* Positive Tip (Daylight): Darkened background, white text, gold icon */}
+              <div className="flex gap-3 p-3 bg-gray-700/50 rounded-lg">
+                <span className="text-[#FDD023] text-xl flex-shrink-0">✅</span>
+                <div>
+                  <p className="font-semibold text-white text-sm">Meet During Daylight</p>
+                  <p className="text-xs text-gray-400">Avoid late night meetings when possible</p>
+                </div>
+              </div>
+
+            {/* Positive Tip (Bring a Friend): Darkened background, white text, gold icon */}
+              <div className="flex gap-3 p-3 bg-gray-700/50 rounded-lg">
+                <span className="text-[#FDD023] text-xl flex-shrink-0">⚠️</span>
+                <div>
+                  <p className="font-semibold text-white text-sm">Report Suspicious Activity</p>
+                  <p className="text-xs text-gray-400">If something feels off, trust your instincts</p>
+                </div>
+              </div>
+
+            {/* Negative Tip (No Personal Info): Darkened background, white text, red icon */}
+              <div className="flex gap-3 p-3 bg-gray-700/50 rounded-lg">
+                <span className="text-red-400 text-xl flex-shrink-0">❌</span>
+                <div>
+                  <p className="font-semibold text-white text-sm">Never Share Personal Info</p>
+                  <p className="text-xs text-gray-400">Don't share passwords, payment info or addresses</p>
+                </div>
+              </div>
+              <div className="flex">
+              <button
+                onClick={() => {
+                  setShowDisclaimer(false);
+                }}
+                className="flex-1 px-4 py-2 bg-[#FDD023] text-black rounded-lg font-semibold hover:bg-[#FDD023]/80 transition-all"
+              >
+              I Understand
+              </button>
+              </div>
+            </div>
+            </div>
+            </div>
+            )}
             {/* Header */}
                 <div className="flex mt-2 mb-2">
                     <MessageToggle currentView={view} toggleView={handleToggleView} incomingCount={incomingCount} outgoingCount={outgoingCount}/>
@@ -472,7 +540,6 @@ export default function Messages() {
                                     <div
                                         key={convo.id}
                                         onClick={()=> setSelectedConversationId(convo.id)}
-                                        // Updated selected/unselected styles
                                         className={`p-3 border-zinc-700 border-b transition-colors ${
                                             isSelected ? 'bg-[#2c1844] border-l-4 border-[#FDD023]' : 'bg-transparent hover:cursor-pointer hover:bg-[#1a0f2e]/50'
                                         }`}
@@ -526,7 +593,6 @@ export default function Messages() {
                                                     className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                                                 >
                                                     <div
-                                                        // Distinct card style for counter offers - using gold accent
                                                         className={`max-w-[80%] sm:max-w-[70%] lg:max-w-[60%] p-4 rounded-2xl shadow-lg border-2 ${
                                                             isCurrentUser 
                                                                 ? 'bg-[#FDD023]/20 border-[#FDD023]/40 text-white rounded-br-md' // Outgoing
