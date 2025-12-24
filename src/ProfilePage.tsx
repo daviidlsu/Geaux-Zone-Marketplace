@@ -38,13 +38,10 @@ export default function ProfilePage() {
   const { currentUser, currentUserData, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<"listings" | "favorites" | "sold">("listings");
   const [showMenu, setShowMenu] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  
-  // Data states
   const [myListings, setMyListings] = useState<Listing[]>([]);
   const [soldListings, setSoldListings] = useState<Listing[]>([]);
   const [favoriteListings, setFavoriteListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -168,21 +165,30 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
+      <>
+      <Navbar
+        handleLogout={handleLogout}
+        setShowLoginModal={()=>{}}
+        setShowMenu={setShowMenu}
+        navigate={navigate}
+      />
       <div className={`min-h-screen ${PRIMARY_BG} flex items-center justify-center`}>
+      
         <div className="text-center">
           {/* Spinner color changed to gold */}
           <div className={`animate-spin inline-block w-12 h-12 border-4 border-t-[#FDD023] border-white/20 rounded-full mb-4`}></div>
           <p className="text-white/80">Loading profile...</p>
         </div>
       </div>
+      </>
     );
   }
 
   return (
-    <div className={`min-h-screen ${PRIMARY_BG} text-white`}>
+    <div className={`min-h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] text-white`}>
       <Navbar
         handleLogout={handleLogout}
-        setShowLoginModal={setShowLoginModal}
+        setShowLoginModal={()=>{}}
         setShowMenu={setShowMenu}
         navigate={navigate}
       />

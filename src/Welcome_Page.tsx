@@ -613,7 +613,7 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="h-screen  bg-gray-50 bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] overflow-x-hidden">
+    <div className="h-screen bg-gradient-to-b from-[#12091a] via-[#1a0f2e] to-[#2c1844] overflow-x-hidden">
       <Navbar
         handleLogout={handleLogout}
         setShowLoginModal={setShowLoginModal}
@@ -693,7 +693,7 @@ export default function WelcomePage() {
                     : "bg-white/20 text-white border-2 border-[#FDD023]"
                   : category === "Recommended"
                     ? "bg-[#FDD023]/80 text-[#41206a] hover:bg-[#FDD023]"
-                    : "bg-white/5 text-white/80 hover:bg-white/10 border border-white/20"
+                    : "bg-white/5 text-white/80 hover:bg-white/10 border-2 border-white/20"
                   }`}
               >
                 {category === "Recommended" && <WandSparkles className="h-4 w-4 mr-1"/>}
@@ -1133,7 +1133,7 @@ export default function WelcomePage() {
                       setLoading(false);
                     }
                   }}
-                  className="flex-1 bg-[#FDD023] text-black py-2 rounded-xl font-bold hover:bg-[#FDD023]/90 transition-all disabled:opacity-50"
+                  className="flex-1 bg-[#FDD023] text-black py-2 rounded-xl font-semibold hover:bg-[#FDD023]/90 transition-all disabled:opacity-50"
                   disabled={!selectedListing?.available || selectedListing?.sellerUID === currentUser?.uid}
                 >
                   {selectedListing?.sellerUID === currentUser?.uid ? "Your Listing" : "Purchase"}
@@ -1150,13 +1150,13 @@ export default function WelcomePage() {
                       toast.warn("Sorry, this listing is not currently accepting new offers.", {toastId: 'reserved-listing-error'});
                     }
                   }}
-                  className={`disabled:opacity-50 ${offerMade ? "!cursor-default" : ""} flex-1 bg-[#FDD023] hover:bg-[#FDD023]/90 text-black py-2 rounded-xl font-bold  transition-all`}
+                  className={`disabled:opacity-50 ${offerMade ? "!cursor-default" : ""} flex-1 bg-[#FDD023] hover:bg-[#FDD023]/90 text-black py-2 rounded-xl font-semibold  transition-all`}
                 >                  
                   Make Offer
                 </button>
                 {/* Favorite Button (Dark Background, Gold/Red Accent) */}
                   <button onClick={() => {handleFavorite(selectedListing.docId);}}
-                    className={`px-2 py-2 rounded-xl border border-zinc-700 hover:border-[#FDD023] transition-all 
+                    className={`px-2 py-2 rounded-xl border border-transparent hover:border-[#FDD023] transition-all 
                       ${likedItems.includes(selectedListing.docId) ? "bg-[#1a0f2e]" : "bg-[#1a0f2e] hover:bg-[#2c1844]"}`}
                   >
                   <Heart className={`w-8 h-8 stroke-2 
